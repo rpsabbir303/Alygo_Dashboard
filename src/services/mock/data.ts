@@ -1,0 +1,297 @@
+import type {
+  ActivityItem,
+  AuthUser,
+  ChartPoint,
+  ComplianceDocument,
+  Driver,
+  EligibilityRule,
+  KpiMetric,
+  NotificationItem,
+  Passenger,
+  Reservation,
+  SurgeZone,
+  Trip,
+} from '@/types'
+
+const cities = ['San Francisco', 'Los Angeles', 'New York', 'Chicago', 'Miami', 'Seattle', 'Austin']
+const states = ['CA', 'NY', 'IL', 'FL', 'WA', 'TX']
+
+export const mockKpis: KpiMetric[] = [
+  { key: 'totalDrivers', label: 'Total Drivers', value: 12847, change: 4.2, format: 'number', icon: 'users' },
+  { key: 'totalPassengers', label: 'Total Passengers', value: 89432, change: 6.8, format: 'number', icon: 'user-check' },
+  { key: 'activeTrips', label: 'Active Trips', value: 342, change: 12.5, format: 'number', icon: 'car' },
+  { key: 'revenueToday', label: 'Revenue Today', value: 284750, change: 8.3, format: 'currency', icon: 'dollar-sign' },
+  { key: 'revenueMonth', label: 'Revenue This Month', value: 8420000, change: 11.2, format: 'currency', icon: 'trending-up' },
+  { key: 'approvalQueue', label: 'Driver Approval Queue', value: 47, change: -3.1, format: 'number', icon: 'clipboard-check' },
+  { key: 'complianceAlerts', label: 'Compliance Alerts', value: 23, change: 15.0, format: 'number', icon: 'shield-alert' },
+  { key: 'waitlistCount', label: 'Waitlist Count', value: 1842, change: 2.4, format: 'number', icon: 'list-ordered' },
+  { key: 'airportQueue', label: 'Airport Queue Count', value: 89, change: 5.6, format: 'number', icon: 'plane' },
+  { key: 'scheduledRides', label: 'Scheduled Rides', value: 156, change: 9.1, format: 'number', icon: 'calendar' },
+]
+
+export const mockRevenueTrend: ChartPoint[] = [
+  { label: 'Mon', value: 245000, secondary: 198000 },
+  { label: 'Tue', value: 268000, secondary: 210000 },
+  { label: 'Wed', value: 252000, secondary: 205000 },
+  { label: 'Thu', value: 289000, secondary: 228000 },
+  { label: 'Fri', value: 342000, secondary: 275000 },
+  { label: 'Sat', value: 398000, secondary: 312000 },
+  { label: 'Sun', value: 284750, secondary: 245000 },
+]
+
+export const mockDemandTrend: ChartPoint[] = [
+  { label: '6AM', value: 120 },
+  { label: '9AM', value: 340 },
+  { label: '12PM', value: 280 },
+  { label: '3PM', value: 310 },
+  { label: '6PM', value: 520 },
+  { label: '9PM', value: 410 },
+  { label: '12AM', value: 180 },
+]
+
+export const mockGrowthTrend: ChartPoint[] = [
+  { label: 'Jan', value: 8200 },
+  { label: 'Feb', value: 9100 },
+  { label: 'Mar', value: 9800 },
+  { label: 'Apr', value: 10500 },
+  { label: 'May', value: 11200 },
+  { label: 'Jun', value: 12847 },
+]
+
+export const mockCategoryUsage: ChartPoint[] = [
+  { label: 'Standard', value: 42 },
+  { label: 'Comfort', value: 18 },
+  { label: 'XL', value: 12 },
+  { label: 'Pet', value: 5 },
+  { label: 'Priority', value: 8 },
+  { label: 'Black', value: 10 },
+  { label: 'Black SUV', value: 5 },
+]
+
+export const mockTopCities: ChartPoint[] = [
+  { label: 'San Francisco', value: 1240000 },
+  { label: 'Los Angeles', value: 980000 },
+  { label: 'New York', value: 1560000 },
+  { label: 'Chicago', value: 720000 },
+  { label: 'Miami', value: 540000 },
+]
+
+export const mockTopAirports: ChartPoint[] = [
+  { label: 'SFO', value: 8420 },
+  { label: 'LAX', value: 12400 },
+  { label: 'JFK', value: 9800 },
+  { label: 'ORD', value: 6200 },
+  { label: 'MIA', value: 5100 },
+]
+
+export const mockActivities: ActivityItem[] = [
+  {
+    id: '1',
+    type: 'trip',
+    title: 'Trip completed',
+    description: 'Driver Marcus J. completed a Black SUV ride in San Francisco',
+    timestamp: new Date(Date.now() - 120000).toISOString(),
+    severity: 'success',
+  },
+  {
+    id: '2',
+    type: 'compliance',
+    title: 'Document expiring',
+    description: 'Vehicle inspection for driver #DR-4821 expires in 7 days',
+    timestamp: new Date(Date.now() - 300000).toISOString(),
+    severity: 'warning',
+  },
+  {
+    id: '3',
+    type: 'surge',
+    title: 'Surge activated',
+    description: 'Downtown SF zone multiplier increased to 2.4x',
+    timestamp: new Date(Date.now() - 480000).toISOString(),
+    severity: 'info',
+  },
+  {
+    id: '4',
+    type: 'driver',
+    title: 'New driver approved',
+    description: 'Sarah Chen approved for Comfort and Standard categories',
+    timestamp: new Date(Date.now() - 720000).toISOString(),
+    severity: 'success',
+  },
+  {
+    id: '5',
+    type: 'reservation',
+    title: 'Airport reservation',
+    description: 'SFO pickup scheduled for 3:45 PM - Black category',
+    timestamp: new Date(Date.now() - 900000).toISOString(),
+    severity: 'info',
+  },
+]
+
+export const mockDrivers: Driver[] = Array.from({ length: 50 }, (_, i) => ({
+  id: `DR-${1000 + i}`,
+  name: ['Marcus Johnson', 'Sarah Chen', 'David Kim', 'Emily Rodriguez', 'James Wilson'][i % 5] + ` ${i + 1}`,
+  email: `driver${i + 1}@example.com`,
+  phone: `+1 (555) ${String(100 + i).padStart(3, '0')}-${String(1000 + i).slice(-4)}`,
+  rating: Number((4.2 + (i % 8) * 0.1).toFixed(1)),
+  completedTrips: 50 + i * 23,
+  vehicle: ['Toyota Camry', 'Honda Accord', 'Tesla Model 3', 'Chevrolet Suburban', 'Mercedes E-Class'][i % 5],
+  vehicleYear: 2018 + (i % 6),
+  categories: (['standard', 'comfort', 'xl', 'black'] as const).slice(0, (i % 4) + 1),
+  complianceStatus: (['approved', 'pending', 'expiring_soon', 'expired'] as const)[i % 4],
+  backgroundCheckStatus: (['approved', 'pending', 'rejected'] as const)[i % 3],
+  status: (['active', 'pending', 'suspended', 'deactivated'] as const)[i % 4],
+  city: cities[i % cities.length],
+  state: states[i % states.length],
+  joinedAt: new Date(Date.now() - i * 86400000 * 7).toISOString(),
+  earnings: 1200 + i * 85,
+}))
+
+export const mockPassengers: Passenger[] = Array.from({ length: 40 }, (_, i) => ({
+  id: `PS-${2000 + i}`,
+  name: ['Alex Turner', 'Jordan Lee', 'Taylor Morgan', 'Casey Brooks', 'Riley Adams'][i % 5] + ` ${i + 1}`,
+  email: `passenger${i + 1}@example.com`,
+  phone: `+1 (555) ${String(200 + i).padStart(3, '0')}-${String(2000 + i).slice(-4)}`,
+  rating: Number((4.5 + (i % 5) * 0.08).toFixed(1)),
+  completedTrips: 10 + i * 8,
+  walletBalance: 25 + i * 12,
+  status: (['active', 'suspended', 'banned'] as const)[i % 10 === 0 ? 2 : i % 15 === 0 ? 1 : 0],
+  city: cities[i % cities.length],
+  joinedAt: new Date(Date.now() - i * 86400000 * 5).toISOString(),
+}))
+
+export const mockTrips: Trip[] = Array.from({ length: 30 }, (_, i) => ({
+  id: `TR-${5000 + i}`,
+  driverId: mockDrivers[i % mockDrivers.length].id,
+  driverName: mockDrivers[i % mockDrivers.length].name,
+  passengerId: mockPassengers[i % mockPassengers.length].id,
+  passengerName: mockPassengers[i % mockPassengers.length].name,
+  category: (['standard', 'comfort', 'xl', 'black', 'priority'] as const)[i % 5],
+  status: (['requested', 'accepted', 'in_progress', 'completed'] as const)[i % 4],
+  pickup: `${100 + i} Market St, ${cities[i % cities.length]}`,
+  dropoff: `${200 + i} Mission St, ${cities[i % cities.length]}`,
+  fare: 18 + i * 3,
+  startedAt: new Date(Date.now() - i * 600000).toISOString(),
+  city: cities[i % cities.length],
+}))
+
+export const mockComplianceDocs: ComplianceDocument[] = Array.from({ length: 25 }, (_, i) => ({
+  id: `CD-${3000 + i}`,
+  driverId: mockDrivers[i].id,
+  driverName: mockDrivers[i].name,
+  type: ['Driver License', 'Vehicle Registration', 'Vehicle Inspection', 'Commercial Insurance', 'Background Check'][i % 5],
+  status: (['approved', 'pending', 'expiring_soon', 'expired', 'rejected'] as const)[i % 5],
+  expiresAt: new Date(Date.now() + (i - 2) * 86400000 * 10).toISOString(),
+  submittedAt: new Date(Date.now() - i * 86400000 * 3).toISOString(),
+}))
+
+export const mockEligibilityRules: EligibilityRule[] = [
+  {
+    id: 'ER-1',
+    name: 'California Black Standard',
+    scope: 'state',
+    scopeValue: 'CA',
+    category: 'black',
+    minVehicleYear: 2019,
+    maxVehicleAge: 5,
+    minRating: 4.8,
+    minTrips: 500,
+    minExperienceYears: 2,
+    seatCount: 4,
+    vehicleTypes: ['Sedan', 'Luxury'],
+    inspectionRequired: true,
+    commercialInsuranceRequired: true,
+    active: true,
+  },
+  {
+    id: 'ER-2',
+    name: 'SFO Airport XL',
+    scope: 'airport',
+    scopeValue: 'SFO',
+    category: 'xl',
+    minVehicleYear: 2017,
+    maxVehicleAge: 7,
+    minRating: 4.5,
+    minTrips: 200,
+    minExperienceYears: 1,
+    seatCount: 6,
+    vehicleTypes: ['SUV', 'Van'],
+    inspectionRequired: true,
+    commercialInsuranceRequired: false,
+    active: true,
+  },
+]
+
+export const mockSurgeZones: SurgeZone[] = [
+  { id: 'SZ-1', name: 'Downtown SF', city: 'San Francisco', multiplier: 2.4, demand: 892, supply: 234, active: true },
+  { id: 'SZ-2', name: 'LAX Terminal', city: 'Los Angeles', multiplier: 1.8, demand: 1240, supply: 420, active: true },
+  { id: 'SZ-3', name: 'Midtown Manhattan', city: 'New York', multiplier: 3.1, demand: 1560, supply: 380, active: true },
+  { id: 'SZ-4', name: 'South Beach', city: 'Miami', multiplier: 1.5, demand: 620, supply: 310, active: false },
+]
+
+export const mockReservations: Reservation[] = Array.from({ length: 20 }, (_, i) => ({
+  id: `RS-${4000 + i}`,
+  passengerName: mockPassengers[i].name,
+  type: (['scheduled', 'airport', 'event', 'business'] as const)[i % 4],
+  pickup: i % 2 === 0 ? 'SFO Terminal 2' : `${100 + i} Main St`,
+  dropoff: i % 2 === 0 ? 'Downtown SF' : 'Convention Center',
+  scheduledAt: new Date(Date.now() + i * 3600000).toISOString(),
+  category: (['standard', 'comfort', 'black', 'xl'] as const)[i % 4],
+  status: (['pending', 'assigned', 'completed'] as const)[i % 3],
+  driverName: i % 3 !== 0 ? mockDrivers[i].name : undefined,
+}))
+
+export const mockNotifications: NotificationItem[] = [
+  {
+    id: 'N-1',
+    title: 'Compliance alert',
+    message: '12 documents expiring within 7 days',
+    read: false,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    category: 'compliance',
+  },
+  {
+    id: 'N-2',
+    title: 'Surge opportunity',
+    message: 'High demand detected in Downtown SF',
+    read: false,
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+    category: 'operations',
+  },
+  {
+    id: 'N-3',
+    title: 'Payout processed',
+    message: '$842,000 in driver payouts completed',
+    read: true,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    category: 'finance',
+  },
+]
+
+export const mockAdminUser: AuthUser = {
+  id: 'ADM-001',
+  email: 'admin@alygo.com',
+  name: 'Alexandra Morgan',
+  role: 'super_admin',
+  permissions: [
+    'dashboard.view',
+    'operations.view',
+    'operations.manage',
+    'drivers.view',
+    'drivers.manage',
+    'passengers.view',
+    'passengers.manage',
+    'compliance.view',
+    'compliance.manage',
+    'eligibility.view',
+    'eligibility.manage',
+    'pricing.view',
+    'pricing.manage',
+    'reservations.view',
+    'reservations.manage',
+    'finance.view',
+    'finance.manage',
+    'analytics.view',
+    'settings.view',
+    'settings.manage',
+  ],
+}
