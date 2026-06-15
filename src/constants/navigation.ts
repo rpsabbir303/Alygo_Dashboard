@@ -49,6 +49,7 @@ export const NAVIGATION: NavItem[] = [
       { key: 'active-passengers', label: 'Active Passengers', path: '/operations/active-passengers' },
       { key: 'ride-monitoring', label: 'Ride Monitoring', path: '/operations/ride-monitoring' },
       { key: 'cancellation-management', label: 'Cancellation Management', path: '/operations/cancellation-management' },
+      { key: 'lost-found', label: 'Lost & Found', path: '/operations/lost-found' },
     ],
   },
   {
@@ -58,6 +59,7 @@ export const NAVIGATION: NavItem[] = [
     permission: 'drivers.view',
     children: [
       { key: 'drivers', label: 'Driver Management', path: '/drivers' },
+      { key: 'driver-rewards', label: 'Driver Rewards & Performance', path: '/drivers/rewards' },
       { key: 'passengers', label: 'Passenger Management', path: '/passengers' },
       { key: 'waitlist', label: 'Driver Waitlist', path: '/drivers/waitlist' },
     ],

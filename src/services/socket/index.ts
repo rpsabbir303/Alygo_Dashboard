@@ -9,6 +9,20 @@ export type SocketEvents = {
   'drivers:status': unknown
   'notifications:new': unknown
   'cancellation:stats-update': void
+  'lost-found:new-report': void
+  'lost-found:driver-response': void
+  'lost-found:status-change': void
+  'lost-found:return-update': void
+  'lost-found:open-dispute': void
+  'lost-found:return-completed': void
+  'lost-found:escalated-case': void
+  'lost-found:stats-update': void
+  'driver-rewards:level-change': void
+  'driver-rewards:points-update': void
+  'driver-rewards:promotion-activated': void
+  'driver-rewards:progress-update': void
+  'driver-rewards:bonus-notification': void
+  'driver-rewards:stats-update': void
 }
 
 class SocketService {

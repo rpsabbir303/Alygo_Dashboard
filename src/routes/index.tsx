@@ -21,6 +21,8 @@ const ActiveDriversPage = lazy(() => import('@/features/operations/ActiveDrivers
 const ActivePassengersPage = lazy(() => import('@/features/operations/ActivePassengersPage'))
 const RideMonitoringPage = lazy(() => import('@/features/operations/RideMonitoringPage'))
 const CancellationManagementPage = lazy(() => import('@/features/cancellations/CancellationManagementPage'))
+const DriverRewardsPage = lazy(() => import('@/features/driver-rewards/DriverRewardsPage'))
+const LostFoundManagementPage = lazy(() => import('@/features/lost-found/LostFoundManagementPage'))
 const ComplianceCenterPage = lazy(() => import('@/features/compliance/ComplianceCenterPage'))
 const BackgroundChecksPage = lazy(() => import('@/features/compliance/BackgroundChecksPage'))
 const DocumentMonitoringPage = lazy(() => import('@/features/compliance/DocumentMonitoringPage'))
@@ -93,7 +95,9 @@ export const router = createBrowserRouter([
       { path: 'operations/active-passengers', element: withSuspense(<ActivePassengersPage />) },
       { path: 'operations/ride-monitoring', element: withSuspense(<RideMonitoringPage />) },
       { path: 'operations/cancellation-management', element: withSuspense(<CancellationManagementPage />) },
+      { path: 'operations/lost-found', element: withSuspense(<LostFoundManagementPage />) },
       { path: 'drivers', element: withSuspense(<DriversPage />) },
+      { path: 'drivers/rewards', element: withSuspense(<DriverRewardsPage />) },
       { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },
       { path: 'drivers/waitlist', element: withSuspense(<DriverWaitlistPage />) },
       { path: 'passengers', element: withSuspense(<PassengersPage />) },

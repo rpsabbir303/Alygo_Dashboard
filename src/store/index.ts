@@ -3,6 +3,8 @@ import { setupListeners } from '@reduxjs/toolkit/query'
 import { authApi } from '@/features/auth/services/authApi'
 import { api } from '@/services/api'
 import { cancellationApi } from '@/services/cancellationApi'
+import { lostFoundApi } from '@/services/lostFoundApi'
+import { driverRewardsApi } from '@/services/driverRewardsApi'
 import authReducer from '@/store/slices/authSlice'
 import uiReducer from '@/store/slices/uiSlice'
 
@@ -13,9 +15,17 @@ export const store = configureStore({
     [api.reducerPath]: api.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [cancellationApi.reducerPath]: cancellationApi.reducer,
+    [lostFoundApi.reducerPath]: lostFoundApi.reducer,
+    [driverRewardsApi.reducerPath]: driverRewardsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware, authApi.middleware, cancellationApi.middleware),
+    getDefaultMiddleware().concat(
+      api.middleware,
+      authApi.middleware,
+      cancellationApi.middleware,
+      lostFoundApi.middleware,
+      driverRewardsApi.middleware,
+    ),
 })
 
 setupListeners(store.dispatch)
