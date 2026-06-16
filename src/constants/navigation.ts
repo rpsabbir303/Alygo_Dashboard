@@ -50,6 +50,10 @@ export const NAVIGATION: NavItem[] = [
       { key: 'ride-monitoring', label: 'Ride Monitoring', path: '/operations/ride-monitoring' },
       { key: 'cancellation-management', label: 'Cancellation Management', path: '/operations/cancellation-management' },
       { key: 'lost-found', label: 'Lost & Found', path: '/operations/lost-found' },
+      { key: 'trip-completion-review', label: 'Trip Completion Review', path: '/operations/trip-completion-review' },
+      { key: 'driving-hours', label: 'Driving Hours', path: '/operations/driving-hours' },
+      { key: 'destination-filters', label: 'Destination Filters', path: '/operations/destination-filters' },
+      { key: 'policy-center', label: 'Operations Policy Center', path: '/operations/policy-center' },
     ],
   },
   {

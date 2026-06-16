@@ -23,6 +23,10 @@ const RideMonitoringPage = lazy(() => import('@/features/operations/RideMonitori
 const CancellationManagementPage = lazy(() => import('@/features/cancellations/CancellationManagementPage'))
 const DriverRewardsPage = lazy(() => import('@/features/driver-rewards/DriverRewardsPage'))
 const LostFoundManagementPage = lazy(() => import('@/features/lost-found/LostFoundManagementPage'))
+const TripCompletionReviewPage = lazy(() => import('@/features/trip-completion-review/TripCompletionReviewPage'))
+const DrivingHoursManagementPage = lazy(() => import('@/features/driving-hours/DrivingHoursManagementPage'))
+const DestinationFilterManagementPage = lazy(() => import('@/features/destination-filters/DestinationFilterManagementPage'))
+const OperationsPolicyCenterPage = lazy(() => import('@/features/operations-policy/OperationsPolicyCenterPage'))
 const ComplianceCenterPage = lazy(() => import('@/features/compliance/ComplianceCenterPage'))
 const BackgroundChecksPage = lazy(() => import('@/features/compliance/BackgroundChecksPage'))
 const DocumentMonitoringPage = lazy(() => import('@/features/compliance/DocumentMonitoringPage'))
@@ -96,6 +100,10 @@ export const router = createBrowserRouter([
       { path: 'operations/ride-monitoring', element: withSuspense(<RideMonitoringPage />) },
       { path: 'operations/cancellation-management', element: withSuspense(<CancellationManagementPage />) },
       { path: 'operations/lost-found', element: withSuspense(<LostFoundManagementPage />) },
+      { path: 'operations/trip-completion-review', element: withSuspense(<TripCompletionReviewPage />) },
+      { path: 'operations/driving-hours', element: withSuspense(<DrivingHoursManagementPage />) },
+      { path: 'operations/destination-filters', element: withSuspense(<DestinationFilterManagementPage />) },
+      { path: 'operations/policy-center', element: withSuspense(<OperationsPolicyCenterPage />) },
       { path: 'drivers', element: withSuspense(<DriversPage />) },
       { path: 'drivers/rewards', element: withSuspense(<DriverRewardsPage />) },
       { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },

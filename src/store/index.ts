@@ -5,6 +5,10 @@ import { api } from '@/services/api'
 import { cancellationApi } from '@/services/cancellationApi'
 import { lostFoundApi } from '@/services/lostFoundApi'
 import { driverRewardsApi } from '@/services/driverRewardsApi'
+import { tripCompletionReviewApi } from '@/services/tripCompletionReviewApi'
+import { drivingHoursApi } from '@/services/drivingHoursApi'
+import { destinationFilterApi } from '@/services/destinationFilterApi'
+import { operationsPolicyApi } from '@/services/operationsPolicyApi'
 import authReducer from '@/store/slices/authSlice'
 import uiReducer from '@/store/slices/uiSlice'
 
@@ -17,6 +21,10 @@ export const store = configureStore({
     [cancellationApi.reducerPath]: cancellationApi.reducer,
     [lostFoundApi.reducerPath]: lostFoundApi.reducer,
     [driverRewardsApi.reducerPath]: driverRewardsApi.reducer,
+    [tripCompletionReviewApi.reducerPath]: tripCompletionReviewApi.reducer,
+    [drivingHoursApi.reducerPath]: drivingHoursApi.reducer,
+    [destinationFilterApi.reducerPath]: destinationFilterApi.reducer,
+    [operationsPolicyApi.reducerPath]: operationsPolicyApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -25,6 +33,10 @@ export const store = configureStore({
       cancellationApi.middleware,
       lostFoundApi.middleware,
       driverRewardsApi.middleware,
+      tripCompletionReviewApi.middleware,
+      drivingHoursApi.middleware,
+      destinationFilterApi.middleware,
+      operationsPolicyApi.middleware,
     ),
 })
 

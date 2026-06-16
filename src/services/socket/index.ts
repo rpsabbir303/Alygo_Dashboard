@@ -23,6 +23,17 @@ export type SocketEvents = {
   'driver-rewards:progress-update': void
   'driver-rewards:bonus-notification': void
   'driver-rewards:stats-update': void
+  'trip-completion:new-complaint': void
+  'trip-completion:status-update': void
+  'trip-completion:stats-update': void
+  'driving-hours:violation': void
+  'driving-hours:driver-update': void
+  'driving-hours:stats-update': void
+  'destination-filter:usage-update': void
+  'destination-filter:settings-update': void
+  'destination-filter:stats-update': void
+  'operations-policy:update': void
+  'operations-policy:stats-update': void
 }
 
 class SocketService {
