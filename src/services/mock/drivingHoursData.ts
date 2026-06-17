@@ -1,32 +1,193 @@
 import type {
   CityDrivingRule,
+  CityRulesSummary,
   DriverHoursRecord,
   DrivingHoursAnalytics,
   DrivingHoursGlobalPolicy,
   DrivingHoursOverview,
   StateDrivingRule,
+  StateRulesSummary,
+  ViolationPenaltySettings,
 } from '@/types/drivingHours'
+
+const defaultPenalties: ViolationPenaltySettings = {
+  firstOffense: 'Warning notification',
+  secondOffense: 'Temporary suspension (24h)',
+  thirdOffense: 'Account review and restriction',
+  autoSuspendAfter: 3,
+}
 
 export let mockDrivingHoursPolicy: DrivingHoursGlobalPolicy = {
   id: 'dhp-global',
   maxDrivingHours: 12,
   requiredResetHours: 8,
   warningThresholdHours: 10,
+  dailyDrivingLimit: 12,
+  weeklyDrivingLimit: 60,
+  mandatoryBreakDuration: 30,
+  breakTriggerThreshold: 6,
   status: 'active',
 }
 
+function stateRule(
+  id: string,
+  state: string,
+  overrides: Partial<StateDrivingRule> = {},
+): StateDrivingRule {
+  return {
+    id,
+    state,
+    maxDrivingHours: 12,
+    requiredResetHours: 8,
+    warningThresholdHours: 10,
+    dailyDrivingLimit: 12,
+    weeklyDrivingLimit: 60,
+    mandatoryBreakDuration: 30,
+    breakTriggerThreshold: 6,
+    violationPenaltySettings: { ...defaultPenalties },
+    driverLevelExceptions: [],
+    status: 'active',
+    violations: 0,
+    ...overrides,
+  }
+}
+
 export let mockStateDrivingRules: StateDrivingRule[] = [
-  { id: 'sd-ca', state: 'California', maxDrivingHours: 12, requiredResetHours: 8, warningThresholdHours: 10, status: 'active' },
-  { id: 'sd-ny', state: 'New York', maxDrivingHours: 10, requiredResetHours: 10, warningThresholdHours: 8, status: 'active' },
-  { id: 'sd-tx', state: 'Texas', maxDrivingHours: 14, requiredResetHours: 6, warningThresholdHours: 12, status: 'active' },
-  { id: 'sd-fl', state: 'Florida', maxDrivingHours: 12, requiredResetHours: 8, warningThresholdHours: 10, status: 'active' },
+  stateRule('sd-ca', 'California', {
+    maxDrivingHours: 12,
+    dailyDrivingLimit: 12,
+    weeklyDrivingLimit: 58,
+    driverLevelExceptions: [
+      { level: 'platinum', maxDrivingHours: 14, dailyDrivingLimit: 14 },
+      { level: 'diamond', maxDrivingHours: 14, dailyDrivingLimit: 14, weeklyDrivingLimit: 65 },
+    ],
+    violations: 4,
+  }),
+  stateRule('sd-ny', 'New York', {
+    maxDrivingHours: 10,
+    requiredResetHours: 10,
+    warningThresholdHours: 8,
+    dailyDrivingLimit: 10,
+    weeklyDrivingLimit: 50,
+    mandatoryBreakDuration: 45,
+    breakTriggerThreshold: 5,
+    violations: 6,
+  }),
+  stateRule('sd-tx', 'Texas', {
+    maxDrivingHours: 14,
+    requiredResetHours: 6,
+    warningThresholdHours: 12,
+    dailyDrivingLimit: 14,
+    weeklyDrivingLimit: 70,
+    violations: 2,
+  }),
+  stateRule('sd-fl', 'Florida', {
+    maxDrivingHours: 12,
+    dailyDrivingLimit: 12,
+    weeklyDrivingLimit: 55,
+    violations: 1,
+  }),
 ]
 
+function cityRule(
+  id: string,
+  city: string,
+  state: string,
+  overrides: Partial<CityDrivingRule> = {},
+): CityDrivingRule {
+  return {
+    id,
+    city,
+    state,
+    maxDrivingHours: 12,
+    requiredResetHours: 8,
+    warningThresholdHours: 10,
+    dailyDrivingLimit: 12,
+    weeklyDrivingLimit: 60,
+    mandatoryBreakDuration: 30,
+    breakTriggerThreshold: 6,
+    driverLevelOverrides: [],
+    status: 'active',
+    inheritanceSource: 'custom',
+    violations: 0,
+    ...overrides,
+  }
+}
+
+function inheritedFromState(stateName: string): Partial<CityDrivingRule> {
+  const parent = mockStateDrivingRules.find((r) => r.state === stateName)
+  if (!parent) return inheritedFromGlobal()
+  return {
+    maxDrivingHours: parent.maxDrivingHours,
+    requiredResetHours: parent.requiredResetHours,
+    warningThresholdHours: parent.warningThresholdHours,
+    dailyDrivingLimit: parent.dailyDrivingLimit,
+    weeklyDrivingLimit: parent.weeklyDrivingLimit,
+    mandatoryBreakDuration: parent.mandatoryBreakDuration,
+    breakTriggerThreshold: parent.breakTriggerThreshold,
+    driverLevelOverrides: parent.driverLevelExceptions,
+    inheritanceSource: 'state',
+  }
+}
+
+function inheritedFromGlobal(): Partial<CityDrivingRule> {
+  return {
+    maxDrivingHours: mockDrivingHoursPolicy.maxDrivingHours,
+    requiredResetHours: mockDrivingHoursPolicy.requiredResetHours,
+    warningThresholdHours: mockDrivingHoursPolicy.warningThresholdHours,
+    dailyDrivingLimit: mockDrivingHoursPolicy.dailyDrivingLimit,
+    weeklyDrivingLimit: mockDrivingHoursPolicy.weeklyDrivingLimit,
+    mandatoryBreakDuration: mockDrivingHoursPolicy.mandatoryBreakDuration,
+    breakTriggerThreshold: mockDrivingHoursPolicy.breakTriggerThreshold,
+    driverLevelOverrides: [],
+    inheritanceSource: 'global',
+  }
+}
+
 export let mockCityDrivingRules: CityDrivingRule[] = [
-  { id: 'cd-sf', city: 'San Francisco', state: 'California', maxDrivingHours: 10, requiredResetHours: 8, warningThresholdHours: 8, status: 'active' },
-  { id: 'cd-la', city: 'Los Angeles', state: 'California', maxDrivingHours: 12, requiredResetHours: 8, warningThresholdHours: 10, status: 'active' },
-  { id: 'cd-nyc', city: 'New York City', state: 'New York', maxDrivingHours: 10, requiredResetHours: 10, warningThresholdHours: 8, status: 'active' },
-  { id: 'cd-mia', city: 'Miami', state: 'Florida', maxDrivingHours: 12, requiredResetHours: 8, warningThresholdHours: 10, status: 'active' },
+  cityRule('cd-sf', 'San Francisco', 'California', {
+    maxDrivingHours: 10,
+    warningThresholdHours: 8,
+    dailyDrivingLimit: 10,
+    weeklyDrivingLimit: 48,
+    mandatoryBreakDuration: 45,
+    breakTriggerThreshold: 5,
+    driverLevelOverrides: [{ level: 'diamond', maxDrivingHours: 12, dailyDrivingLimit: 12 }],
+    violations: 2,
+  }),
+  cityRule('cd-la', 'Los Angeles', 'California', {
+    maxDrivingHours: 12,
+    dailyDrivingLimit: 12,
+    weeklyDrivingLimit: 55,
+    violations: 1,
+  }),
+  cityRule('cd-nyc', 'New York City', 'New York', {
+    maxDrivingHours: 10,
+    requiredResetHours: 10,
+    warningThresholdHours: 8,
+    dailyDrivingLimit: 10,
+    weeklyDrivingLimit: 50,
+    mandatoryBreakDuration: 45,
+    violations: 3,
+  }),
+  cityRule('cd-mia', 'Miami', 'Florida', {
+    maxDrivingHours: 12,
+    dailyDrivingLimit: 12,
+    weeklyDrivingLimit: 52,
+    violations: 0,
+  }),
+  cityRule('cd-sd', 'San Diego', 'California', {
+    ...inheritedFromState('California'),
+    violations: 1,
+  }),
+  cityRule('cd-dal', 'Dallas', 'Texas', {
+    ...inheritedFromState('Texas'),
+    violations: 0,
+  }),
+  cityRule('cd-chi', 'Chicago', 'Illinois', {
+    ...inheritedFromGlobal(),
+    violations: 2,
+  }),
 ]
 
 export let mockDriverHoursRecords: DriverHoursRecord[] = [
@@ -46,6 +207,38 @@ export function computeDrivingHoursOverview(): DrivingHoursOverview {
     drivingHourViolations: mockDriverHoursRecords.reduce((sum, d) => sum + d.violations, 0),
   }
 }
+
+export function computeStateRulesSummary(): StateRulesSummary {
+  return {
+    totalStates: mockStateDrivingRules.length,
+    activeStates: mockStateDrivingRules.filter((r) => r.status === 'active').length,
+    customStates: mockStateDrivingRules.length,
+    violations: mockStateDrivingRules.reduce((sum, r) => sum + r.violations, 0),
+  }
+}
+
+export function computeCityRulesSummary(): CityRulesSummary {
+  return {
+    totalCities: mockCityDrivingRules.length,
+    activeCities: mockCityDrivingRules.filter((r) => r.status === 'active').length,
+    customCities: mockCityDrivingRules.filter((r) => r.inheritanceSource === 'custom').length,
+    violations: mockCityDrivingRules.reduce((sum, r) => sum + r.violations, 0),
+  }
+}
+
+export const US_STATE_OPTIONS = [
+  'Alabama', 'Alaska', 'Arizona', 'California', 'Colorado', 'Connecticut', 'Florida',
+  'Georgia', 'Illinois', 'Massachusetts', 'Michigan', 'Nevada', 'New York', 'Ohio',
+  'Oregon', 'Pennsylvania', 'Tennessee', 'Texas', 'Virginia', 'Washington',
+].map((s) => ({ value: s, label: s }))
+
+export const DRIVER_LEVEL_OPTIONS = [
+  { value: 'journey', label: 'Journey' },
+  { value: 'pro_go', label: 'Pro Go' },
+  { value: 'elite', label: 'Elite' },
+  { value: 'platinum', label: 'Platinum' },
+  { value: 'diamond', label: 'Diamond' },
+]
 
 export const mockDrivingHoursAnalytics: DrivingHoursAnalytics = {
   violationTrend: [
