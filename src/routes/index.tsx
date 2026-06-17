@@ -13,7 +13,7 @@ const PasswordUpdatedPage = lazy(() => import('@/features/auth/pages/PasswordUpd
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'))
 const DriversPage = lazy(() => import('@/features/drivers/DriversPage'))
 const DriverProfilePage = lazy(() => import('@/features/drivers/DriverProfilePage'))
-const DriverWaitlistPage = lazy(() => import('@/features/drivers/DriverWaitlistPage'))
+const DriverWaitlistPage = lazy(() => import('@/features/driver-capacity/DriverCapacityPage'))
 const PassengersPage = lazy(() => import('@/features/passengers/PassengersPage'))
 const PassengerProfilePage = lazy(() => import('@/features/passengers/PassengerProfilePage'))
 const LiveTripsPage = lazy(() => import('@/features/operations/LiveTripsPage'))
@@ -27,6 +27,19 @@ const TripCompletionReviewPage = lazy(() => import('@/features/trip-completion-r
 const DrivingHoursManagementPage = lazy(() => import('@/features/driving-hours/DrivingHoursManagementPage'))
 const DestinationFilterManagementPage = lazy(() => import('@/features/destination-filters/DestinationFilterManagementPage'))
 const OperationsPolicyCenterPage = lazy(() => import('@/features/operations-policy/OperationsPolicyCenterPage'))
+const StateActivationPage = lazy(() => import('@/features/state-activation/StateActivationPage'))
+const AirportQueuePage = lazy(() => import('@/features/airport-queue/AirportQueuePage'))
+const SafetyIncidentPage = lazy(() => import('@/features/safety-incidents/SafetyIncidentPage'))
+const BackgroundCheckFeePage = lazy(() => import('@/features/background-check-fees/BackgroundCheckFeePage'))
+const ConversationsPage = lazy(() => import('@/features/communication/pages/ConversationsPage'))
+const ActiveTripChatsPage = lazy(() => import('@/features/communication/pages/ActiveTripChatsPage'))
+const DriverSupportPage = lazy(() => import('@/features/communication/pages/DriverSupportPage'))
+const PassengerSupportPage = lazy(() => import('@/features/communication/pages/PassengerSupportPage'))
+const SafetyCommunicationsPage = lazy(() => import('@/features/communication/pages/SafetyCommunicationsPage'))
+const BroadcastCenterPage = lazy(() => import('@/features/communication/pages/BroadcastCenterPage'))
+const MessageTemplatesPage = lazy(() => import('@/features/communication/pages/MessageTemplatesPage'))
+const InternalNotesPage = lazy(() => import('@/features/communication/pages/InternalNotesPage'))
+const CommunicationAnalyticsPage = lazy(() => import('@/features/communication/pages/CommunicationAnalyticsPage'))
 const ComplianceCenterPage = lazy(() => import('@/features/compliance/ComplianceCenterPage'))
 const BackgroundChecksPage = lazy(() => import('@/features/compliance/BackgroundChecksPage'))
 const DocumentMonitoringPage = lazy(() => import('@/features/compliance/DocumentMonitoringPage'))
@@ -104,6 +117,16 @@ export const router = createBrowserRouter([
       { path: 'operations/driving-hours', element: withSuspense(<DrivingHoursManagementPage />) },
       { path: 'operations/destination-filters', element: withSuspense(<DestinationFilterManagementPage />) },
       { path: 'operations/policy-center', element: withSuspense(<OperationsPolicyCenterPage />) },
+      { path: 'operations/safety-incidents', element: withSuspense(<SafetyIncidentPage />) },
+      { path: 'communication/conversations', element: withSuspense(<ConversationsPage />) },
+      { path: 'communication/active-trip-chats', element: withSuspense(<ActiveTripChatsPage />) },
+      { path: 'communication/driver-support', element: withSuspense(<DriverSupportPage />) },
+      { path: 'communication/passenger-support', element: withSuspense(<PassengerSupportPage />) },
+      { path: 'communication/safety', element: withSuspense(<SafetyCommunicationsPage />) },
+      { path: 'communication/broadcast', element: withSuspense(<BroadcastCenterPage />) },
+      { path: 'communication/templates', element: withSuspense(<MessageTemplatesPage />) },
+      { path: 'communication/internal-notes', element: withSuspense(<InternalNotesPage />) },
+      { path: 'communication/analytics', element: withSuspense(<CommunicationAnalyticsPage />) },
       { path: 'drivers', element: withSuspense(<DriversPage />) },
       { path: 'drivers/rewards', element: withSuspense(<DriverRewardsPage />) },
       { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },
@@ -112,6 +135,7 @@ export const router = createBrowserRouter([
       { path: 'passengers/:id', element: withSuspense(<PassengerProfilePage />) },
       { path: 'compliance', element: withSuspense(<ComplianceCenterPage />) },
       { path: 'compliance/background-checks', element: withSuspense(<BackgroundChecksPage />) },
+      { path: 'compliance/background-check-fees', element: withSuspense(<BackgroundCheckFeePage />) },
       { path: 'compliance/documents', element: withSuspense(<DocumentMonitoringPage />) },
       { path: 'compliance/restrictions', element: withSuspense(<DriverRestrictionsPage />) },
       { path: 'eligibility/rules', element: withSuspense(<EligibilityRulesPage />) },
@@ -131,8 +155,10 @@ export const router = createBrowserRouter([
       { path: 'reservations/airport', element: withSuspense(<AirportReservationsPage />) },
       { path: 'reservations/events', element: withSuspense(<EventReservationsPage />) },
       { path: 'locations/states', element: withSuspense(<StatesPage />) },
+      { path: 'locations/state-activation', element: withSuspense(<StateActivationPage />) },
       { path: 'locations/cities', element: withSuspense(<CitiesPage />) },
       { path: 'locations/airports', element: withSuspense(<AirportsPage />) },
+      { path: 'locations/airport-queue', element: withSuspense(<AirportQueuePage />) },
       { path: 'locations/zones', element: withSuspense(<ZonesPage />) },
       { path: 'finance/revenue', element: withSuspense(<RevenuePage />) },
       { path: 'finance/payouts', element: withSuspense(<PayoutsPage />) },

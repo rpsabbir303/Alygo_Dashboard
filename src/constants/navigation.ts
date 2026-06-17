@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Map,
   MapPin,
+  MessageSquare,
   Plane,
   Settings,
   Shield,
@@ -54,6 +55,24 @@ export const NAVIGATION: NavItem[] = [
       { key: 'driving-hours', label: 'Driving Hours', path: '/operations/driving-hours' },
       { key: 'destination-filters', label: 'Destination Filters', path: '/operations/destination-filters' },
       { key: 'policy-center', label: 'Operations Policy Center', path: '/operations/policy-center' },
+      { key: 'safety-incidents', label: 'Safety & Incidents', path: '/operations/safety-incidents' },
+    ],
+  },
+  {
+    key: 'communication',
+    label: 'Communication Center',
+    icon: MessageSquare,
+    permission: 'communication.view',
+    children: [
+      { key: 'conversations', label: 'Conversations', path: '/communication/conversations' },
+      { key: 'active-trip-chats', label: 'Active Trip Chats', path: '/communication/active-trip-chats' },
+      { key: 'driver-support', label: 'Driver Support', path: '/communication/driver-support' },
+      { key: 'passenger-support', label: 'Passenger Support', path: '/communication/passenger-support' },
+      { key: 'safety-comms', label: 'Safety Communications', path: '/communication/safety' },
+      { key: 'broadcast', label: 'Broadcast Center', path: '/communication/broadcast' },
+      { key: 'templates', label: 'Message Templates', path: '/communication/templates' },
+      { key: 'internal-notes', label: 'Internal Notes', path: '/communication/internal-notes' },
+      { key: 'comm-analytics', label: 'Communication Analytics', path: '/communication/analytics' },
     ],
   },
   {
@@ -65,7 +84,7 @@ export const NAVIGATION: NavItem[] = [
       { key: 'drivers', label: 'Driver Management', path: '/drivers' },
       { key: 'driver-rewards', label: 'Driver Rewards & Performance', path: '/drivers/rewards' },
       { key: 'passengers', label: 'Passenger Management', path: '/passengers' },
-      { key: 'waitlist', label: 'Driver Waitlist', path: '/drivers/waitlist' },
+      { key: 'waitlist', label: 'Driver Capacity & Waitlist', path: '/drivers/waitlist' },
     ],
   },
   {
@@ -76,6 +95,7 @@ export const NAVIGATION: NavItem[] = [
     children: [
       { key: 'compliance-center', label: 'Compliance Center', path: '/compliance' },
       { key: 'background-checks', label: 'Background Checks', path: '/compliance/background-checks' },
+      { key: 'background-check-fees', label: 'Background Check Fees', path: '/compliance/background-check-fees' },
       { key: 'document-monitoring', label: 'Document Monitoring', path: '/compliance/documents' },
       { key: 'driver-restrictions', label: 'Driver Restrictions', path: '/compliance/restrictions' },
     ],
@@ -149,8 +169,10 @@ export const NAVIGATION: NavItem[] = [
     permission: 'settings.view',
     children: [
       { key: 'states', label: 'States', path: '/locations/states' },
+      { key: 'state-activation', label: 'State Activation Control', path: '/locations/state-activation' },
       { key: 'cities', label: 'Cities', path: '/locations/cities' },
       { key: 'airports', label: 'Airports', path: '/locations/airports' },
+      { key: 'airport-queue', label: 'Airport Queue Management', path: '/locations/airport-queue' },
       { key: 'zones', label: 'Zones', path: '/locations/zones' },
     ],
   },
@@ -194,7 +216,7 @@ export const NAVIGATION: NavItem[] = [
 ]
 
 export const QUICK_LINKS = [
-  { label: 'Airport Queue', path: '/locations/airports', icon: Plane },
+  { label: 'Airport Queue', path: '/locations/airport-queue', icon: Plane },
   { label: 'Surge Monitor', path: '/pricing/surge-zones', icon: AlertTriangle },
   { label: 'Live Map', path: '/operations/ride-monitoring', icon: Map },
   { label: 'Stripe Payouts', path: '/finance/payouts', icon: CreditCard },

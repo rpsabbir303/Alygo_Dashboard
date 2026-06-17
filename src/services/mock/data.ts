@@ -293,5 +293,7 @@ export const mockAdminUser: AuthUser = {
     'analytics.view',
     'settings.view',
     'settings.manage',
+    'communication.view',
+    'communication.manage',
   ],
 }

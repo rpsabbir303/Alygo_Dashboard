@@ -9,13 +9,21 @@ import { tripCompletionReviewApi } from '@/services/tripCompletionReviewApi'
 import { drivingHoursApi } from '@/services/drivingHoursApi'
 import { destinationFilterApi } from '@/services/destinationFilterApi'
 import { operationsPolicyApi } from '@/services/operationsPolicyApi'
+import { stateActivationApi } from '@/services/stateActivationApi'
+import { driverCapacityApi } from '@/services/driverCapacityApi'
+import { airportQueueApi } from '@/services/airportQueueApi'
+import { safetyIncidentApi } from '@/services/safetyIncidentApi'
+import { backgroundCheckFeeApi } from '@/services/backgroundCheckFeeApi'
+import { communicationApi } from '@/services/communicationApi'
 import authReducer from '@/store/slices/authSlice'
+import communicationReducer from '@/store/slices/communicationSlice'
 import uiReducer from '@/store/slices/uiSlice'
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     ui: uiReducer,
+    communication: communicationReducer,
     [api.reducerPath]: api.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [cancellationApi.reducerPath]: cancellationApi.reducer,
@@ -25,6 +33,12 @@ export const store = configureStore({
     [drivingHoursApi.reducerPath]: drivingHoursApi.reducer,
     [destinationFilterApi.reducerPath]: destinationFilterApi.reducer,
     [operationsPolicyApi.reducerPath]: operationsPolicyApi.reducer,
+    [stateActivationApi.reducerPath]: stateActivationApi.reducer,
+    [driverCapacityApi.reducerPath]: driverCapacityApi.reducer,
+    [airportQueueApi.reducerPath]: airportQueueApi.reducer,
+    [safetyIncidentApi.reducerPath]: safetyIncidentApi.reducer,
+    [backgroundCheckFeeApi.reducerPath]: backgroundCheckFeeApi.reducer,
+    [communicationApi.reducerPath]: communicationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -37,6 +51,12 @@ export const store = configureStore({
       drivingHoursApi.middleware,
       destinationFilterApi.middleware,
       operationsPolicyApi.middleware,
+      stateActivationApi.middleware,
+      driverCapacityApi.middleware,
+      airportQueueApi.middleware,
+      safetyIncidentApi.middleware,
+      backgroundCheckFeeApi.middleware,
+      communicationApi.middleware,
     ),
 })
 

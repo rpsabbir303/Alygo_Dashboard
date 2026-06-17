@@ -1,7 +1,9 @@
 import {
   Ban,
   CheckCircle,
+  Clock,
   Download,
+  Eye,
   FileText,
   MapPin,
   MessageSquare,
@@ -9,6 +11,7 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
+  Shield,
   Trash2,
   UserPlus,
   XCircle,
@@ -18,6 +21,8 @@ import type { ComplianceDocument, Driver, EligibilityRule, Passenger, Reservatio
 import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { formatCurrency, formatDateTime } from '@/utils/format'
 import type { useAdminActions } from '@/hooks/useAdminActions'
+import { store } from '@/store'
+import { openTripCommunicationDrawer } from '@/store/slices/communicationSlice'
 
 type AdminActions = ReturnType<typeof useAdminActions>
 
@@ -40,29 +45,50 @@ export function openTripDetails(record: Trip, actions: AdminActions) {
 
 export function getTripActionItems(): ActionMenuItem[] {
   return [
+    { key: 'view-details', label: 'View Trip Details', icon: Eye, group: 1 },
     { key: 'track', label: 'Live Tracking', icon: MapPin, group: 1 },
-    { key: 'contact-driver', label: 'Contact Driver', icon: MessageSquare, group: 1 },
-    { key: 'contact-passenger', label: 'Contact Passenger', icon: MessageSquare, group: 1 },
+    { key: 'communication-center', label: 'Communication Center', icon: MessageSquare, group: 1 },
+    { key: 'trip-timeline', label: 'Trip Timeline', icon: Clock, group: 1 },
+    { key: 'safety-review', label: 'Safety Review', icon: Shield, group: 2 },
     { key: 'cancel', label: 'Cancel Trip', icon: XCircle, danger: true, group: 2 },
   ]
 }
 
-export function handleTripAction(key: string, record: Trip, actions: AdminActions) {
+export function handleTripAction(
+  key: string,
+  record: Trip,
+  actions: AdminActions,
+  options?: { onNavigate?: (path: string) => void },
+) {
   const name = record.id
   switch (key) {
+    case 'view-details':
+      openTripDetails(record, actions)
+      break
     case 'track':
       actions.openDrawer('Live Tracking', [
         { label: 'Trip', value: record.id },
+        { label: 'Driver', value: record.driverName },
+        { label: 'Passenger', value: record.passengerName },
         { label: 'Current Location', value: record.city },
+        { label: 'Pickup', value: record.pickup },
+        { label: 'Dropoff', value: record.dropoff },
         { label: 'ETA', value: '8 min' },
         { label: 'Status', value: record.status },
       ])
       break
-    case 'contact-driver':
-      actions.notify('Message sent to driver', record.driverName)
+    case 'communication-center':
+      store.dispatch(openTripCommunicationDrawer({ trip: record, tab: 'both' }))
       break
-    case 'contact-passenger':
-      actions.notify('Message sent to passenger', record.passengerName)
+    case 'trip-timeline':
+      store.dispatch(openTripCommunicationDrawer({ trip: record, tab: 'timeline' }))
+      break
+    case 'safety-review':
+      if (options?.onNavigate) {
+        options.onNavigate('/communication/safety')
+      } else {
+        store.dispatch(openTripCommunicationDrawer({ trip: record, tab: 'safety' }))
+      }
       break
     case 'cancel':
       actions.openConfirm({
@@ -96,6 +122,7 @@ export function openDriverDetails(record: Driver, actions: AdminActions) {
 export function getActiveDriverActionItems(): ActionMenuItem[] {
   return [
     { key: 'edit', label: 'Edit Driver', icon: Pencil, group: 1 },
+    { key: 'message', label: 'Open Communication', icon: MessageSquare, group: 1 },
     { key: 'documents', label: 'View Documents', icon: FileText, group: 1 },
     { key: 'compliance', label: 'View Compliance', icon: FileText, group: 1 },
     { key: 'eligibility', label: 'View Eligibility', icon: FileText, group: 1 },
@@ -108,6 +135,7 @@ export function getActiveDriverActionItems(): ActionMenuItem[] {
 export function getDriverManagementActionItems(): ActionMenuItem[] {
   return [
     ...getActiveDriverActionItems(),
+    { key: 'message', label: 'Open Communication', icon: MessageSquare, group: 1 },
     { key: 'approve', label: 'Approve Driver', icon: CheckCircle, group: 3 },
     { key: 'reject', label: 'Reject Driver', icon: XCircle, danger: true, group: 3 },
   ]
@@ -155,6 +183,9 @@ export function handleDriverAction(key: string, record: Driver, actions: AdminAc
         onConfirm: async () => actions.notify('Driver reactivated', label),
       })
       break
+    case 'message':
+      globalThis.location.assign('/communication/driver-support')
+      break
     case 'documents':
     case 'compliance':
     case 'eligibility':
@@ -187,6 +218,7 @@ export function openPassengerDetails(record: Passenger, actions: AdminActions) {
 export function getPassengerActionItems(): ActionMenuItem[] {
   return [
     { key: 'edit', label: 'Edit Passenger', icon: Pencil, group: 1 },
+    { key: 'message', label: 'Open Communication', icon: MessageSquare, group: 1 },
     { key: 'wallet', label: 'Wallet History', icon: FileText, group: 1 },
     { key: 'trips', label: 'Trip History', icon: FileText, group: 1 },
     { key: 'suspend', label: 'Suspend Passenger', icon: Ban, group: 2 },
@@ -232,6 +264,9 @@ export function handlePassengerAction(key: string, record: Passenger, actions: A
         { label: 'Rating', value: `${record.rating} ★` },
         { label: 'City', value: record.city },
       ])
+      break
+    case 'message':
+      globalThis.location.assign('/communication/passenger-support')
       break
     default:
       break

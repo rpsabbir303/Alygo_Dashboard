@@ -26,6 +26,8 @@ export type Permission =
   | 'analytics.view'
   | 'settings.view'
   | 'settings.manage'
+  | 'communication.view'
+  | 'communication.manage'
 
 export interface AuthUser {
   id: string

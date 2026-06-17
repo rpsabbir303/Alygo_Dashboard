@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { TripCommunicationDrawer } from '@/features/communication/components/TripCommunicationDrawer'
 import { useSocket } from '@/hooks/useSocket'
 
 export function DashboardLayout() {
@@ -15,6 +16,7 @@ export function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+      <TripCommunicationDrawer />
     </div>
   )
 }

@@ -44,11 +44,14 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'analytics.view',
     'settings.view',
     'settings.manage',
+    'communication.view',
+    'communication.manage',
   ],
   operations_manager: [
     'dashboard.view',
     'operations.view',
     'operations.manage',
+    'communication.view',
     'drivers.view',
     'drivers.manage',
     'passengers.view',
@@ -65,6 +68,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'eligibility.view',
     'eligibility.manage',
     'analytics.view',
+    'communication.view',
   ],
   finance_manager: [
     'dashboard.view',
@@ -78,6 +82,8 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'passengers.view',
     'passengers.manage',
     'operations.view',
+    'communication.view',
+    'communication.manage',
   ],
 }
 

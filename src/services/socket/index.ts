@@ -34,6 +34,32 @@ export type SocketEvents = {
   'destination-filter:stats-update': void
   'operations-policy:update': void
   'operations-policy:stats-update': void
+  'state-activation:settings-update': void
+  'state-activation:status-change': void
+  'state-activation:stats-update': void
+  'driver-capacity:waitlist-update': void
+  'driver-capacity:cap-update': void
+  'driver-capacity:stats-update': void
+  'airport-queue:queue-update': void
+  'airport-queue:driver-join': void
+  'airport-queue:driver-dispatch': void
+  'airport-queue:rules-update': void
+  'airport-queue:stats-update': void
+  'safety-incident:sos-alert': void
+  'safety-incident:update': void
+  'safety-incident:assigned': void
+  'safety-incident:resolved': void
+  'safety-incident:stats-update': void
+  'background-check-fee:payment-update': void
+  'background-check-fee:config-update': void
+  'background-check-fee:rules-update': void
+  'background-check-fee:stats-update': void
+  'communication:new-message': void
+  'communication:safety-case': void
+  'communication:escalation': void
+  'communication:sos-alert': void
+  'communication:stats-update': void
+  'communication:typing': void
 }
 
 class SocketService {
