@@ -16,6 +16,7 @@ import { safetyIncidentApi } from '@/services/safetyIncidentApi'
 import { backgroundCheckFeeApi } from '@/services/backgroundCheckFeeApi'
 import { communicationApi } from '@/services/communicationApi'
 import { driverVerificationApi } from '@/services/driverVerificationApi'
+import { rideCategoryApi } from '@/services/rideCategoryApi'
 import authReducer from '@/store/slices/authSlice'
 import communicationReducer from '@/store/slices/communicationSlice'
 import uiReducer from '@/store/slices/uiSlice'
@@ -41,6 +42,7 @@ export const store = configureStore({
     [backgroundCheckFeeApi.reducerPath]: backgroundCheckFeeApi.reducer,
     [communicationApi.reducerPath]: communicationApi.reducer,
     [driverVerificationApi.reducerPath]: driverVerificationApi.reducer,
+    [rideCategoryApi.reducerPath]: rideCategoryApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -60,6 +62,7 @@ export const store = configureStore({
       backgroundCheckFeeApi.middleware,
       communicationApi.middleware,
       driverVerificationApi.middleware,
+      rideCategoryApi.middleware,
     ),
 })
 

@@ -1,184 +1,81 @@
-import { useMemo, useState } from 'react'
-import { Segmented, Table, Tag } from 'antd'
-import { Eye } from 'lucide-react'
-import {
-  AdminActionHost,
-  createActionsColumn,
-  createTableRowProps,
-  openReportDetails,
-} from '@/components/admin'
-import { RevenueTrendChart, ChartCard } from '@/components/charts/AnalyticsCharts'
+import { useMemo } from 'react'
+import { Table, Tag } from 'antd'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import {
-  DEMAND_EVENTS,
-  DEMAND_OVERVIEW,
-  DRIVER_EARNINGS_IMPACT,
-  FORECAST_DATA,
-  FORECAST_RANGE_LABELS,
-  TOP_DEMAND_ZONES,
-  type ForecastRange,
+  computeAverageEta,
+  DEMAND_ZONE_STATUS_COLORS,
+  DEMAND_ZONE_STATUS_LABELS,
+  formatAverageEta,
 } from '@/features/demand-intelligence/demandIntelligenceData'
-import { useAdminActions } from '@/hooks/useAdminActions'
 import {
-  useGetDashboardKpisQuery,
+  useGetDemandZonesQuery,
+  useGetOperationalEventsQuery,
   useGetReservationsQuery,
   useGetSurgeZonesQuery,
-  useGetTripsQuery,
 } from '@/services/api'
-import { formatCurrency } from '@/utils/format'
+import type { OperationalEvent, Reservation } from '@/types'
+import { formatDateTime } from '@/utils/format'
 
-export function DemandOverviewCards() {
-  const metrics = [
-    { label: 'Current Active Requests', value: DEMAND_OVERVIEW.currentActiveRequests.toLocaleString() },
-    { label: 'Forecasted Requests (24h)', value: DEMAND_OVERVIEW.forecastedRequests24h.toLocaleString() },
-    { label: 'High Demand Zones', value: DEMAND_OVERVIEW.highDemandZones.toString() },
-    { label: 'Active Surge Zones', value: DEMAND_OVERVIEW.activeSurgeZones.toString() },
-    { label: 'Upcoming Events', value: DEMAND_OVERVIEW.upcomingEvents.toString() },
-    { label: 'Revenue Impact', value: DEMAND_OVERVIEW.revenueImpact },
-    { label: 'Average ETA', value: DEMAND_OVERVIEW.averageEta },
-    { label: 'Available Drivers', value: DEMAND_OVERVIEW.availableDrivers.toLocaleString() },
-  ]
+function countRelatedReservations(event: OperationalEvent, reservations: Reservation[]): number {
+  return reservations.filter(
+    (r) =>
+      r.type === 'event' &&
+      (r.eventName === event.eventName ||
+        r.venue === event.location ||
+        r.pickup.includes(event.location) ||
+        r.dropoff.includes(event.location)),
+  ).length
+}
+
+export function DemandKpiOverview() {
+  const { data: zones = [] } = useGetDemandZonesQuery()
+  const { data: surgeZones = [] } = useGetSurgeZonesQuery()
+  const { data: events = [] } = useGetOperationalEventsQuery()
+
+  const metrics = useMemo(() => {
+    const activeRequests = zones.reduce((sum, z) => sum + z.activeRequests, 0)
+    const availableDrivers = zones.reduce((sum, z) => sum + z.availableDrivers, 0)
+    const highDemandZones = zones.filter((z) => z.status === 'high_demand').length
+    const activeSurgeCount = surgeZones.filter((z) => z.active).length
+    const upcomingEvents = events.filter((e) => e.status === 'upcoming').length
+
+    return [
+      { label: 'Active Requests', value: activeRequests.toLocaleString() },
+      { label: 'Available Drivers', value: availableDrivers.toLocaleString() },
+      { label: 'High Demand Zones', value: highDemandZones.toLocaleString() },
+      { label: 'Active Surge Zones', value: activeSurgeCount.toLocaleString() },
+      { label: 'Upcoming Events', value: upcomingEvents.toLocaleString() },
+      { label: 'Average ETA', value: computeAverageEta(zones) },
+    ]
+  }, [zones, surgeZones, events])
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {metrics.map((m) => (
-        <div key={m.label} className="glass-card p-4">
-          <p className="text-xs text-alygo-text-muted">{m.label}</p>
-          <p className="mt-2 text-xl font-semibold text-white">{m.value}</p>
+        <div key={m.label} className="glass-card p-5">
+          <p className="text-sm text-alygo-text-muted">{m.label}</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{m.value}</p>
         </div>
       ))}
     </div>
   )
 }
 
-export function DemandForecastSection() {
-  const [range, setRange] = useState<ForecastRange>('24h')
+export function DemandZonesTable() {
+  const { data: zones = [], isLoading } = useGetDemandZonesQuery()
 
   return (
     <div className="glass-card p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-white">Demand Forecasting</h3>
-          <p className="text-xs text-alygo-text-muted">
-            Current vs predicted demand — prepare driver capacity ahead of spikes
-          </p>
-        </div>
-        <Segmented
-          value={range}
-          onChange={(v) => setRange(v as ForecastRange)}
-          options={Object.entries(FORECAST_RANGE_LABELS).map(([value, label]) => ({ value, label }))}
-        />
-      </div>
-      <ChartCard title="Current Demand vs Predicted Demand" subtitle={`Range: ${FORECAST_RANGE_LABELS[range]}`} className="!border-none !bg-transparent !p-0">
-        <RevenueTrendChart data={FORECAST_DATA[range]} />
-      </ChartCard>
-    </div>
-  )
-}
-
-export function EventImpactSection() {
-  const adminActions = useAdminActions()
-
-  return (
-    <div className="glass-card p-5">
-      <h3 className="mb-4 text-base font-semibold text-white">Event Impact Center</h3>
-      <Table
-        rowKey="id"
-        dataSource={DEMAND_EVENTS}
-        scroll={{ x: 1100 }}
-        pagination={false}
-        {...createTableRowProps<(typeof DEMAND_EVENTS)[0]>((record) =>
-          openReportDetails(record as unknown as Record<string, unknown>, adminActions),
-        )}
-        columns={[
-          { title: 'Event Name', dataIndex: 'eventName' },
-          { title: 'Location', dataIndex: 'location' },
-          { title: 'Date', dataIndex: 'date' },
-          {
-            title: 'Expected Attendance',
-            dataIndex: 'expectedAttendance',
-            render: (n: number) => n.toLocaleString(),
-          },
-          {
-            title: 'Predicted Demand Impact',
-            dataIndex: 'predictedDemandImpact',
-            render: (d: string) => <Tag color="orange">{d}</Tag>,
-          },
-          { title: 'Recommended Surge', dataIndex: 'recommendedSurge' },
-          {
-            title: 'Est. Revenue Impact',
-            dataIndex: 'estimatedRevenueImpact',
-            render: (v: number) => formatCurrency(v),
-          },
-          {
-            title: 'Status',
-            dataIndex: 'status',
-            render: (s: string) => <StatusBadge status={s} />,
-          },
-          createActionsColumn<(typeof DEMAND_EVENTS)[0]>(
-            () => [{ key: 'view', label: 'View Details', icon: Eye, group: 0 }],
-            (key, record) => {
-              if (key === 'view') {
-                openReportDetails(
-                  {
-                    event: record.eventName,
-                    location: record.location,
-                    demand: record.predictedDemandImpact,
-                    surge: record.recommendedSurge,
-                    revenue: formatCurrency(record.estimatedRevenueImpact),
-                  },
-                  adminActions,
-                )
-              }
-            },
-          ),
-        ]}
-      />
-      <AdminActionHost actions={adminActions} />
-    </div>
-  )
-}
-
-export function DriverEarningsSection() {
-  const impact = DRIVER_EARNINGS_IMPACT
-  const cards = [
-    { label: 'Current Avg Earnings', value: `$${impact.currentAvgEarnings}/hr` },
-    { label: 'Forecast Avg Earnings', value: `$${impact.forecastAvgEarnings}/hr` },
-    { label: 'Revenue Increase', value: impact.revenueIncrease },
-    { label: 'Best Performing Market', value: impact.bestPerformingMarket },
-    { label: 'Highest Surge Zone', value: impact.highestSurgeZone },
-  ]
-
-  return (
-    <div className="glass-card p-5">
-      <h3 className="mb-4 text-base font-semibold text-white">Driver Earnings Impact</h3>
+      <h3 className="mb-1 text-base font-semibold text-white">Demand Zones</h3>
       <p className="mb-4 text-sm text-alygo-text-muted">
-        Operational earnings impact under current demand conditions — use for supply incentives and market focus.
-      </p>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {cards.map((c) => (
-          <div key={c.label} className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
-            <p className="text-xs text-alygo-text-muted">{c.label}</p>
-            <p className="mt-2 text-lg font-semibold text-white">{c.value}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export function TopDemandZonesSection() {
-  return (
-    <div className="glass-card p-5">
-      <h3 className="mb-4 text-base font-semibold text-white">Top Demand Zones</h3>
-      <p className="mb-4 text-sm text-alygo-text-muted">
-        Highest-demand zones right now — use for dispatch prioritization and supply allocation.
+        Zone-level request volume, driver supply, and wait times for dispatch decisions.
       </p>
       <Table
         rowKey="id"
-        dataSource={TOP_DEMAND_ZONES}
+        loading={isLoading}
+        dataSource={zones}
         pagination={false}
-        scroll={{ x: 800 }}
+        scroll={{ x: 900 }}
         columns={[
           { title: 'Zone', dataIndex: 'zone' },
           {
@@ -198,67 +95,71 @@ export function TopDemandZonesSection() {
               <Tag color={r >= 3 ? 'red' : r >= 2 ? 'orange' : 'default'}>{r.toFixed(2)}:1</Tag>
             ),
           },
-          { title: 'Average ETA', dataIndex: 'averageEta' },
+          {
+            title: 'Average ETA',
+            dataIndex: 'averageEtaMinutes',
+            render: (m: number) => formatAverageEta(m),
+          },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (status: keyof typeof DEMAND_ZONE_STATUS_LABELS) => (
+              <Tag color={DEMAND_ZONE_STATUS_COLORS[status]}>
+                {DEMAND_ZONE_STATUS_LABELS[status]}
+              </Tag>
+            ),
+          },
         ]}
       />
     </div>
   )
 }
 
-export function OperationalSnapshotSection() {
-  const { data: kpis = [] } = useGetDashboardKpisQuery()
-  const { data: activeTrips = [] } = useGetTripsQuery({ status: 'in_progress' })
+export function UpcomingEventsTable() {
+  const { data: events = [], isLoading } = useGetOperationalEventsQuery()
   const { data: reservations = [] } = useGetReservationsQuery()
-  const { data: surgeZones = [] } = useGetSurgeZonesQuery()
 
-  const metrics = useMemo(() => {
-    const activeTripsKpi = kpis.find((k) => k.key === 'activeTrips')?.value
-    const airportQueueKpi = kpis.find((k) => k.key === 'airportQueue')?.value
-    const pendingReservations = reservations.filter((r) => r.status === 'pending').length
-    const activeSurgeCount = surgeZones.filter((z) => z.active).length
-
-    return [
-      {
-        label: 'Online Drivers',
-        value: DEMAND_OVERVIEW.availableDrivers.toLocaleString(),
-      },
-      {
-        label: 'Active Trips',
-        value: (activeTrips.length || activeTripsKpi || 0).toLocaleString(),
-      },
-      {
-        label: 'Pending Reservations',
-        value: pendingReservations.toLocaleString(),
-      },
-      {
-        label: 'Average ETA',
-        value: DEMAND_OVERVIEW.averageEta,
-      },
-      {
-        label: 'Airport Queue Size',
-        value: (airportQueueKpi ?? 0).toLocaleString(),
-      },
-      {
-        label: 'Active Surge Zones',
-        value: activeSurgeCount.toLocaleString(),
-      },
-    ]
-  }, [activeTrips.length, kpis, reservations, surgeZones])
+  const dataSource = useMemo(
+    () =>
+      events.map((event) => ({
+        ...event,
+        relatedReservations: countRelatedReservations(event, reservations),
+      })),
+    [events, reservations],
+  )
 
   return (
     <div className="glass-card p-5">
-      <h3 className="mb-4 text-base font-semibold text-white">Operational Snapshot</h3>
+      <h3 className="mb-1 text-base font-semibold text-white">Upcoming Events</h3>
       <p className="mb-4 text-sm text-alygo-text-muted">
-        Live platform status — driver supply, trip volume, reservations, and surge activity.
+        Scheduled events with linked reservation volume — no demand predictions.
       </p>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {metrics.map((m) => (
-          <div key={m.label} className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
-            <p className="text-xs text-alygo-text-muted">{m.label}</p>
-            <p className="mt-2 text-lg font-semibold text-white">{m.value}</p>
-          </div>
-        ))}
-      </div>
+      <Table
+        rowKey="id"
+        loading={isLoading}
+        dataSource={dataSource}
+        pagination={false}
+        scroll={{ x: 800 }}
+        columns={[
+          { title: 'Event Name', dataIndex: 'eventName' },
+          { title: 'Location', dataIndex: 'location' },
+          {
+            title: 'Date',
+            dataIndex: 'date',
+            render: (d: string) => formatDateTime(d),
+          },
+          {
+            title: 'Related Reservations',
+            dataIndex: 'relatedReservations',
+            render: (n: number) => n.toLocaleString(),
+          },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (s: string) => <StatusBadge status={s} />,
+          },
+        ]}
+      />
     </div>
   )
 }

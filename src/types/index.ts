@@ -177,6 +177,28 @@ export interface SurgeZone {
   active: boolean
 }
 
+export type DemandZoneStatus = 'normal' | 'medium_demand' | 'high_demand'
+
+export interface DemandZone {
+  id: string
+  zone: string
+  activeRequests: number
+  availableDrivers: number
+  demandRatio: number
+  averageEtaMinutes: number
+  status: DemandZoneStatus
+}
+
+export type OperationalEventStatus = 'upcoming' | 'active' | 'completed'
+
+export interface OperationalEvent {
+  id: string
+  eventName: string
+  location: string
+  date: string
+  status: OperationalEventStatus
+}
+
 export interface Reservation {
   id: string
   passengerName: string

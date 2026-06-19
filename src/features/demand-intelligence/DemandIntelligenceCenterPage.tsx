@@ -1,13 +1,10 @@
 import { PageShell } from '@/components/common/PageShell'
-import { LiveDemandMap } from '@/features/demand-intelligence/components/LiveDemandMap'
 import {
-  DemandForecastSection,
-  DemandOverviewCards,
-  DriverEarningsSection,
-  EventImpactSection,
-  OperationalSnapshotSection,
-  TopDemandZonesSection,
+  DemandKpiOverview,
+  DemandZonesTable,
+  UpcomingEventsTable,
 } from '@/features/demand-intelligence/components/DemandIntelligenceSections'
+import { LiveOperationsMap } from '@/features/demand-intelligence/components/LiveOperationsMap'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export default function DemandIntelligenceCenterPage() {
@@ -16,20 +13,13 @@ export default function DemandIntelligenceCenterPage() {
   return (
     <PageShell
       title="Demand Intelligence Center"
-      description="Unified demand visibility, forecasting, event impact, and operational intelligence."
+      description="Demand monitoring for zones, events, and live map visibility — dispatch and supply decisions only."
     >
       <div className="space-y-6">
-        <DemandOverviewCards />
-        <LiveDemandMap />
-        <DemandForecastSection />
-
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <EventImpactSection />
-          <DriverEarningsSection />
-        </div>
-
-        <TopDemandZonesSection />
-        <OperationalSnapshotSection />
+        <DemandKpiOverview />
+        <LiveOperationsMap />
+        <DemandZonesTable />
+        <UpcomingEventsTable />
       </div>
     </PageShell>
   )

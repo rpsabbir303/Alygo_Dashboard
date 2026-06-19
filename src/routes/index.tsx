@@ -45,7 +45,7 @@ const EligibilityRulesPage = lazy(() => import('@/features/eligibility/Eligibili
 const VehicleCategoriesPage = lazy(() => import('@/features/eligibility/VehicleCategoriesPage'))
 const CategoryAssignmentsPage = lazy(() => import('@/features/eligibility/CategoryAssignmentsPage'))
 const PremiumVehiclesPage = lazy(() => import('@/features/eligibility/PremiumVehiclesPage'))
-const CategoryDetailPage = lazy(() => import('@/features/categories/CategoryDetailPage'))
+const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCategoriesPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
 const ReservationCenterPage = lazy(() => import('@/features/reservations/ReservationCenterPage'))
@@ -123,13 +123,9 @@ export const router = createBrowserRouter([
       { path: 'eligibility/categories', element: withSuspense(<VehicleCategoriesPage />) },
       { path: 'eligibility/assignments', element: withSuspense(<CategoryAssignmentsPage />) },
       { path: 'eligibility/premium-vehicles', element: withSuspense(<PremiumVehiclesPage />) },
-      { path: 'categories/:category', element: withSuspense(<CategoryDetailPage />) },
+      { path: 'ride-categories', element: withSuspense(<RideCategoriesPage />) },
+      { path: 'categories/:category', element: <Navigate to="/ride-categories" replace /> },
       { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },
-      { path: 'demand/trends', element: <Navigate to="/demand-intelligence" replace /> },
-      { path: 'demand/forecasting', element: <Navigate to="/demand-intelligence" replace /> },
-      { path: 'demand/heat-maps', element: <Navigate to="/demand-intelligence" replace /> },
-      { path: 'demand/earnings-forecasts', element: <Navigate to="/demand-intelligence" replace /> },
-      { path: 'demand/event-intelligence', element: <Navigate to="/demand-intelligence" replace /> },
       {
         path: 'pricing',
         children: [

@@ -3,10 +3,12 @@ import type {
   ActivityItem,
   ChartPoint,
   ComplianceDocument,
+  DemandZone,
   Driver,
   EligibilityRule,
   KpiMetric,
   NotificationItem,
+  OperationalEvent,
   PaginatedResponse,
   Passenger,
   Reservation,
@@ -18,11 +20,13 @@ import {
   mockCategoryUsage,
   mockComplianceDocs,
   mockDemandTrend,
+  mockDemandZones,
   mockDrivers,
   mockEligibilityRules,
   mockGrowthTrend,
   mockKpis,
   mockNotifications,
+  mockOperationalEvents,
   mockPassengers,
   mockReservations,
   mockRevenueTrend,
@@ -47,6 +51,7 @@ export const api = createApi({
     'Pricing',
     'Reservations',
     'Notifications',
+    'DemandIntelligence',
   ],
   endpoints: (builder) => ({
     getDashboardKpis: builder.query<KpiMetric[], void>({
@@ -162,6 +167,20 @@ export const api = createApi({
       queryFn: async () => ({ data: mockNotifications }),
       providesTags: ['Notifications'],
     }),
+    getDemandZones: builder.query<DemandZone[], void>({
+      queryFn: async () => {
+        await delay()
+        return { data: mockDemandZones }
+      },
+      providesTags: ['DemandIntelligence'],
+    }),
+    getOperationalEvents: builder.query<OperationalEvent[], void>({
+      queryFn: async () => {
+        await delay()
+        return { data: mockOperationalEvents }
+      },
+      providesTags: ['DemandIntelligence'],
+    }),
     executeAdminAction: builder.mutation<
       { success: boolean; message: string },
       { action: string; entityType: string; entityId?: string; notes?: string }
@@ -216,5 +235,7 @@ export const {
   useGetSurgeZonesQuery,
   useGetReservationsQuery,
   useGetNotificationsQuery,
+  useGetDemandZonesQuery,
+  useGetOperationalEventsQuery,
   useExecuteAdminActionMutation,
 } = api

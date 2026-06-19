@@ -3,10 +3,12 @@ import type {
   AuthUser,
   ChartPoint,
   ComplianceDocument,
+  DemandZone,
   Driver,
   EligibilityRule,
   KpiMetric,
   NotificationItem,
+  OperationalEvent,
   Passenger,
   Reservation,
   SurgeZone,
@@ -249,6 +251,28 @@ export const mockSurgeZones: SurgeZone[] = [
   { id: 'SZ-2', name: 'LAX Terminal', city: 'Los Angeles', multiplier: 1.8, demand: 1240, supply: 420, active: true },
   { id: 'SZ-3', name: 'Midtown Manhattan', city: 'New York', multiplier: 3.1, demand: 1560, supply: 380, active: true },
   { id: 'SZ-4', name: 'South Beach', city: 'Miami', multiplier: 1.5, demand: 620, supply: 310, active: false },
+]
+
+function demandZoneStatus(ratio: number): DemandZone['status'] {
+  if (ratio >= 3) return 'high_demand'
+  if (ratio >= 2) return 'medium_demand'
+  return 'normal'
+}
+
+export const mockDemandZones: DemandZone[] = [
+  { id: 'DZ-1', zone: 'SFO Airport', activeRequests: 342, availableDrivers: 89, demandRatio: 3.84, averageEtaMinutes: 8.4, status: demandZoneStatus(3.84) },
+  { id: 'DZ-2', zone: 'Downtown SF', activeRequests: 289, availableDrivers: 124, demandRatio: 2.33, averageEtaMinutes: 5.1, status: demandZoneStatus(2.33) },
+  { id: 'DZ-3', zone: 'LAX Terminal', activeRequests: 412, availableDrivers: 156, demandRatio: 2.64, averageEtaMinutes: 7.2, status: demandZoneStatus(2.64) },
+  { id: 'DZ-4', zone: 'Midtown Manhattan', activeRequests: 378, availableDrivers: 98, demandRatio: 3.86, averageEtaMinutes: 9.1, status: demandZoneStatus(3.86) },
+  { id: 'DZ-5', zone: 'Convention Center', activeRequests: 198, availableDrivers: 72, demandRatio: 2.75, averageEtaMinutes: 6.8, status: demandZoneStatus(2.75) },
+  { id: 'DZ-6', zone: 'South Beach', activeRequests: 156, availableDrivers: 94, demandRatio: 1.66, averageEtaMinutes: 4.5, status: demandZoneStatus(1.66) },
+]
+
+export const mockOperationalEvents: OperationalEvent[] = [
+  { id: 'EV-1', eventName: 'Tech Summit', location: 'Moscone Center', date: '2026-06-14T09:00:00Z', status: 'active' },
+  { id: 'EV-2', eventName: 'Music Festival', location: 'Golden Gate Park', date: '2026-06-16T14:00:00Z', status: 'upcoming' },
+  { id: 'EV-3', eventName: 'Sports Championship', location: 'Crypto.com Arena', date: '2026-06-15T19:00:00Z', status: 'upcoming' },
+  { id: 'EV-4', eventName: 'Tech Summit', location: 'Staples Center', date: '2026-06-13T19:30:00Z', status: 'completed' },
 ]
 
 const reservationTypes = ['scheduled', 'airport', 'event'] as const

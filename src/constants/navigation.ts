@@ -113,17 +113,9 @@ export const NAVIGATION: NavItem[] = [
   {
     key: 'ride-categories',
     label: 'Ride Categories',
+    path: '/ride-categories',
     icon: Car,
     permission: 'eligibility.view',
-    children: [
-      { key: 'standard', label: 'Standard', path: '/categories/standard' },
-      { key: 'comfort', label: 'Comfort', path: '/categories/comfort' },
-      { key: 'xl', label: 'XL', path: '/categories/xl' },
-      { key: 'pet', label: 'Pet', path: '/categories/pet' },
-      { key: 'priority', label: 'Priority', path: '/categories/priority' },
-      { key: 'black', label: 'Black', path: '/categories/black' },
-      { key: 'black-suv', label: 'Black SUV', path: '/categories/black_suv' },
-    ],
   },
   {
     key: 'demand-intelligence',
