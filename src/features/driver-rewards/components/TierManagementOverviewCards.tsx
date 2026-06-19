@@ -21,7 +21,7 @@ export function TierManagementOverviewCards() {
   const { overview } = data
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {cards.map(({ key, label, icon: Icon }) => (
         <div key={key} className="glass-card p-5">
           <div className="w-fit rounded-xl bg-indigo-500/10 p-2.5">

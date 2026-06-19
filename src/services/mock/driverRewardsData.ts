@@ -31,6 +31,8 @@ import type {
   DriverRewardsListResponse,
   RewardsConfigOverview,
 } from '@/types/driverRewardsConfig'
+import type { TierDistributionItem, TierManagementOverview } from '@/types/tierManagement'
+import type { TierHistoryReason } from '@/types/driverRewards'
 import { createDefaultLevel, createPointsRule } from '@/features/driver-rewards/utils/tierDefaults'
 
 export let mockDriverLevels: DriverLevel[] = [
@@ -64,7 +66,7 @@ export let mockPerformanceRules: PerformanceRule[] = [
 ]
 
 export let mockPenaltyRules: PenaltyRule[] = [
-  { id: 'pen-1', ruleName: 'Accepted Ride Cancellation', actionType: 'ride_cancelled', points: -10, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'pen-1', ruleName: 'Ride Cancellation', actionType: 'ride_cancelled', points: -10, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
   { id: 'pen-2', ruleName: 'Late Arrival', actionType: 'late_arrival', points: -15, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
   { id: 'pen-3', ruleName: 'Passenger Complaint', actionType: 'passenger_complaint', points: -25, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
   { id: 'pen-4', ruleName: 'Fraud Warning', actionType: 'fraud_warning', points: -50, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
@@ -113,19 +115,70 @@ export let mockBonusRules: BonusRule[] = [
 ]
 
 export let mockLevelBenefits: LevelBenefit[] = [
-  { id: 'ben-1', level: 'journey', name: 'Basic Driver Support', description: 'Standard email and in-app support.', category: 'support', status: 'active' },
-  { id: 'ben-2', level: 'pro_go', name: 'Priority Support', description: 'Faster response times for support tickets.', category: 'support', status: 'active' },
-  { id: 'ben-3', level: 'pro_go', name: 'Airport Queue Priority', description: 'Priority queue at airport pickup zones.', category: 'queue', status: 'active' },
-  { id: 'ben-4', level: 'elite', name: 'Bonus Opportunities', description: 'Access to exclusive bonus promotions.', category: 'rewards', status: 'active' },
-  { id: 'ben-5', level: 'elite', name: 'Priority Queue Access', description: 'Higher priority in trip dispatch queue.', category: 'dispatch', status: 'active' },
-  { id: 'ben-6', level: 'elite', name: 'Scheduled Ride Priority', description: 'First access to scheduled ride requests.', category: 'dispatch', status: 'active' },
-  { id: 'ben-7', level: 'platinum', name: 'Premium Support', description: 'Dedicated support line for platinum drivers.', category: 'support', status: 'active' },
-  { id: 'ben-8', level: 'platinum', name: 'Higher Ride Priority', description: 'First access to high-value trip requests.', category: 'dispatch', status: 'active' },
-  { id: 'ben-9', level: 'platinum', name: 'Enhanced Bonus Multipliers', description: 'Increased bonus payout multipliers.', category: 'rewards', status: 'active' },
-  { id: 'ben-10', level: 'diamond', name: 'VIP Support', description: '24/7 VIP support with dedicated agent.', category: 'support', status: 'active' },
-  { id: 'ben-11', level: 'diamond', name: 'Exclusive Promotions', description: 'Access to diamond-only bonus campaigns.', category: 'rewards', status: 'active' },
-  { id: 'ben-12', level: 'diamond', name: 'Highest Ride Priority', description: 'Top priority for all trip requests.', category: 'dispatch', status: 'active' },
-  { id: 'ben-13', level: 'diamond', name: 'Priority Airport Access', description: 'Top priority at all airport zones.', category: 'queue', status: 'active' },
+  {
+    id: 'ben-1',
+    name: 'Destination Filter',
+    description: 'Configure destination filters for eligible rides.',
+    assignedTiers: ['pro_go', 'elite', 'platinum', 'diamond'],
+    category: 'filters',
+    status: 'active',
+  },
+  {
+    id: 'ben-2',
+    name: 'Priority Dispatch',
+    description: 'Higher priority in trip dispatch queue.',
+    assignedTiers: ['platinum', 'diamond'],
+    category: 'dispatch',
+    status: 'active',
+  },
+  {
+    id: 'ben-3',
+    name: 'Airport Priority Queue',
+    description: 'Priority access at airport pickup zones.',
+    assignedTiers: ['diamond'],
+    category: 'queue',
+    status: 'active',
+  },
+  {
+    id: 'ben-4',
+    name: 'Reservation Access',
+    description: 'Access scheduled reservation requests.',
+    assignedTiers: ['elite', 'platinum', 'diamond'],
+    category: 'reservations',
+    status: 'active',
+  },
+  {
+    id: 'ben-5',
+    name: 'Premium Ride Access',
+    description: 'Eligible for premium ride categories.',
+    assignedTiers: ['elite', 'platinum', 'diamond'],
+    category: 'rides',
+    status: 'active',
+  },
+  {
+    id: 'ben-6',
+    name: 'Bonus Multiplier',
+    description: 'Increased bonus point multipliers.',
+    assignedTiers: ['platinum', 'diamond'],
+    category: 'rewards',
+    status: 'active',
+  },
+  {
+    id: 'ben-7',
+    name: 'VIP Support',
+    description: 'Dedicated VIP driver support line.',
+    assignedTiers: ['platinum', 'diamond'],
+    category: 'support',
+    status: 'active',
+  },
+  {
+    id: 'ben-8',
+    name: 'Exclusive Promotions',
+    description: 'Access to tier-exclusive bonus campaigns.',
+    assignedTiers: ['diamond'],
+    category: 'rewards',
+    status: 'active',
+  },
 ]
 
 const rawDriverPerformance = [
@@ -619,7 +672,40 @@ export let mockDriverTierHistory: DriverTierHistory[] = [
     newTierId: 'lvl-diamond',
     newTierLabel: 'Diamond',
     reason: 'auto_promotion',
-    createdAt: '2025-06-01T10:00:00Z',
+    createdAt: '2026-06-10T10:00:00Z',
+  },
+  {
+    id: 'th-4',
+    driverId: 'DR-1001',
+    driverName: 'Elena Rodriguez',
+    previousTierId: 'lvl-pro-go',
+    previousTierLabel: 'Pro',
+    newTierId: 'lvl-elite',
+    newTierLabel: 'Elite',
+    reason: 'auto_promotion',
+    createdAt: '2026-06-08T16:20:00Z',
+  },
+  {
+    id: 'th-5',
+    driverId: 'DR-1005',
+    driverName: 'Jennifer Park',
+    previousTierId: 'lvl-elite',
+    previousTierLabel: 'Elite',
+    newTierId: 'lvl-pro-go',
+    newTierLabel: 'Pro',
+    reason: 'auto_demotion',
+    createdAt: '2026-06-05T09:15:00Z',
+  },
+  {
+    id: 'th-6',
+    driverId: 'DR-1002',
+    driverName: 'David Kim',
+    previousTierId: 'lvl-journey',
+    previousTierLabel: 'Journey',
+    newTierId: 'lvl-pro-go',
+    newTierLabel: 'Pro',
+    reason: 'manual_promotion',
+    createdAt: '2026-06-01T11:45:00Z',
   },
 ]
 
@@ -1186,5 +1272,103 @@ export function computeRewardsConfigOverview(): RewardsConfigOverview {
       ? `${highestPenalty.ruleName} (${highestPenalty.points} pts)`
       : '—',
     activeConfigurations,
+  }
+}
+
+export function computeTierDistribution(): TierDistributionItem[] {
+  const overview = computeDriverRewardsOverview()
+  const total = overview.totalDrivers || 1
+  const tiers = [
+    { label: 'Journey', count: overview.journeyDrivers },
+    { label: 'Pro', count: overview.proDrivers },
+    { label: 'Elite', count: overview.eliteDrivers },
+    { label: 'Platinum', count: overview.platinumDrivers },
+    { label: 'Diamond', count: overview.diamondDrivers },
+  ]
+  return tiers.map((tier) => ({
+    ...tier,
+    percent: Math.round((tier.count / total) * 100),
+  }))
+}
+
+export function syncTierBenefitAssignments(tierName: string, benefitIds: string[]) {
+  mockLevelBenefits.forEach((benefit) => {
+    const tiers = new Set(benefit.assignedTiers)
+    if (benefitIds.includes(benefit.id)) {
+      tiers.add(tierName)
+    } else {
+      tiers.delete(tierName)
+    }
+    benefit.assignedTiers = [...tiers]
+  })
+}
+
+export function getTierBenefitIds(tierName: string): string[] {
+  return mockLevelBenefits
+    .filter((benefit) => benefit.assignedTiers.includes(tierName))
+    .map((benefit) => benefit.id)
+}
+
+const BENEFIT_DISPLAY_LABELS: Record<string, string> = {
+  'Destination Filter': 'Destination Filter',
+  'Priority Dispatch': 'Priority Dispatch',
+  'Airport Priority Queue': 'Airport Queue',
+  'Reservation Access': 'Reservation Access',
+  'Premium Ride Access': 'Premium Access',
+  'Bonus Multiplier': 'Bonus Multiplier',
+  'VIP Support': 'VIP Support',
+  'Exclusive Promotions': 'Promotions',
+}
+
+function formatTierChangeType(reason: TierHistoryReason): string {
+  switch (reason) {
+    case 'auto_promotion':
+      return 'Promotion'
+    case 'auto_demotion':
+      return 'Demotion'
+    case 'manual_promotion':
+      return 'Manual Promotion'
+    case 'manual_demotion':
+      return 'Manual Demotion'
+    case 'compliance':
+      return 'Compliance'
+    case 'safety':
+      return 'Safety'
+    case 'fraud':
+      return 'Fraud'
+    default:
+      return String(reason).replace(/_/g, ' ')
+  }
+}
+
+export function computeTierManagementOverview(): TierManagementOverview {
+  const overview = computeDriverRewardsOverview()
+  const activeTiers = mockDriverLevels.filter((level) => level.status === 'active').length
+  const activeBenefits = mockLevelBenefits.filter((benefit) => benefit.status === 'active')
+
+  const recentTierChanges = [...mockDriverTierHistory]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5)
+    .map((entry) => ({
+      id: entry.id,
+      driverName: entry.driverName,
+      previousTier: entry.previousTierLabel,
+      newTier: entry.newTierLabel,
+      changeType: formatTierChangeType(entry.reason),
+      date: entry.createdAt,
+    }))
+
+  return {
+    totalDrivers: overview.totalDrivers,
+    activeTiers,
+    promotionCandidates: overview.driversNearPromotion,
+    demotionCandidates: overview.driversAtRiskOfDemotion,
+    recentTierChanges,
+    tierDistribution: computeTierDistribution(),
+    benefitsSummary: {
+      totalBenefits: activeBenefits.length,
+      assignedAcrossTiers: activeBenefits.reduce((sum, benefit) => sum + benefit.assignedTiers.length, 0),
+      benefitLabels: activeBenefits.map((benefit) => BENEFIT_DISPLAY_LABELS[benefit.name] ?? benefit.name),
+    },
   }
 }

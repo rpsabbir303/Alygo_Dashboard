@@ -1,5 +1,9 @@
 export type WaitlistDriverStatus = 'pending' | 'approved' | 'rejected' | 'priority'
 
+export type CapacityRuleAdminStatus = 'active' | 'inactive'
+
+export type CapacityRuleDisplayStatus = 'available' | 'full' | 'near_capacity' | 'inactive'
+
 export interface CapacityOverview {
   activeDrivers: number
   availableCapacity: number
@@ -14,6 +18,8 @@ export interface DriverCapSetting {
   maxDrivers: number
   currentDrivers: number
   remainingSlots: number
+  notes?: string
+  status: CapacityRuleAdminStatus
 }
 
 export interface WaitlistDriver {
@@ -28,9 +34,26 @@ export interface WaitlistDriver {
   priority: boolean
 }
 
-export interface CapacityAutoRules {
-  autoApproveWaitlist: boolean
-  manualApproval: boolean
-  priorityDriversEnabled: boolean
-  marketCapacityThreshold: number
+export interface DriverCapacityListParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  state?: string
+  city?: string
+  status?: string
+}
+
+export interface DriverCapacityListResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface CapacityRuleFormValues {
+  state: string
+  city: string
+  maxDrivers: number
+  notes?: string
+  status: CapacityRuleAdminStatus
 }

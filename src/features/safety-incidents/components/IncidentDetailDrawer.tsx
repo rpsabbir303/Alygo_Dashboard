@@ -27,6 +27,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function IncidentDetailDrawer({ open, incident, onClose }: IncidentDetailDrawerProps) {
   if (!incident) return null
 
+  const timelineEvents = [
+    ...incident.tripHistory.map((entry) => ({
+      key: `trip-${entry.timestamp}-${entry.event}`,
+      label: entry.event,
+      timestamp: entry.timestamp,
+      type: 'trip' as const,
+    })),
+    ...incident.notes.map((note) => ({
+      key: note.id,
+      label: note.content,
+      timestamp: note.timestamp,
+      type: 'note' as const,
+      author: note.author,
+    })),
+  ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+
   return (
     <Drawer
       title={`Case ${incident.caseId}`}
@@ -41,7 +57,12 @@ export function IncidentDetailDrawer({ open, incident, onClose }: IncidentDetail
         <Tag color={priorityColor(incident.priority)}>{priorityLabel(incident.priority)}</Tag>
       </div>
 
-      <p className="mb-6 text-sm text-white">{incident.description}</p>
+      <Section title="Full Incident Information">
+        <p className="text-sm text-white">{incident.description}</p>
+        <p className="mt-2 text-xs text-alygo-text-muted">
+          Reported {new Date(incident.createdAt).toLocaleString()}
+        </p>
+      </Section>
 
       <Section title="Driver Information">
         <div className="space-y-2 text-sm">
@@ -60,38 +81,28 @@ export function IncidentDetailDrawer({ open, incident, onClose }: IncidentDetail
         </div>
       </Section>
 
-      <Section title="GPS Timeline">
-        <Timeline
-          items={incident.gpsTimeline.map((point) => ({
-            dot: <MapPin className="h-3 w-3 text-indigo-400" />,
-            children: (
-              <div>
-                <p className="font-medium text-white">{point.label}</p>
-                <p className="text-xs text-alygo-text-muted">
-                  {new Date(point.timestamp).toLocaleString()} — {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
-                </p>
+      <Section title="Uploaded Evidence">
+        {incident.attachments.length === 0 ? (
+          <p className="text-sm text-alygo-text-muted">No evidence uploaded.</p>
+        ) : (
+          <div className="space-y-2">
+            {incident.attachments.map((att) => (
+              <div key={att.id} className="flex items-center gap-2 rounded-lg border border-white/5 p-3 text-sm">
+                <Paperclip className="h-4 w-4 text-alygo-text-muted" />
+                <FileText className="h-4 w-4 text-indigo-400" />
+                <span className="text-white">{att.name}</span>
+                <span className="ml-auto text-xs text-alygo-text-muted">
+                  {att.type} · {new Date(att.uploadedAt).toLocaleString()}
+                </span>
               </div>
-            ),
-          }))}
-        />
+            ))}
+          </div>
+        )}
       </Section>
 
-      <Section title="Trip History">
-        <Timeline
-          items={incident.tripHistory.map((entry) => ({
-            children: (
-              <div>
-                <p className="text-white">{entry.event}</p>
-                <p className="text-xs text-alygo-text-muted">{new Date(entry.timestamp).toLocaleString()}</p>
-              </div>
-            ),
-          }))}
-        />
-      </Section>
-
-      <Section title="Notes">
+      <Section title="Internal Notes">
         {incident.notes.length === 0 ? (
-          <p className="text-sm text-alygo-text-muted">No notes yet.</p>
+          <p className="text-sm text-alygo-text-muted">No internal notes yet.</p>
         ) : (
           <Table
             size="small"
@@ -107,22 +118,50 @@ export function IncidentDetailDrawer({ open, incident, onClose }: IncidentDetail
         )}
       </Section>
 
-      <Section title="Attachments">
-        {incident.attachments.length === 0 ? (
-          <p className="text-sm text-alygo-text-muted">No attachments.</p>
+      <Section title="Timeline History">
+        {timelineEvents.length === 0 ? (
+          <p className="text-sm text-alygo-text-muted">No timeline events.</p>
         ) : (
-          <div className="space-y-2">
-            {incident.attachments.map((att) => (
-              <div key={att.id} className="flex items-center gap-2 rounded-lg border border-white/5 p-3 text-sm">
-                <Paperclip className="h-4 w-4 text-alygo-text-muted" />
-                <FileText className="h-4 w-4 text-indigo-400" />
-                <span className="text-white">{att.name}</span>
-                <span className="ml-auto text-xs text-alygo-text-muted">{att.type}</span>
-              </div>
-            ))}
-          </div>
+          <Timeline
+            items={timelineEvents.map((event) => ({
+              dot: event.type === 'trip' ? <MapPin className="h-3 w-3 text-indigo-400" /> : undefined,
+              children: (
+                <div>
+                  <p className="text-white">{event.label}</p>
+                  {'author' in event && event.author && (
+                    <p className="text-xs text-alygo-text-muted">By {event.author}</p>
+                  )}
+                  <p className="text-xs text-alygo-text-muted">{new Date(event.timestamp).toLocaleString()}</p>
+                </div>
+              ),
+            }))}
+          />
         )}
       </Section>
+
+      {incident.gpsTimeline.length > 0 && (
+        <Section title="GPS Timeline">
+          <Timeline
+            items={incident.gpsTimeline.map((point) => ({
+              dot: <MapPin className="h-3 w-3 text-indigo-400" />,
+              children: (
+                <div>
+                  <p className="font-medium text-white">{point.label}</p>
+                  <p className="text-xs text-alygo-text-muted">
+                    {new Date(point.timestamp).toLocaleString()} — {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
+                  </p>
+                </div>
+              ),
+            }))}
+          />
+        </Section>
+      )}
+
+      {incident.resolutionNotes && (
+        <Section title="Resolution Notes">
+          <p className="text-sm text-white">{incident.resolutionNotes}</p>
+        </Section>
+      )}
 
       {incident.assignedTo && (
         <Section title="Assignment">

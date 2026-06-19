@@ -34,14 +34,12 @@ const OperationsPolicyCenterPage = lazy(() => import('@/features/operations-poli
 const LocationDashboardPage = lazy(() => import('@/features/locations/LocationDashboardPage'))
 const SafetyIncidentPage = lazy(() => import('@/features/safety-incidents/SafetyIncidentPage'))
 const ComplianceCenterPage = lazy(() => import('@/features/compliance/ComplianceCenterPage'))
-const ConversationsPage = lazy(() => import('@/features/communication/pages/ConversationsPage'))
-const ActiveTripChatsPage = lazy(() => import('@/features/communication/pages/ActiveTripChatsPage'))
-const DriverSupportPage = lazy(() => import('@/features/communication/pages/DriverSupportPage'))
-const PassengerSupportPage = lazy(() => import('@/features/communication/pages/PassengerSupportPage'))
-const SafetyCommunicationsPage = lazy(() => import('@/features/communication/pages/SafetyCommunicationsPage'))
-const BroadcastCenterPage = lazy(() => import('@/features/communication/pages/BroadcastCenterPage'))
-const MessageTemplatesPage = lazy(() => import('@/features/communication/pages/MessageTemplatesPage'))
-const CommunicationAnalyticsPage = lazy(() => import('@/features/communication/pages/CommunicationAnalyticsPage'))
+const CommunicationCenterPage = lazy(() => import('@/features/communication/CommunicationCenterPage'))
+const LegacyCommunicationRedirect = lazy(() =>
+  import('@/features/communication/LegacyCommunicationRedirect').then((m) => ({
+    default: m.LegacyCommunicationRedirect,
+  })),
+)
 const VehicleEligibilityPage = lazy(() => import('@/features/vehicle-eligibility/VehicleEligibilityPage'))
 const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCategoriesPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
@@ -95,15 +93,16 @@ export const router = createBrowserRouter([
       { path: 'operations/destination-filters', element: withSuspense(<DestinationFilterManagementPage />) },
       { path: 'operations/policy-center', element: withSuspense(<OperationsPolicyCenterPage />) },
       { path: 'operations/safety-incidents', element: withSuspense(<SafetyIncidentPage />) },
-      { path: 'communication/conversations', element: withSuspense(<ConversationsPage />) },
-      { path: 'communication/active-trip-chats', element: withSuspense(<ActiveTripChatsPage />) },
-      { path: 'communication/driver-support', element: withSuspense(<DriverSupportPage />) },
-      { path: 'communication/passenger-support', element: withSuspense(<PassengerSupportPage />) },
-      { path: 'communication/safety', element: withSuspense(<SafetyCommunicationsPage />) },
-      { path: 'communication/broadcast', element: withSuspense(<BroadcastCenterPage />) },
-      { path: 'communication/templates', element: withSuspense(<MessageTemplatesPage />) },
-      { path: 'communication/internal-notes', element: <Navigate to="/communication/conversations" replace /> },
-      { path: 'communication/analytics', element: withSuspense(<CommunicationAnalyticsPage />) },
+      { path: 'communication', element: withSuspense(<CommunicationCenterPage />) },
+      { path: 'communication/conversations', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/active-trip-chats', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/driver-support', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/passenger-support', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/safety', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/broadcast', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/templates', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/internal-notes', element: withSuspense(<LegacyCommunicationRedirect />) },
+      { path: 'communication/analytics', element: withSuspense(<LegacyCommunicationRedirect />) },
       { path: 'drivers', element: withSuspense(<DriversPage />) },
       { path: 'driver-rewards', element: withSuspense(<DriverRewardsPage />) },
       { path: 'drivers/rewards', element: withSuspense(<LegacyDriverRewardsRedirect />) },

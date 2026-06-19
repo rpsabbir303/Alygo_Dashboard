@@ -95,7 +95,7 @@ export function handleTripAction(
       break
     case 'safety-review':
       if (options?.onNavigate) {
-        options.onNavigate('/communication/safety')
+        options.onNavigate('/communication?tab=safety')
       } else {
         store.dispatch(openTripCommunicationDrawer({ trip: record, tab: 'safety' }))
       }
@@ -205,7 +205,7 @@ export function handleDriverAction(
       })
       break
     case 'message':
-      globalThis.location.assign('/communication/driver-support')
+      globalThis.location.assign('/communication?tab=drivers')
       break
     case 'documents':
     case 'compliance':
@@ -324,7 +324,7 @@ export function handlePassengerAction(key: string, record: Passenger, actions: A
       ])
       break
     case 'message':
-      globalThis.location.assign('/communication/passenger-support')
+      globalThis.location.assign('/communication?tab=passengers')
       break
     default:
       break

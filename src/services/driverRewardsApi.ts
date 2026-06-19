@@ -57,16 +57,20 @@ import {
   mockQualificationRules,
   buildDriverRewardsPublicConfig,
   computePointsRulesOverview,
+  computeTierDistribution,
+  computeTierManagementOverview,
   computeRewardsConfigOverview,
   computeRulesEngineAnalytics,
   paginateBonusPrograms,
   paginateDriverRewardsList,
+  syncTierBenefitAssignments,
 } from '@/services/mock/driverRewardsData'
 import type {
   DriverRewardsListParams,
   DriverRewardsListResponse,
   RewardsConfigOverview,
 } from '@/types/driverRewardsConfig'
+import type { TierDistributionItem, TierManagementOverview } from '@/types/tierManagement'
 import type { DriverRewardsAuditFields } from '@/types/driverRewards'
 import {
   deriveActiveBenefitLabels,
@@ -122,7 +126,7 @@ function getNextLevel(current: DriverLevelName) {
 function syncLevelBenefitsCount() {
   mockDriverLevels.forEach((level) => {
     level.benefitsCount = mockLevelBenefits.filter(
-      (b) => b.level === level.name && b.status === 'active',
+      (b) => b.status === 'active' && b.assignedTiers.includes(level.name),
     ).length
   })
 }
@@ -199,6 +203,20 @@ export const driverRewardsApi = createApi({
         data: { overview: computeDriverRewardsOverview(), charts: mockOverviewCharts },
       }),
       providesTags: ['RewardsOverview'],
+    }),
+    getTierDistribution: builder.query<TierDistributionItem[], void>({
+      queryFn: async () => {
+        await delay()
+        return { data: computeTierDistribution() }
+      },
+      providesTags: ['RewardsOverview', 'DriverLevels'],
+    }),
+    getTierManagementOverview: builder.query<TierManagementOverview, void>({
+      queryFn: async () => {
+        await delay()
+        return { data: computeTierManagementOverview() }
+      },
+      providesTags: ['RewardsOverview', 'DriverLevels', 'LevelBenefits', 'TierHistory'],
     }),
     getDriverLevels: builder.query<DriverLevel[], void>({
       queryFn: async () => {
@@ -284,6 +302,31 @@ export const driverRewardsApi = createApi({
       },
       invalidatesTags: ['DriverLevels', 'ProgressionRules'],
     }),
+    deleteDriverLevel: builder.mutation<void, string>({
+      queryFn: async (id) => {
+        await delay()
+        const index = mockDriverLevels.findIndex((l) => l.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Tier not found' } }
+        if (mockDriverLevels[index].driverCount > 0) {
+          return { error: { status: 400, data: 'Cannot delete a tier with assigned drivers' } }
+        }
+        const tierName = mockDriverLevels[index].name
+        mockDriverLevels.splice(index, 1)
+        syncTierBenefitAssignments(tierName, [])
+        syncLevelBenefitsCount()
+        return { data: undefined }
+      },
+      invalidatesTags: ['DriverLevels', 'LevelBenefits', 'ProgressionRules', 'QualificationRules', 'RewardsOverview'],
+    }),
+    syncTierBenefitAssignments: builder.mutation<void, { tierName: string; benefitIds: string[] }>({
+      queryFn: async ({ tierName, benefitIds }) => {
+        await delay()
+        syncTierBenefitAssignments(tierName, benefitIds)
+        syncLevelBenefitsCount()
+        return { data: undefined }
+      },
+      invalidatesTags: ['LevelBenefits', 'DriverLevels'],
+    }),
     getPointsRulesOverview: builder.query<PointsRulesOverview, void>({
       queryFn: async () => ({ data: computePointsRulesOverview() }),
       providesTags: ['PointsRules', 'BonusCampaigns'],
@@ -306,6 +349,7 @@ export const driverRewardsApi = createApi({
             'ruleName',
             'action',
             'actionType',
+            'category',
           ]),
         }
       },
@@ -988,9 +1032,13 @@ export const driverRewardsApi = createApi({
 
 export const {
   useGetRewardsOverviewQuery,
+  useGetTierDistributionQuery,
+  useGetTierManagementOverviewQuery,
   useGetDriverLevelsQuery,
   useUpdateDriverLevelMutation,
   useCreateDriverLevelMutation,
+  useDeleteDriverLevelMutation,
+  useSyncTierBenefitAssignmentsMutation,
   useDuplicateDriverLevelMutation,
   useGetPointsRulesOverviewQuery,
   useGetRewardsConfigOverviewQuery,

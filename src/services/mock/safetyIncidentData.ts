@@ -1,10 +1,9 @@
 import type {
-  EscalationRule,
   IncidentCategory,
-  ResponseSlaSettings,
+  SafetyDashboardSummary,
   SafetyIncident,
   SafetyOverview,
-  SafetyTeamMember,
+  SafetySettings,
 } from '@/types/safetyIncident'
 
 const baseTimeline = [
@@ -40,7 +39,7 @@ export let mockSafetyIncidents: SafetyIncident[] = [
   {
     id: 'si-2',
     caseId: 'INC-2026-0411',
-    type: 'passenger_report',
+    type: 'passenger_complaint',
     driverName: 'David Kim',
     driverId: 'd-118',
     driverPhone: '+1 (310) 555-0234',
@@ -51,7 +50,7 @@ export let mockSafetyIncidents: SafetyIncident[] = [
     status: 'assigned',
     priority: 'high',
     createdAt: '2026-06-11T22:30:00Z',
-    assignedTo: 'Safety Team Alpha',
+    assignedTo: 'Sarah Kim',
     description: 'Passenger reported aggressive driving and route deviation.',
     gpsTimeline: [
       { timestamp: '2026-06-11T22:00:00Z', lat: 34.0522, lng: -118.2437, label: 'Pickup' },
@@ -60,7 +59,7 @@ export let mockSafetyIncidents: SafetyIncident[] = [
     ],
     tripHistory: [
       { event: 'Trip Started', timestamp: '2026-06-11T22:00:00Z' },
-      { event: 'Passenger Report Submitted', timestamp: '2026-06-11T22:30:00Z' },
+      { event: 'Passenger Complaint Submitted', timestamp: '2026-06-11T22:30:00Z' },
     ],
     notes: [{ id: 'n-1', author: 'Safety Admin', content: 'Contacted passenger for statement.', timestamp: '2026-06-11T23:00:00Z' }],
     attachments: [],
@@ -68,7 +67,7 @@ export let mockSafetyIncidents: SafetyIncident[] = [
   {
     id: 'si-3',
     caseId: 'INC-2026-0410',
-    type: 'driver_report',
+    type: 'harassment',
     driverName: 'Lisa Martinez',
     driverId: 'd-089',
     driverPhone: '+1 (415) 555-0312',
@@ -76,26 +75,24 @@ export let mockSafetyIncidents: SafetyIncident[] = [
     passengerId: 'p-2201',
     passengerPhone: '+1 (415) 555-0789',
     tripId: 'trip-88102',
-    status: 'escalated',
+    status: 'in_review',
     priority: 'high',
     createdAt: '2026-06-10T19:45:00Z',
-    assignedTo: 'Safety Team Beta',
+    assignedTo: 'Mike Torres',
     description: 'Driver reported passenger harassment and verbal abuse.',
     gpsTimeline: baseTimeline,
     tripHistory: [
       { event: 'Trip Started', timestamp: '2026-06-10T19:30:00Z' },
-      { event: 'Driver Report Filed', timestamp: '2026-06-10T19:45:00Z' },
-      { event: 'Case Escalated', timestamp: '2026-06-10T20:15:00Z' },
+      { event: 'Harassment Report Filed', timestamp: '2026-06-10T19:45:00Z' },
+      { event: 'Case Under Review', timestamp: '2026-06-10T20:15:00Z' },
     ],
-    notes: [
-      { id: 'n-2', author: 'Compliance Admin', content: 'Escalated to legal review.', timestamp: '2026-06-10T20:15:00Z' },
-    ],
+    notes: [{ id: 'n-2', author: 'Compliance Admin', content: 'Statements collected from both parties.', timestamp: '2026-06-10T20:15:00Z' }],
     attachments: [{ id: 'att-2', name: 'driver_statement.pdf', type: 'document', uploadedAt: '2026-06-10T19:46:00Z' }],
   },
   {
     id: 'si-4',
     caseId: 'INC-2026-0409',
-    type: 'emergency',
+    type: 'accident',
     driverName: 'Jennifer Park',
     driverId: 'd-512',
     driverPhone: '+1 (212) 555-0421',
@@ -106,15 +103,16 @@ export let mockSafetyIncidents: SafetyIncident[] = [
     status: 'resolved',
     priority: 'critical',
     createdAt: '2026-06-09T08:20:00Z',
-    assignedTo: 'Safety Team Alpha',
+    assignedTo: 'Sarah Kim',
     description: 'Vehicle accident reported. Emergency services dispatched.',
+    resolutionNotes: 'All parties safe. Insurance claim initiated.',
     gpsTimeline: [
       { timestamp: '2026-06-09T08:00:00Z', lat: 40.7128, lng: -74.006, label: 'Trip Start' },
       { timestamp: '2026-06-09T08:18:00Z', lat: 40.72, lng: -74.01, label: 'Accident Location' },
     ],
     tripHistory: [
       { event: 'Trip Started', timestamp: '2026-06-09T08:00:00Z' },
-      { event: 'Emergency Reported', timestamp: '2026-06-09T08:20:00Z' },
+      { event: 'Accident Reported', timestamp: '2026-06-09T08:20:00Z' },
       { event: 'Case Resolved', timestamp: '2026-06-09T12:00:00Z' },
     ],
     notes: [{ id: 'n-3', author: 'Safety Admin', content: 'All parties safe. Insurance claim initiated.', timestamp: '2026-06-09T12:00:00Z' }],
@@ -123,7 +121,7 @@ export let mockSafetyIncidents: SafetyIncident[] = [
   {
     id: 'si-5',
     caseId: 'INC-2026-0408',
-    type: 'safety_case',
+    type: 'vehicle_issue',
     driverName: 'Robert Chen',
     driverId: 'd-620',
     driverPhone: '+1 (305) 555-0333',
@@ -134,67 +132,150 @@ export let mockSafetyIncidents: SafetyIncident[] = [
     status: 'open',
     priority: 'medium',
     createdAt: '2026-06-08T16:10:00Z',
-    description: 'Routine safety review flagged unusual trip pattern.',
+    description: 'Passenger reported brake issue and requested trip termination.',
     gpsTimeline: baseTimeline,
-    tripHistory: [{ event: 'Flagged by System', timestamp: '2026-06-08T16:10:00Z' }],
+    tripHistory: [{ event: 'Vehicle Issue Reported', timestamp: '2026-06-08T16:10:00Z' }],
     notes: [],
+    attachments: [],
+  },
+  {
+    id: 'si-6',
+    caseId: 'INC-2026-0407',
+    type: 'lost_item',
+    driverName: 'Tom Bradley',
+    driverId: 'd-312',
+    driverPhone: '+1 (312) 555-0199',
+    passengerName: 'Amy Foster',
+    passengerId: 'p-5501',
+    passengerPhone: '+1 (312) 555-0288',
+    tripId: 'trip-87950',
+    status: 'closed',
+    priority: 'low',
+    createdAt: '2026-06-07T11:00:00Z',
+    assignedTo: 'Lisa Park',
+    description: 'Passenger left phone in vehicle. Item returned.',
+    resolutionNotes: 'Phone returned to passenger at hub location.',
+    gpsTimeline: baseTimeline,
+    tripHistory: [
+      { event: 'Lost Item Reported', timestamp: '2026-06-07T11:00:00Z' },
+      { event: 'Item Returned', timestamp: '2026-06-07T15:30:00Z' },
+      { event: 'Case Closed', timestamp: '2026-06-07T16:00:00Z' },
+    ],
+    notes: [{ id: 'n-4', author: 'Lisa Park', content: 'Driver confirmed item handoff.', timestamp: '2026-06-07T15:30:00Z' }],
+    attachments: [],
+  },
+  {
+    id: 'si-7',
+    caseId: 'INC-2026-0406',
+    type: 'driver_complaint',
+    driverName: 'Kevin Nguyen',
+    driverId: 'd-445',
+    driverPhone: '+1 (408) 555-0333',
+    passengerName: 'Rachel Green',
+    passengerId: 'p-4420',
+    passengerPhone: '+1 (408) 555-0444',
+    tripId: 'trip-87920',
+    status: 'assigned',
+    priority: 'medium',
+    createdAt: '2026-06-06T09:30:00Z',
+    assignedTo: 'Mike Torres',
+    description: 'Driver complaint regarding passenger no-show at pickup.',
+    gpsTimeline: baseTimeline,
+    tripHistory: [{ event: 'Driver Complaint Filed', timestamp: '2026-06-06T09:30:00Z' }],
+    notes: [],
+    attachments: [],
+  },
+  {
+    id: 'si-8',
+    caseId: 'INC-2026-0405',
+    type: 'safety_investigation',
+    driverName: 'Elena Rodriguez',
+    driverId: 'd-331',
+    driverPhone: '+1 (646) 555-0555',
+    passengerName: 'Chris Martinez',
+    passengerId: 'p-3310',
+    passengerPhone: '+1 (646) 555-0666',
+    tripId: 'trip-87880',
+    status: 'in_review',
+    priority: 'high',
+    createdAt: '2026-06-05T14:00:00Z',
+    assignedTo: 'Sarah Kim',
+    description: 'System flagged unusual trip pattern for safety investigation.',
+    gpsTimeline: baseTimeline,
+    tripHistory: [{ event: 'Investigation Opened', timestamp: '2026-06-05T14:00:00Z' }],
+    notes: [{ id: 'n-5', author: 'Sarah Kim', content: 'Reviewing GPS and trip metadata.', timestamp: '2026-06-05T15:00:00Z' }],
     attachments: [],
   },
 ]
 
 export let mockIncidentCategories: IncidentCategory[] = [
-  { id: 'cat-1', name: 'SOS Alert', description: 'Emergency SOS button activation', defaultPriority: 'critical', status: 'active' },
-  { id: 'cat-2', name: 'Harassment', description: 'Verbal or physical harassment reports', defaultPriority: 'high', status: 'active' },
-  { id: 'cat-3', name: 'Accident', description: 'Vehicle accident or collision', defaultPriority: 'critical', status: 'active' },
-  { id: 'cat-4', name: 'Unsafe Driving', description: 'Reckless or unsafe driving behavior', defaultPriority: 'high', status: 'active' },
-  { id: 'cat-5', name: 'Route Deviation', description: 'Unusual route or destination issues', defaultPriority: 'medium', status: 'active' },
-  { id: 'cat-6', name: 'Medical Emergency', description: 'Passenger or driver medical emergency', defaultPriority: 'critical', status: 'active' },
+  { id: 'cat-1', name: 'SOS Alert', description: 'Emergency SOS button activation', severityLevel: 'critical', status: 'active' },
+  { id: 'cat-2', name: 'Passenger Complaint', description: 'Passenger-reported safety or service issues', severityLevel: 'high', status: 'active' },
+  { id: 'cat-3', name: 'Driver Complaint', description: 'Driver-reported passenger or trip issues', severityLevel: 'high', status: 'active' },
+  { id: 'cat-4', name: 'Harassment', description: 'Verbal or physical harassment reports', severityLevel: 'critical', status: 'active' },
+  { id: 'cat-5', name: 'Accident', description: 'Vehicle accident or collision', severityLevel: 'critical', status: 'active' },
+  { id: 'cat-6', name: 'Vehicle Issue', description: 'Vehicle safety or mechanical concerns', severityLevel: 'high', status: 'active' },
+  { id: 'cat-7', name: 'Lost Item', description: 'Lost property reports from trips', severityLevel: 'low', status: 'active' },
 ]
 
-export let mockEscalationRules: EscalationRule[] = [
-  { id: 'er-1', name: 'Critical SOS Escalation', triggerCondition: 'SOS alert unresolved after 5 minutes', escalateAfterMinutes: 5, escalateTo: 'Safety Team Lead', status: 'active' },
-  { id: 'er-2', name: 'High Priority Timeout', triggerCondition: 'High priority case unassigned after 15 minutes', escalateAfterMinutes: 15, escalateTo: 'Operations Manager', status: 'active' },
-  { id: 'er-3', name: 'Emergency Auto-Escalate', triggerCondition: 'Emergency type incident created', escalateAfterMinutes: 0, escalateTo: 'Safety Team Alpha', status: 'active' },
-]
-
-export let mockResponseSla: ResponseSlaSettings = {
-  criticalResponseMinutes: 5,
-  highResponseMinutes: 15,
-  mediumResponseMinutes: 30,
-  lowResponseMinutes: 60,
-  autoEscalateEnabled: true,
+export let mockSafetySettings: SafetySettings = {
+  enableSosFeature: true,
+  enableEmergencyHotline: true,
+  enableCriticalAlertNotifications: true,
+  autoAssignCases: false,
+  enableSafetyCaseEmailAlerts: true,
+  enablePushNotifications: true,
 }
 
-export let mockSafetyTeam: SafetyTeamMember[] = [
-  { id: 'st-1', name: 'Safety Team Alpha', role: 'Primary Response', email: 'alpha@safety.alygo.com', shift: '24/7', status: 'active' },
-  { id: 'st-2', name: 'Safety Team Beta', role: 'Secondary Response', email: 'beta@safety.alygo.com', shift: 'Mon-Fri 8am-8pm', status: 'active' },
-  { id: 'st-3', name: 'Maria Santos', role: 'Safety Lead', email: 'm.santos@alygo.com', shift: '24/7 On-Call', status: 'active' },
-  { id: 'st-4', name: 'James Okonkwo', role: 'Compliance Reviewer', email: 'j.okonkwo@alygo.com', shift: 'Mon-Fri 9am-5pm', status: 'active' },
-]
+const OPEN_STATUSES: SafetyIncident['status'][] = ['open', 'assigned', 'in_review']
 
 export function computeSafetyOverview(): SafetyOverview {
   return {
-    openIncidents: mockSafetyIncidents.filter((i) => i.status === 'open' || i.status === 'assigned' || i.status === 'escalated').length,
-    resolvedCases: mockSafetyIncidents.filter((i) => i.status === 'resolved').length,
-    sosAlerts: mockSafetyIncidents.filter((i) => i.type === 'sos_alert').length,
-    driverReports: mockSafetyIncidents.filter((i) => i.type === 'driver_report').length,
-    passengerReports: mockSafetyIncidents.filter((i) => i.type === 'passenger_report').length,
+    openCases: mockSafetyIncidents.filter((i) => OPEN_STATUSES.includes(i.status)).length,
+    criticalCases: mockSafetyIncidents.filter(
+      (i) => i.priority === 'critical' && OPEN_STATUSES.includes(i.status),
+    ).length,
+    sosAlerts: mockSafetyIncidents.filter((i) => i.type === 'sos_alert' && i.status !== 'closed').length,
+    resolvedCases: mockSafetyIncidents.filter((i) => i.status === 'resolved' || i.status === 'closed').length,
   }
+}
+
+export function computeSafetyDashboardSummary(): SafetyDashboardSummary {
+  const overview = computeSafetyOverview()
+  const recentIncidents = [...mockSafetyIncidents]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5)
+    .map((i) => ({
+      id: i.id,
+      caseId: i.caseId,
+      type: i.type,
+      priority: i.priority,
+      status: i.status,
+      createdAt: i.createdAt,
+      driverName: i.driverName,
+      passengerName: i.passengerName,
+    }))
+
+  return { ...overview, recentIncidents }
 }
 
 export const TYPE_LABELS: Record<string, string> = {
   sos_alert: 'SOS Alert',
-  driver_report: 'Driver Report',
-  passenger_report: 'Passenger Report',
-  emergency: 'Emergency',
-  safety_case: 'Safety Case',
+  passenger_complaint: 'Passenger Complaint',
+  driver_complaint: 'Driver Complaint',
+  harassment: 'Harassment',
+  accident: 'Accident',
+  vehicle_issue: 'Vehicle Issue',
+  lost_item: 'Lost Item',
+  safety_investigation: 'Safety Investigation',
 }
 
 export const STATUS_LABELS: Record<string, string> = {
   open: 'Open',
   assigned: 'Assigned',
-  escalated: 'Escalated',
+  in_review: 'In Review',
   resolved: 'Resolved',
+  closed: 'Closed',
 }
 
 export const PRIORITY_LABELS: Record<string, string> = {
@@ -203,3 +284,13 @@ export const PRIORITY_LABELS: Record<string, string> = {
   medium: 'Medium',
   low: 'Low',
 }
+
+export const SEVERITY_LABELS = PRIORITY_LABELS
+
+export const ASSIGN_OPTIONS = [
+  { value: 'Sarah Kim', label: 'Sarah Kim' },
+  { value: 'Mike Torres', label: 'Mike Torres' },
+  { value: 'Lisa Park', label: 'Lisa Park' },
+  { value: 'Safety Team Alpha', label: 'Safety Team Alpha' },
+  { value: 'Safety Team Beta', label: 'Safety Team Beta' },
+]

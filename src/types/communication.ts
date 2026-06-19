@@ -62,6 +62,7 @@ export type BroadcastTarget =
   | 'all_passengers'
   | 'city'
   | 'state'
+  | 'tier_based'
   | 'airport_drivers'
   | 'black_drivers'
   | 'black_suv_drivers'
@@ -85,6 +86,38 @@ export type TemplateCategory =
   | 'payment'
   | 'compliance'
   | 'general'
+
+export interface CommunicationInboxOverview {
+  totalConversations: number
+  unreadMessages: number
+  openCases: number
+  broadcastsSentToday: number
+}
+
+export type CommunicationInboxType = 'driver' | 'passenger' | 'support' | 'safety' | 'broadcast'
+
+export interface CommunicationInboxItem {
+  id: string
+  ticketId?: string
+  userOrGroup: string
+  communicationType: CommunicationInboxType
+  subject: string
+  priority: ConversationPriority
+  lastActivity: string
+  status: string
+  conversationId?: string
+  unreadCount: number
+  assignedAgent?: string
+  tripId?: string
+  userId?: string
+}
+
+export interface CommunicationInboxParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  communicationType?: string
+}
 
 export interface CommunicationOverview {
   openConversations: number
@@ -194,6 +227,64 @@ export interface BroadcastRecord {
   sentBy: string
   sentAt: string
   status: 'scheduled' | 'sent' | 'failed'
+}
+
+export type SupportTicketType = 'driver' | 'passenger' | 'safety'
+
+export type SupportTicketStatus =
+  | 'open'
+  | 'assigned'
+  | 'in_progress'
+  | 'investigating'
+  | 'waiting_user'
+  | 'escalated'
+  | 'resolved'
+  | 'closed'
+
+export interface SupportTicket {
+  id: string
+  ticketId: string
+  ticketType: SupportTicketType
+  userName: string
+  subject: string
+  priority: ConversationPriority
+  status: SupportTicketStatus
+  createdAt: string
+  assignedAgent?: string
+  description?: string
+  tripId?: string
+  city?: string
+}
+
+export interface CommunicationListParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  ticketType?: string
+  status?: string
+}
+
+export interface CommunicationListResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface BroadcastFormValues {
+  title: string
+  message: string
+  broadcastType: BroadcastType
+  target: BroadcastTarget
+  targetValue?: string
+  scheduledAt: string
+}
+
+export interface NotificationTemplateFormValues {
+  name: string
+  category: TemplateCategory
+  content: string
+  status: 'active' | 'inactive'
 }
 
 export interface CommunicationHistoryEntry {

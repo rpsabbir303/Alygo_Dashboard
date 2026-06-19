@@ -147,6 +147,7 @@ export interface PointsRule extends DriverRewardsAuditFields {
   category: PointsRuleCategory
   points: number
   type: PointsRuleType
+  description?: string
   status: DriverRewardsEntityStatus
   lastUpdated: string
 }
@@ -256,9 +257,9 @@ export interface DriverRewardsPublicConfig {
 
 export interface LevelBenefit {
   id: string
-  level: DriverLevelName
   name: string
   description: string
+  assignedTiers: DriverLevelName[]
   category: string
   status: DriverRewardsEntityStatus
 }

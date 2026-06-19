@@ -1,46 +1,90 @@
 import { useState } from 'react'
-import { Form, InputNumber, Modal, Progress, Table } from 'antd'
-import { Pencil } from 'lucide-react'
+import { Button, Table, Tag } from 'antd'
+import { Plus } from 'lucide-react'
 import {
   AdminActionHost,
+  ConfirmationModal,
   createActionsColumn,
   createTableRowProps,
 } from '@/components/admin'
+import { CapacityRuleFormModal } from '@/features/driver-capacity/components/CapacityRuleFormModal'
+import {
+  buildCapacityRuleDetailFields,
+  capacityDisplayStatusColor,
+  CAPACITY_DISPLAY_STATUS_LABELS,
+  getCapacityDisplayStatus,
+  getCapacityRuleActionItems,
+} from '@/features/driver-capacity/driverCapacityHelpers'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
+  useCreateDriverCapSettingMutation,
+  useDeleteDriverCapSettingMutation,
   useGetDriverCapSettingsQuery,
   useUpdateDriverCapSettingMutation,
 } from '@/services/driverCapacityApi'
 import type { DriverCapSetting } from '@/types/driverCapacity'
-import { capacityUtilization } from '@/features/driver-capacity/driverCapacityHelpers'
+import type { CapacityRuleFormValues } from '@/types/driverCapacity'
 import { formatNumber } from '@/utils/format'
 
 export function DriverCapSettingsTable() {
   const adminActions = useAdminActions()
   const { data = [], isLoading } = useGetDriverCapSettingsQuery()
+  const [createRule, { isLoading: creating }] = useCreateDriverCapSettingMutation()
+  const [updateRule, { isLoading: updating }] = useUpdateDriverCapSettingMutation()
+  const [deleteRule, { isLoading: deleting }] = useDeleteDriverCapSettingMutation()
+
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [editRecord, setEditRecord] = useState<DriverCapSetting | null>(null)
-  const [maxDrivers, setMaxDrivers] = useState(0)
-  const [updateCap, { isLoading: updating }] = useUpdateDriverCapSettingMutation()
+  const [deleteRecord, setDeleteRecord] = useState<DriverCapSetting | null>(null)
+
+  const openCreate = () => {
+    setFormMode('create')
+    setEditRecord(null)
+    setFormOpen(true)
+  }
+
+  const openEdit = (record: DriverCapSetting) => {
+    setFormMode('edit')
+    setEditRecord(record)
+    setFormOpen(true)
+  }
+
+  const handleFormSubmit = async (values: CapacityRuleFormValues) => {
+    try {
+      if (formMode === 'create') {
+        await createRule(values).unwrap()
+        adminActions.notify(`Capacity rule added for ${values.city}, ${values.state}`)
+      } else if (editRecord) {
+        await updateRule({ id: editRecord.id, ...values }).unwrap()
+        adminActions.notify(`Capacity rule updated for ${editRecord.city}`)
+      }
+      setFormOpen(false)
+      setEditRecord(null)
+    } catch (err) {
+      adminActions.notify('Unable to save capacity rule', String(err))
+    }
+  }
 
   return (
     <>
-      <p className="mb-4 text-sm text-alygo-text-muted">
-        Set maximum driver capacity per city and state. Remaining slots update automatically as drivers are approved.
-      </p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-alygo-text-muted">
+          Set maximum driver limits by city and state. Admins control capacity manually.
+        </p>
+        <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={openCreate}>
+          Add Capacity Rule
+        </Button>
+      </div>
+
       <Table
         loading={isLoading}
         rowKey="id"
         dataSource={data}
         scroll={{ x: 1000 }}
+        pagination={{ pageSize: 10, showSizeChanger: false }}
         {...createTableRowProps<DriverCapSetting>((record) =>
-          adminActions.openDrawer(`${record.city}, ${record.state}`, [
-            { label: 'State', value: record.state },
-            { label: 'City', value: record.city },
-            { label: 'Max Drivers', value: formatNumber(record.maxDrivers) },
-            { label: 'Current Drivers', value: formatNumber(record.currentDrivers) },
-            { label: 'Remaining Slots', value: formatNumber(record.remainingSlots) },
-            { label: 'Utilization', value: `${capacityUtilization(record.currentDrivers, record.maxDrivers)}%` },
-          ]),
+          adminActions.openDrawer(`${record.city}, ${record.state}`, buildCapacityRuleDetailFields(record)),
         )}
         columns={[
           { title: 'State', dataIndex: 'state' },
@@ -48,67 +92,67 @@ export function DriverCapSettingsTable() {
           { title: 'Max Drivers', dataIndex: 'maxDrivers', render: (n: number) => formatNumber(n) },
           { title: 'Current Drivers', dataIndex: 'currentDrivers', render: (n: number) => formatNumber(n) },
           {
-            title: 'Remaining Slots',
+            title: 'Available Slots',
             dataIndex: 'remainingSlots',
-            render: (n: number) => (
-              <span className={n === 0 ? 'text-red-400' : 'text-emerald-400'}>
+            render: (n: number, record: DriverCapSetting) => (
+              <span className={record.status === 'inactive' ? 'text-alygo-text-muted' : n === 0 ? 'text-red-400' : 'text-emerald-400'}>
                 {formatNumber(n)}
               </span>
             ),
           },
           {
-            title: 'Utilization',
-            key: 'utilization',
+            title: 'Status',
+            key: 'status',
             render: (_: unknown, record: DriverCapSetting) => {
-              const pct = capacityUtilization(record.currentDrivers, record.maxDrivers)
+              const displayStatus = getCapacityDisplayStatus(record)
               return (
-                <Progress
-                  percent={pct}
-                  size="small"
-                  strokeColor={pct >= 90 ? '#ef4444' : pct >= 75 ? '#f59e0b' : '#6366f1'}
-                />
+                <Tag color={capacityDisplayStatusColor(displayStatus)}>
+                  {CAPACITY_DISPLAY_STATUS_LABELS[displayStatus]}
+                </Tag>
               )
             },
           },
           createActionsColumn<DriverCapSetting>(
-            () => [{ key: 'edit', label: 'Edit Cap', icon: Pencil }],
+            () => getCapacityRuleActionItems(),
             (key, record) => {
-              if (key === 'edit') {
-                setEditRecord(record)
-                setMaxDrivers(record.maxDrivers)
-              }
+              if (key === 'edit') openEdit(record)
+              if (key === 'delete') setDeleteRecord(record)
             },
           ),
         ]}
       />
 
-      <Modal
-        title={`Edit Driver Cap — ${editRecord?.city}, ${editRecord?.state}`}
-        open={Boolean(editRecord)}
-        confirmLoading={updating}
-        onCancel={() => setEditRecord(null)}
-        onOk={async () => {
-          if (!editRecord) return
-          await updateCap({ id: editRecord.id, maxDrivers }).unwrap()
-          adminActions.notify(`Cap updated for ${editRecord.city}`)
+      <CapacityRuleFormModal
+        open={formOpen}
+        mode={formMode}
+        rule={editRecord}
+        loading={creating || updating}
+        onCancel={() => {
+          setFormOpen(false)
           setEditRecord(null)
         }}
-        destroyOnClose
-      >
-        <Form layout="vertical" className="mt-4">
-          <Form.Item label="Max Drivers">
-            <InputNumber
-              min={editRecord?.currentDrivers ?? 0}
-              className="w-full"
-              value={maxDrivers}
-              onChange={(v) => setMaxDrivers(v ?? 0)}
-            />
-          </Form.Item>
-          <p className="text-xs text-alygo-text-muted">
-            Current drivers: {editRecord?.currentDrivers}. Minimum cap cannot be below current count.
-          </p>
-        </Form>
-      </Modal>
+        onSubmit={handleFormSubmit}
+      />
+
+      <ConfirmationModal
+        open={Boolean(deleteRecord)}
+        title="Delete Capacity Rule"
+        description={`Delete the capacity rule for ${deleteRecord?.city}, ${deleteRecord?.state}?`}
+        confirmLabel="Delete"
+        danger
+        loading={deleting}
+        onCancel={() => setDeleteRecord(null)}
+        onConfirm={async () => {
+          if (!deleteRecord) return
+          try {
+            await deleteRule(deleteRecord.id).unwrap()
+            adminActions.notify(`Capacity rule deleted for ${deleteRecord.city}`)
+            setDeleteRecord(null)
+          } catch (err) {
+            adminActions.notify('Unable to delete rule', String(err))
+          }
+        }}
+      />
 
       <AdminActionHost actions={adminActions} />
     </>

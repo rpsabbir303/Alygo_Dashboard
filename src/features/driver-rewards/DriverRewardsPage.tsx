@@ -4,10 +4,8 @@ import { PageShell } from '@/components/common/PageShell'
 import {
   BonusProgramsTab,
   PenaltyRulesTab,
-  PerformanceRewardsTab,
   RewardRulesTab,
 } from '@/features/driver-rewards/components/DriverRewardsTabPanels'
-import { RewardsOverviewCards } from '@/features/driver-rewards/components/RewardsOverviewCards'
 import {
   isLegacyTierRewardsTab,
   REWARDS_TAB_LABELS,
@@ -16,19 +14,13 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 const REWARDS_TABS = [
-  { key: 'overview', label: REWARDS_TAB_LABELS.overview, children: <RewardsOverviewCards /> },
   { key: 'reward-rules', label: REWARDS_TAB_LABELS['reward-rules'], children: <RewardRulesTab /> },
-  {
-    key: 'performance-rewards',
-    label: REWARDS_TAB_LABELS['performance-rewards'],
-    children: <PerformanceRewardsTab />,
-  },
   { key: 'bonus-programs', label: REWARDS_TAB_LABELS['bonus-programs'], children: <BonusProgramsTab /> },
   { key: 'penalty-rules', label: REWARDS_TAB_LABELS['penalty-rules'], children: <PenaltyRulesTab /> },
 ] as const
 
 export default function DriverRewardsPage() {
-  useDocumentTitle('Driver Rewards & Performance')
+  useDocumentTitle('Driver Rewards Management')
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
 
@@ -40,8 +32,8 @@ export default function DriverRewardsPage() {
 
   return (
     <PageShell
-      title="Driver Rewards & Performance"
-      description="Configure ride rewards, performance incentives, bonus programs, and penalty deductions for driver tier progression."
+      title="Driver Rewards Management"
+      description="Manage reward rules, bonus programs, and penalty deductions for driver points."
     >
       <div className="glass-card p-4">
         <Tabs

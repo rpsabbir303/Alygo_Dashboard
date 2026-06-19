@@ -1,16 +1,17 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
 import type {
-  CapacityAutoRules,
   CapacityOverview,
+  CapacityRuleFormValues,
   DriverCapSetting,
+  DriverCapacityListParams,
+  DriverCapacityListResponse,
   WaitlistDriver,
-  WaitlistDriverStatus,
 } from '@/types/driverCapacity'
 import {
   computeCapacityOverview,
-  mockCapacityAutoRules,
   mockDriverCapSettings,
   mockWaitlistDrivers,
+  paginateWaitlistDrivers,
   recalcCapSlots,
   reorderWaitlistPositions,
 } from '@/services/mock/driverCapacityData'
@@ -20,7 +21,7 @@ const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
 export const driverCapacityApi = createApi({
   reducerPath: 'driverCapacityApi',
   baseQuery: fakeBaseQuery(),
-  tagTypes: ['CapacityOverview', 'DriverCapSettings', 'WaitlistDrivers', 'CapacityAutoRules'],
+  tagTypes: ['CapacityOverview', 'DriverCapSettings', 'WaitlistDrivers'],
   endpoints: (builder) => ({
     getCapacityOverview: builder.query<CapacityOverview, void>({
       queryFn: async () => {
@@ -33,19 +34,67 @@ export const driverCapacityApi = createApi({
       queryFn: async () => ({ data: [...mockDriverCapSettings] }),
       providesTags: ['DriverCapSettings'],
     }),
-    updateDriverCapSetting: builder.mutation<DriverCapSetting, { id: string; maxDrivers: number }>({
-      queryFn: async ({ id, maxDrivers }) => {
+    createDriverCapSetting: builder.mutation<DriverCapSetting, CapacityRuleFormValues>({
+      queryFn: async (values) => {
+        await delay()
+        const rule: DriverCapSetting = {
+          id: `cap-${Date.now()}`,
+          state: values.state,
+          city: values.city,
+          maxDrivers: values.maxDrivers,
+          currentDrivers: 0,
+          remainingSlots: values.maxDrivers,
+          notes: values.notes,
+          status: values.status,
+        }
+        mockDriverCapSettings.unshift(rule)
+        return { data: rule }
+      },
+      invalidatesTags: ['DriverCapSettings', 'CapacityOverview'],
+    }),
+    updateDriverCapSetting: builder.mutation<
+      DriverCapSetting,
+      { id: string } & Partial<CapacityRuleFormValues>
+    >({
+      queryFn: async ({ id, ...updates }) => {
         await delay()
         const index = mockDriverCapSettings.findIndex((c) => c.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Cap setting not found' } }
-        mockDriverCapSettings[index] = { ...mockDriverCapSettings[index], maxDrivers }
+        if (index === -1) return { error: { status: 404, data: 'Capacity rule not found' } }
+        const nextMax = updates.maxDrivers ?? mockDriverCapSettings[index].maxDrivers
+        if (nextMax < mockDriverCapSettings[index].currentDrivers) {
+          return { error: { status: 400, data: 'Max drivers cannot be below current driver count' } }
+        }
+        mockDriverCapSettings[index] = {
+          ...mockDriverCapSettings[index],
+          ...updates,
+          maxDrivers: nextMax,
+        }
         recalcCapSlots(mockDriverCapSettings[index])
         return { data: mockDriverCapSettings[index] }
       },
       invalidatesTags: ['DriverCapSettings', 'CapacityOverview'],
     }),
-    getWaitlistDrivers: builder.query<WaitlistDriver[], void>({
-      queryFn: async () => ({ data: [...mockWaitlistDrivers].sort((a, b) => a.position - b.position) }),
+    deleteDriverCapSetting: builder.mutation<void, string>({
+      queryFn: async (id) => {
+        await delay()
+        const index = mockDriverCapSettings.findIndex((c) => c.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Capacity rule not found' } }
+        if (mockDriverCapSettings[index].currentDrivers > 0) {
+          return { error: { status: 400, data: 'Cannot delete a rule with active drivers' } }
+        }
+        mockDriverCapSettings.splice(index, 1)
+        return { data: undefined }
+      },
+      invalidatesTags: ['DriverCapSettings', 'CapacityOverview'],
+    }),
+    getWaitlistDrivers: builder.query<
+      DriverCapacityListResponse<WaitlistDriver>,
+      DriverCapacityListParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        return { data: paginateWaitlistDrivers(params ?? {}) }
+      },
       providesTags: ['WaitlistDrivers'],
     }),
     approveWaitlistDriver: builder.mutation<WaitlistDriver, string>({
@@ -55,7 +104,10 @@ export const driverCapacityApi = createApi({
         if (index === -1) return { error: { status: 404, data: 'Driver not found' } }
         mockWaitlistDrivers[index] = { ...mockWaitlistDrivers[index], status: 'approved' }
         const cap = mockDriverCapSettings.find(
-          (c) => c.city === mockWaitlistDrivers[index].city && c.state === mockWaitlistDrivers[index].state,
+          (c) =>
+            c.city === mockWaitlistDrivers[index].city &&
+            c.state === mockWaitlistDrivers[index].state &&
+            c.status === 'active',
         )
         if (cap && cap.remainingSlots > 0) {
           cap.currentDrivers += 1
@@ -77,65 +129,31 @@ export const driverCapacityApi = createApi({
       },
       invalidatesTags: ['WaitlistDrivers', 'CapacityOverview'],
     }),
-    priorityApproveWaitlistDriver: builder.mutation<WaitlistDriver, string>({
+    setWaitlistPriority: builder.mutation<WaitlistDriver, string>({
       queryFn: async (id) => {
         await delay()
         const index = mockWaitlistDrivers.findIndex((d) => d.id === id)
         if (index === -1) return { error: { status: 404, data: 'Driver not found' } }
         mockWaitlistDrivers[index] = {
           ...mockWaitlistDrivers[index],
-          status: 'approved',
           priority: true,
-        }
-        const cap = mockDriverCapSettings.find(
-          (c) => c.city === mockWaitlistDrivers[index].city && c.state === mockWaitlistDrivers[index].state,
-        )
-        if (cap && cap.remainingSlots > 0) {
-          cap.currentDrivers += 1
-          recalcCapSlots(cap)
-        }
-        reorderWaitlistPositions()
-        return { data: mockWaitlistDrivers[index] }
-      },
-      invalidatesTags: ['WaitlistDrivers', 'CapacityOverview', 'DriverCapSettings'],
-    }),
-    moveWaitlistPosition: builder.mutation<WaitlistDriver, { id: string; position: number }>({
-      queryFn: async ({ id, position }) => {
-        await delay()
-        const index = mockWaitlistDrivers.findIndex((d) => d.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Driver not found' } }
-        mockWaitlistDrivers[index].position = position
-        reorderWaitlistPositions()
-        return { data: mockWaitlistDrivers[index] }
-      },
-      invalidatesTags: ['WaitlistDrivers'],
-    }),
-    setWaitlistPriority: builder.mutation<WaitlistDriver, { id: string; priority: boolean }>({
-      queryFn: async ({ id, priority }) => {
-        await delay()
-        const index = mockWaitlistDrivers.findIndex((d) => d.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Driver not found' } }
-        mockWaitlistDrivers[index] = {
-          ...mockWaitlistDrivers[index],
-          priority,
-          status: priority ? 'priority' : 'pending',
+          status: 'priority',
         }
         reorderWaitlistPositions()
         return { data: mockWaitlistDrivers[index] }
       },
       invalidatesTags: ['WaitlistDrivers'],
     }),
-    getCapacityAutoRules: builder.query<CapacityAutoRules, void>({
-      queryFn: async () => ({ data: { ...mockCapacityAutoRules } }),
-      providesTags: ['CapacityAutoRules'],
-    }),
-    updateCapacityAutoRules: builder.mutation<CapacityAutoRules, Partial<CapacityAutoRules>>({
-      queryFn: async (updates) => {
+    removeWaitlistDriver: builder.mutation<void, string>({
+      queryFn: async (id) => {
         await delay()
-        Object.assign(mockCapacityAutoRules, updates)
-        return { data: { ...mockCapacityAutoRules } }
+        const index = mockWaitlistDrivers.findIndex((d) => d.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Driver not found' } }
+        mockWaitlistDrivers.splice(index, 1)
+        reorderWaitlistPositions()
+        return { data: undefined }
       },
-      invalidatesTags: ['CapacityAutoRules'],
+      invalidatesTags: ['WaitlistDrivers', 'CapacityOverview'],
     }),
   }),
 })
@@ -143,19 +161,21 @@ export const driverCapacityApi = createApi({
 export const {
   useGetCapacityOverviewQuery,
   useGetDriverCapSettingsQuery,
+  useCreateDriverCapSettingMutation,
   useUpdateDriverCapSettingMutation,
+  useDeleteDriverCapSettingMutation,
   useGetWaitlistDriversQuery,
   useApproveWaitlistDriverMutation,
   useRejectWaitlistDriverMutation,
-  usePriorityApproveWaitlistDriverMutation,
-  useMoveWaitlistPositionMutation,
-  useGetCapacityAutoRulesQuery,
-  useUpdateCapacityAutoRulesMutation,
+  useSetWaitlistPriorityMutation,
+  useRemoveWaitlistDriverMutation,
 } = driverCapacityApi
 
-export const WAITLIST_STATUS_LABELS: Record<WaitlistDriverStatus, string> = {
+export const WAITLIST_STATUS_LABELS: Record<WaitlistDriver['status'], string> = {
   pending: 'Pending',
   approved: 'Approved',
   rejected: 'Rejected',
   priority: 'Priority',
 }
+
+export { CITY_OPTIONS, STATE_OPTIONS } from '@/services/mock/driverCapacityData'

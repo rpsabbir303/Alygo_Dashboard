@@ -14,7 +14,6 @@ export function useDriverCapacityRealtime() {
           'CapacityOverview',
           'DriverCapSettings',
           'WaitlistDrivers',
-          'CapacityAutoRules',
         ]),
       )
     }

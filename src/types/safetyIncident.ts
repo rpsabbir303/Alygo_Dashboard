@@ -1,6 +1,14 @@
-export type IncidentType = 'sos_alert' | 'driver_report' | 'passenger_report' | 'emergency' | 'safety_case'
+export type IncidentType =
+  | 'sos_alert'
+  | 'passenger_complaint'
+  | 'driver_complaint'
+  | 'harassment'
+  | 'accident'
+  | 'vehicle_issue'
+  | 'lost_item'
+  | 'safety_investigation'
 
-export type IncidentStatus = 'open' | 'assigned' | 'escalated' | 'resolved'
+export type IncidentStatus = 'open' | 'assigned' | 'in_review' | 'resolved' | 'closed'
 
 export type IncidentPriority = 'critical' | 'high' | 'medium' | 'low'
 
@@ -46,6 +54,7 @@ export interface SafetyIncident {
   createdAt: string
   assignedTo?: string
   description: string
+  resolutionNotes?: string
   gpsTimeline: GpsTimelinePoint[]
   tripHistory: TripHistoryEntry[]
   notes: IncidentNote[]
@@ -53,43 +62,48 @@ export interface SafetyIncident {
 }
 
 export interface SafetyOverview {
-  openIncidents: number
-  resolvedCases: number
+  openCases: number
+  criticalCases: number
   sosAlerts: number
-  driverReports: number
-  passengerReports: number
+  resolvedCases: number
+}
+
+export interface SafetyDashboardSummary {
+  openCases: number
+  criticalCases: number
+  sosAlerts: number
+  recentIncidents: Array<{
+    id: string
+    caseId: string
+    type: IncidentType
+    priority: IncidentPriority
+    status: IncidentStatus
+    createdAt: string
+    driverName: string
+    passengerName: string
+  }>
 }
 
 export interface IncidentCategory {
   id: string
   name: string
   description: string
-  defaultPriority: IncidentPriority
+  severityLevel: IncidentPriority
   status: 'active' | 'inactive'
 }
 
-export interface EscalationRule {
-  id: string
-  name: string
-  triggerCondition: string
-  escalateAfterMinutes: number
-  escalateTo: string
-  status: 'active' | 'inactive'
+export interface SafetySettings {
+  enableSosFeature: boolean
+  enableEmergencyHotline: boolean
+  enableCriticalAlertNotifications: boolean
+  autoAssignCases: boolean
+  enableSafetyCaseEmailAlerts: boolean
+  enablePushNotifications: boolean
 }
 
-export interface ResponseSlaSettings {
-  criticalResponseMinutes: number
-  highResponseMinutes: number
-  mediumResponseMinutes: number
-  lowResponseMinutes: number
-  autoEscalateEnabled: boolean
-}
-
-export interface SafetyTeamMember {
-  id: string
+export interface IncidentCategoryFormValues {
   name: string
-  role: string
-  email: string
-  shift: string
+  description: string
+  severityLevel: IncidentPriority
   status: 'active' | 'inactive'
 }

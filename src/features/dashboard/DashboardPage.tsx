@@ -31,6 +31,7 @@ import {
   useGetTopCitiesQuery,
   useGetTripsQuery,
 } from '@/services/api'
+import { SafetyDashboardSummary } from '@/features/dashboard/components/SafetyDashboardSummary'
 import { useAppSelector } from '@/store/hooks'
 import { formatCurrency } from '@/utils/format'
 import type { Trip } from '@/types'
@@ -98,29 +99,31 @@ export default function DashboardPage() {
           <BarTrendChart data={topAirports} />
         </ChartCard>
         <div className="xl:col-span-2">
-          <div className="glass-card p-5">
-            <h3 className="mb-4 text-base font-semibold text-white">Live Trip Overview</h3>
-            <Table
-              size="small"
-              pagination={false}
-              dataSource={liveTrips.slice(0, 5)}
-              rowKey="id"
-              {...createTableRowProps<Trip>((record) => openTripDetails(record, adminActions))}
-              columns={[
-                { title: 'Trip', dataIndex: 'id', render: (id: string) => <Link to="/operations/live-trips" onClick={(e) => e.stopPropagation()}>{id}</Link> },
-                { title: 'Driver', dataIndex: 'driverName' },
-                { title: 'City', dataIndex: 'city' },
-                { title: 'Category', dataIndex: 'category', render: (c: string) => <Tag>{c}</Tag> },
-                { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-                { title: 'Fare', dataIndex: 'fare', render: (f: number) => formatCurrency(f) },
-                createActionsColumn<Trip>(
-                  () => getTripActionItems(),
-                  (key, record) => handleTripAction(key, record, adminActions),
-                ),
-              ]}
-            />
-          </div>
+          <SafetyDashboardSummary />
         </div>
+      </div>
+
+      <div className="glass-card p-5">
+        <h3 className="mb-4 text-base font-semibold text-white">Live Trip Overview</h3>
+        <Table
+          size="small"
+          pagination={false}
+          dataSource={liveTrips.slice(0, 5)}
+          rowKey="id"
+          {...createTableRowProps<Trip>((record) => openTripDetails(record, adminActions))}
+          columns={[
+            { title: 'Trip', dataIndex: 'id', render: (id: string) => <Link to="/operations/live-trips" onClick={(e) => e.stopPropagation()}>{id}</Link> },
+            { title: 'Driver', dataIndex: 'driverName' },
+            { title: 'City', dataIndex: 'city' },
+            { title: 'Category', dataIndex: 'category', render: (c: string) => <Tag>{c}</Tag> },
+            { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
+            { title: 'Fare', dataIndex: 'fare', render: (f: number) => formatCurrency(f) },
+            createActionsColumn<Trip>(
+              () => getTripActionItems(),
+              (key, record) => handleTripAction(key, record, adminActions),
+            ),
+          ]}
+        />
       </div>
       <AdminActionHost actions={adminActions} />
     </PageShell>

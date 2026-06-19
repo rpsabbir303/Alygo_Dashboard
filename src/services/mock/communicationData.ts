@@ -3,13 +3,19 @@ import type {
   ChatMessage,
   CommunicationAnalytics,
   CommunicationHistoryEntry,
+  CommunicationInboxItem,
+  CommunicationInboxOverview,
+  CommunicationInboxParams,
+  CommunicationListResponse,
   CommunicationOverview,
   Conversation,
   InternalNote,
   MessageTemplate,
   SafetyCommunication,
   SupportCase,
+  SupportTicket,
 } from '@/types/communication'
+import type { CommunicationInboxType, CommunicationListParams } from '@/types/communication'
 import { mockTrips } from '@/services/mock/data'
 
 export let mockConversations: Conversation[] = [
@@ -164,18 +170,14 @@ const baseMessages: Record<string, ChatMessage[]> = {
 export let mockChatMessages: Record<string, ChatMessage[]> = { ...baseMessages }
 
 export let mockMessageTemplates: MessageTemplate[] = [
-  { id: 'tpl-1', name: 'Driver En Route', category: 'trip_updates', content: 'Your driver is on the way and will arrive shortly.', status: 'active', usageCount: 1240, updatedAt: '2026-06-01T00:00:00Z' },
-  { id: 'tpl-2', name: 'Passenger Not Found', category: 'trip_updates', content: 'We could not locate you at the pickup point. Please confirm your location or the driver may cancel after the wait time.', status: 'active', usageCount: 890, updatedAt: '2026-06-01T00:00:00Z' },
-  { id: 'tpl-3', name: 'Ride Delayed', category: 'trip_updates', content: 'Your ride is experiencing a delay. We apologize for the inconvenience and are working to resolve this quickly.', status: 'active', usageCount: 650, updatedAt: '2026-06-02T00:00:00Z' },
-  { id: 'tpl-4', name: 'Traffic Delay', category: 'trip_updates', content: 'Heavy traffic is affecting your trip. Your driver is taking the fastest available route.', status: 'active', usageCount: 2100, updatedAt: '2026-06-02T00:00:00Z' },
-  { id: 'tpl-5', name: 'Safety Check', category: 'safety', content: 'This is a safety check from Alygo Support. Are you safe and is everything okay with your trip?', status: 'active', usageCount: 420, updatedAt: '2026-06-03T00:00:00Z' },
-  { id: 'tpl-6', name: 'Lost & Found Follow-up', category: 'lost_found', content: 'We are following up on your lost item report. Our team is coordinating with the driver to locate your belongings.', status: 'active', usageCount: 310, updatedAt: '2026-06-03T00:00:00Z' },
-  { id: 'tpl-7', name: 'Cancellation Review', category: 'cancellation', content: 'We are reviewing your cancellation request. You will receive an update within 24 hours.', status: 'active', usageCount: 780, updatedAt: '2026-06-04T00:00:00Z' },
-  { id: 'tpl-8', name: 'Payment Issue', category: 'payment', content: 'We detected a payment issue on your account. Please update your payment method or contact support.', status: 'active', usageCount: 560, updatedAt: '2026-06-04T00:00:00Z' },
-  { id: 'tpl-9', name: 'Refund Approved', category: 'payment', content: 'Your refund request has been approved. Funds will be returned within 3-5 business days.', status: 'active', usageCount: 340, updatedAt: '2026-06-05T00:00:00Z' },
-  { id: 'tpl-10', name: 'Refund Denied', category: 'payment', content: 'After review, your refund request could not be approved. Please see the case notes for details.', status: 'active', usageCount: 120, updatedAt: '2026-06-05T00:00:00Z' },
-  { id: 'tpl-11', name: 'Account Verification', category: 'compliance', content: 'Please complete your account verification to continue using Alygo. Upload required documents in the app.', status: 'active', usageCount: 980, updatedAt: '2026-06-06T00:00:00Z' },
-  { id: 'tpl-12', name: 'Compliance Reminder', category: 'compliance', content: 'Your compliance documents are expiring soon. Please renew them to avoid account restrictions.', status: 'active', usageCount: 450, updatedAt: '2026-06-06T00:00:00Z' },
+  { id: 'tpl-1', name: 'Ride Accepted', category: 'trip_updates', content: 'Your ride has been accepted. Your driver is on the way.', status: 'active', usageCount: 8420, updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'tpl-2', name: 'Ride Cancelled', category: 'cancellation', content: 'Your ride has been cancelled. You will not be charged for this trip.', status: 'active', usageCount: 3180, updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'tpl-3', name: 'Driver Approved', category: 'compliance', content: 'Congratulations! Your driver application has been approved. You can now go online.', status: 'active', usageCount: 1240, updatedAt: '2026-06-02T00:00:00Z' },
+  { id: 'tpl-4', name: 'Driver Rejected', category: 'compliance', content: 'Your driver application could not be approved at this time. Please review the requirements and reapply.', status: 'active', usageCount: 420, updatedAt: '2026-06-02T00:00:00Z' },
+  { id: 'tpl-5', name: 'Reservation Reminder', category: 'trip_updates', content: 'Reminder: Your scheduled reservation is coming up. Please be ready at the pickup location.', status: 'active', usageCount: 2100, updatedAt: '2026-06-03T00:00:00Z' },
+  { id: 'tpl-6', name: 'Payment Success', category: 'payment', content: 'Payment received successfully. Thank you for riding with Alygo.', status: 'active', usageCount: 5600, updatedAt: '2026-06-03T00:00:00Z' },
+  { id: 'tpl-7', name: 'Safety Check', category: 'safety', content: 'This is a safety check from Alygo Support. Are you safe and is everything okay with your trip?', status: 'active', usageCount: 420, updatedAt: '2026-06-04T00:00:00Z' },
+  { id: 'tpl-8', name: 'Refund Approved', category: 'payment', content: 'Your refund request has been approved. Funds will be returned within 3-5 business days.', status: 'inactive', usageCount: 340, updatedAt: '2026-06-05T00:00:00Z' },
 ]
 
 export let mockInternalNotes: InternalNote[] = [
@@ -184,6 +186,19 @@ export let mockInternalNotes: InternalNote[] = [
   { id: 'note-3', userId: 'd-118', userName: 'David Kim', userType: 'driver', noteType: 'safety', content: 'Previous harassment report filed — handle with care.', author: 'Safety Team Alpha', createdAt: '2026-06-12T09:00:00Z', tripId: 'TRP-88190' },
   { id: 'note-4', userId: 'p-2201', userName: 'Elena Rodriguez', userType: 'passenger', noteType: 'fraud', content: 'Multiple chargeback attempts flagged.', author: 'Finance Admin', createdAt: '2026-06-12T16:00:00Z' },
   { id: 'note-5', userId: 'p-3891', userName: 'James Wilson', userType: 'passenger', noteType: 'support', content: 'Repeat lost item reporter — verify claims.', author: 'Lisa Park', createdAt: '2026-06-13T08:00:00Z', tripId: 'TRP-88102' },
+]
+
+export let mockSupportTickets: SupportTicket[] = [
+  { id: 'ticket-1', ticketId: 'TCK-2026-0412', ticketType: 'safety', userName: 'David Kim', subject: 'SOS alert during active trip', priority: 'critical', status: 'escalated', createdAt: '2026-06-13T14:05:00Z', assignedAgent: 'Safety Team Alpha', description: 'Driver triggered SOS during active trip', tripId: 'TRP-88190', city: 'Los Angeles' },
+  { id: 'ticket-2', ticketId: 'TCK-2026-0411', ticketType: 'passenger', userName: 'James Wilson', subject: 'Phone left in vehicle', priority: 'medium', status: 'investigating', createdAt: '2026-06-13T13:40:00Z', assignedAgent: 'Lisa Park', description: 'Lost item report from passenger', tripId: 'TRP-88102', city: 'Los Angeles' },
+  { id: 'ticket-3', ticketId: 'TCK-2026-0410', ticketType: 'passenger', userName: 'Elena Rodriguez', subject: 'Double charge on trip', priority: 'high', status: 'waiting_user', createdAt: '2026-06-13T10:00:00Z', assignedAgent: 'Mike Torres', tripId: 'TRP-88055', city: 'New York' },
+  { id: 'ticket-4', ticketId: 'TCK-2026-0409', ticketType: 'driver', userName: 'Lisa Martinez', subject: 'Background check fee refund', priority: 'low', status: 'open', createdAt: '2026-06-13T12:00:00Z', city: 'San Francisco' },
+  { id: 'ticket-5', ticketId: 'TCK-2026-0408', ticketType: 'driver', userName: 'Marcus Johnson', subject: 'Passenger no-show dispute', priority: 'medium', status: 'resolved', createdAt: '2026-06-12T20:00:00Z', assignedAgent: 'Sarah Kim', tripId: 'TRP-88241', city: 'San Francisco' },
+  { id: 'ticket-6', ticketId: 'TCK-2026-0407', ticketType: 'safety', userName: 'Sarah Chen', subject: 'Route deviation concern', priority: 'high', status: 'in_progress', createdAt: '2026-06-13T14:10:00Z', assignedAgent: 'Mike Torres', description: 'Passenger reported route deviation concern', tripId: 'TRP-88241', city: 'San Francisco' },
+  { id: 'ticket-7', ticketId: 'TCK-2026-0406', ticketType: 'safety', userName: 'James Wilson', subject: 'Harassment report filed post-trip', priority: 'high', status: 'open', createdAt: '2026-06-12T18:00:00Z', assignedAgent: 'Safety Team Beta', tripId: 'TRP-87800', city: 'Chicago' },
+  { id: 'ticket-8', ticketId: 'TCK-2026-0405', ticketType: 'safety', userName: 'Tom Bradley', subject: 'Minor accident reported — no injuries', priority: 'critical', status: 'assigned', createdAt: '2026-06-11T22:00:00Z', assignedAgent: 'Safety Team Alpha', tripId: 'TRP-87750', city: 'Miami' },
+  { id: 'ticket-9', ticketId: 'TCK-2026-0404', ticketType: 'driver', userName: 'Tom Bradley', subject: 'Document upload issue', priority: 'low', status: 'closed', createdAt: '2026-06-12T18:00:00Z', assignedAgent: 'Sarah Kim', city: 'Chicago' },
+  { id: 'ticket-10', ticketId: 'TCK-2026-0403', ticketType: 'passenger', userName: 'Amy Foster', subject: 'Payment charged twice', priority: 'high', status: 'assigned', createdAt: '2026-06-13T11:00:00Z', assignedAgent: 'Mike Torres', city: 'Miami' },
 ]
 
 export let mockSupportCases: SupportCase[] = [
@@ -205,6 +220,8 @@ export let mockBroadcasts: BroadcastRecord[] = [
   { id: 'bc-1', title: 'Platform Maintenance', message: 'Scheduled maintenance tonight 2-4 AM PST. Minimal service disruption expected.', broadcastType: 'maintenance', target: 'all_drivers', recipientCount: 12400, sentBy: 'Super Admin', sentAt: '2026-06-12T20:00:00Z', status: 'sent' },
   { id: 'bc-2', title: 'SF Surge Opportunity', message: 'High demand in downtown SF. Surge pricing active — great earning opportunity.', broadcastType: 'surge', target: 'city', targetValue: 'San Francisco', recipientCount: 3200, sentBy: 'Operations Manager', sentAt: '2026-06-13T08:00:00Z', status: 'sent' },
   { id: 'bc-3', title: 'Weather Alert — LA', message: 'Heavy rain expected. Drive safely and allow extra time for pickups.', broadcastType: 'weather', target: 'city', targetValue: 'Los Angeles', recipientCount: 8900, sentBy: 'Operations Manager', sentAt: '2026-06-13T06:00:00Z', status: 'sent' },
+  { id: 'bc-4', title: 'Holiday Service Hours', message: 'Alygo will operate with extended hours during the holiday weekend.', broadcastType: 'service', target: 'all_passengers', recipientCount: 0, sentBy: 'Admin', sentAt: '2026-06-20T09:00:00Z', status: 'scheduled' },
+  { id: 'bc-5', title: 'Driver Safety Reminder', message: 'Complete your weekly safety checklist before your next shift.', broadcastType: 'platform_update', target: 'all_drivers', recipientCount: 0, sentBy: 'Admin', sentAt: '2026-06-18T07:00:00Z', status: 'scheduled' },
 ]
 
 export let mockCommunicationHistory: CommunicationHistoryEntry[] = [
@@ -309,7 +326,184 @@ export function getActiveTripChats() {
   })
 }
 
+const TICKET_CONVERSATION_MAP: Record<string, string> = {
+  'ticket-1': 'conv-3',
+  'ticket-2': 'conv-4',
+  'ticket-3': 'conv-6',
+  'ticket-5': 'conv-1',
+}
+
+function mapConversationInboxType(conversation: Conversation): CommunicationInboxType {
+  if (conversation.category === 'safety') return 'safety'
+  if (['support', 'general', 'lost_found', 'escalation'].includes(conversation.category)) return 'support'
+  if (conversation.userType === 'driver') return 'driver'
+  if (conversation.userType === 'passenger') return 'passenger'
+  return 'support'
+}
+
+function conversationToInbox(conversation: Conversation): CommunicationInboxItem {
+  return {
+    id: conversation.id,
+    ticketId: `CONV-${conversation.id.replace('conv-', '').toUpperCase()}`,
+    userOrGroup: conversation.userName,
+    communicationType: mapConversationInboxType(conversation),
+    subject: conversation.lastMessage,
+    priority: conversation.priority,
+    lastActivity: conversation.lastActivity,
+    status: conversation.status,
+    conversationId: conversation.id,
+    unreadCount: conversation.unreadCount,
+    assignedAgent: conversation.assignedAgent,
+    tripId: conversation.tripId,
+    userId: conversation.userId,
+  }
+}
+
+function ticketToInbox(ticket: SupportTicket): CommunicationInboxItem {
+  const communicationType: CommunicationInboxType =
+    ticket.ticketType === 'safety'
+      ? 'safety'
+      : ticket.ticketType === 'driver'
+        ? 'driver'
+        : ticket.ticketType === 'passenger'
+          ? 'passenger'
+          : 'support'
+
+  return {
+    id: ticket.id,
+    ticketId: ticket.ticketId,
+    userOrGroup: ticket.userName,
+    communicationType,
+    subject: ticket.subject,
+    priority: ticket.priority,
+    lastActivity: ticket.createdAt,
+    status: ticket.status,
+    conversationId: TICKET_CONVERSATION_MAP[ticket.id],
+    unreadCount: 0,
+    assignedAgent: ticket.assignedAgent,
+    tripId: ticket.tripId,
+  }
+}
+
+function broadcastToInbox(broadcast: BroadcastRecord): CommunicationInboxItem {
+  const audience = BROADCAST_TARGET_LABELS[broadcast.target] ?? broadcast.target
+  return {
+    id: broadcast.id,
+    ticketId: `BC-${broadcast.id.replace('bc-', '').toUpperCase()}`,
+    userOrGroup: broadcast.targetValue ? `${audience} — ${broadcast.targetValue}` : audience,
+    communicationType: 'broadcast',
+    subject: broadcast.title,
+    priority: 'medium',
+    lastActivity: broadcast.sentAt,
+    status: broadcast.status,
+    unreadCount: 0,
+  }
+}
+
+export function buildCommunicationInbox(): CommunicationInboxItem[] {
+  const conversationUsers = new Set(mockConversations.map((c) => c.userName))
+  const ticketItems = mockSupportTickets
+    .filter((ticket) => !conversationUsers.has(ticket.userName) || ticket.ticketType === 'safety')
+    .map(ticketToInbox)
+  const broadcastItems = mockBroadcasts.slice(0, 2).map(broadcastToInbox)
+  return [...mockConversations.map(conversationToInbox), ...ticketItems, ...broadcastItems].sort(
+    (a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime(),
+  )
+}
+
+export function computeCommunicationInboxOverview(): CommunicationInboxOverview {
+  const inbox = buildCommunicationInbox()
+  const today = new Date().toISOString().slice(0, 10)
+  return {
+    totalConversations: mockConversations.length + mockSupportTickets.length,
+    unreadMessages: mockConversations.reduce((sum, c) => sum + c.unreadCount, 0),
+    openCases: inbox.filter((item) => !['resolved', 'closed', 'sent'].includes(item.status)).length,
+    broadcastsSentToday: mockBroadcasts.filter(
+      (b) => b.status === 'sent' && b.sentAt.slice(0, 10) === today,
+    ).length,
+  }
+}
+
+export function paginateCommunicationInbox(
+  params: CommunicationInboxParams,
+): CommunicationListResponse<CommunicationInboxItem> {
+  const page = params.page ?? 1
+  const pageSize = params.pageSize ?? 10
+  const search = (params.search ?? '').trim().toLowerCase()
+  const communicationType = (params.communicationType ?? '').trim()
+
+  let filtered = buildCommunicationInbox()
+
+  if (communicationType) {
+    filtered = filtered.filter((item) => item.communicationType === communicationType)
+  }
+  if (search) {
+    filtered = filtered.filter(
+      (item) =>
+        item.userOrGroup.toLowerCase().includes(search) ||
+        (item.ticketId ?? '').toLowerCase().includes(search) ||
+        item.subject.toLowerCase().includes(search),
+    )
+  }
+
+  const start = (page - 1) * pageSize
+  return {
+    data: filtered.slice(start, start + pageSize),
+    total: filtered.length,
+    page,
+    pageSize,
+  }
+}
+
+export function paginateSupportTickets(
+  params: CommunicationListParams,
+): CommunicationListResponse<SupportTicket> {
+  const page = params.page ?? 1
+  const pageSize = params.pageSize ?? 10
+  const search = (params.search ?? '').trim().toLowerCase()
+  const ticketType = (params.ticketType ?? '').trim()
+
+  let filtered = [...mockSupportTickets].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
+
+  if (search) {
+    filtered = filtered.filter(
+      (ticket) =>
+        ticket.ticketId.toLowerCase().includes(search) ||
+        ticket.userName.toLowerCase().includes(search) ||
+        ticket.subject.toLowerCase().includes(search),
+    )
+  }
+  if (ticketType) {
+    filtered = filtered.filter((ticket) => ticket.ticketType === ticketType)
+  }
+
+  const start = (page - 1) * pageSize
+  return {
+    data: filtered.slice(start, start + pageSize),
+    total: filtered.length,
+    page,
+    pageSize,
+  }
+}
+
+export const COMMUNICATION_TYPE_LABELS: Record<string, string> = {
+  driver: 'Driver',
+  passenger: 'Passenger',
+  support: 'Support',
+  safety: 'Safety',
+  broadcast: 'Broadcast',
+}
+
+export const TICKET_TYPE_LABELS: Record<string, string> = {
+  driver: 'Driver',
+  passenger: 'Passenger',
+  safety: 'Safety',
+}
+
 export const STATUS_LABELS: Record<string, string> = {
+  assigned: 'Assigned',
   open: 'Open',
   in_progress: 'In Progress',
   waiting_user: 'Waiting User',
@@ -339,8 +533,9 @@ export const CATEGORY_LABELS: Record<string, string> = {
 export const BROADCAST_TARGET_LABELS: Record<string, string> = {
   all_drivers: 'All Drivers',
   all_passengers: 'All Passengers',
-  city: 'City Specific',
-  state: 'State Specific',
+  city: 'City Based',
+  state: 'State Based',
+  tier_based: 'Tier Based',
   airport_drivers: 'Airport Drivers',
   black_drivers: 'Black Category Drivers',
   black_suv_drivers: 'Black SUV Drivers',

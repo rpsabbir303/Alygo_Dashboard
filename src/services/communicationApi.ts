@@ -4,16 +4,24 @@ import type {
   ChatMessage,
   CommunicationAnalytics,
   CommunicationHistoryEntry,
+  CommunicationInboxItem,
+  CommunicationInboxOverview,
+  CommunicationInboxParams,
+  CommunicationListParams,
+  CommunicationListResponse,
   CommunicationOverview,
   Conversation,
   InternalNote,
   MessageTemplate,
   SafetyCommunication,
   SupportCase,
+  SupportTicket,
 } from '@/types/communication'
+import type { BroadcastFormValues } from '@/types/communication'
 import type { ActiveTripChat } from '@/types/communication'
 import {
   computeCommunicationAnalytics,
+  computeCommunicationInboxOverview,
   computeCommunicationOverview,
   getActiveTripChats,
   mockBroadcasts,
@@ -24,6 +32,9 @@ import {
   mockMessageTemplates,
   mockSafetyCommunications,
   mockSupportCases,
+  mockSupportTickets,
+  paginateCommunicationInbox,
+  paginateSupportTickets,
 } from '@/services/mock/communicationData'
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -43,6 +54,8 @@ export const communicationApi = createApi({
     'CommunicationHistory',
     'CommunicationAnalytics',
     'ActiveTripChats',
+    'SupportTickets',
+    'CommunicationInbox',
   ],
   endpoints: (builder) => ({
     getCommunicationOverview: builder.query<CommunicationOverview, void>({
@@ -51,6 +64,23 @@ export const communicationApi = createApi({
         return { data: computeCommunicationOverview() }
       },
       providesTags: ['CommunicationOverview'],
+    }),
+    getCommunicationInboxOverview: builder.query<CommunicationInboxOverview, void>({
+      queryFn: async () => {
+        await delay()
+        return { data: computeCommunicationInboxOverview() }
+      },
+      providesTags: ['CommunicationInbox', 'CommunicationOverview'],
+    }),
+    getCommunicationInbox: builder.query<
+      CommunicationListResponse<CommunicationInboxItem>,
+      CommunicationInboxParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        return { data: paginateCommunicationInbox(params ?? {}) }
+      },
+      providesTags: ['CommunicationInbox'],
     }),
     getConversations: builder.query<Conversation[], { category?: string; userType?: string } | void>({
       queryFn: async (filters) => {
@@ -109,6 +139,7 @@ export const communicationApi = createApi({
         'Conversations',
         'CommunicationOverview',
         'CommunicationHistory',
+        'CommunicationInbox',
       ],
     }),
     updateConversationStatus: builder.mutation<
@@ -122,7 +153,7 @@ export const communicationApi = createApi({
         mockConversations[index] = { ...mockConversations[index], status, lastActivity: new Date().toISOString() }
         return { data: mockConversations[index] }
       },
-      invalidatesTags: ['Conversations', 'CommunicationOverview', 'CommunicationHistory'],
+      invalidatesTags: ['Conversations', 'CommunicationOverview', 'CommunicationHistory', 'CommunicationInbox'],
     }),
     assignConversation: builder.mutation<Conversation, { id: string; agent: string }>({
       queryFn: async ({ id, agent }) => {
@@ -137,7 +168,7 @@ export const communicationApi = createApi({
         }
         return { data: mockConversations[index] }
       },
-      invalidatesTags: ['Conversations'],
+      invalidatesTags: ['Conversations', 'CommunicationInbox'],
     }),
     updateConversation: builder.mutation<Conversation, Partial<Conversation> & { id: string }>({
       queryFn: async ({ id, ...updates }) => {
@@ -209,6 +240,26 @@ export const communicationApi = createApi({
       },
       invalidatesTags: ['InternalNotes', 'CommunicationHistory'],
     }),
+    getSupportTickets: builder.query<
+      CommunicationListResponse<SupportTicket>,
+      CommunicationListParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        return { data: paginateSupportTickets(params ?? {}) }
+      },
+      providesTags: ['SupportTickets'],
+    }),
+    updateSupportTicket: builder.mutation<SupportTicket, Partial<SupportTicket> & { id: string }>({
+      queryFn: async ({ id, ...updates }) => {
+        await delay()
+        const index = mockSupportTickets.findIndex((t) => t.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Ticket not found' } }
+        mockSupportTickets[index] = { ...mockSupportTickets[index], ...updates }
+        return { data: mockSupportTickets[index] }
+      },
+      invalidatesTags: ['SupportTickets'],
+    }),
     getSupportCases: builder.query<SupportCase[], void>({
       queryFn: async () => ({ data: [...mockSupportCases] }),
       providesTags: ['SupportCases'],
@@ -235,6 +286,49 @@ export const communicationApi = createApi({
       queryFn: async () => ({ data: [...mockBroadcasts] }),
       providesTags: ['Broadcasts'],
     }),
+    createBroadcast: builder.mutation<
+      BroadcastRecord,
+      Omit<BroadcastFormValues, 'scheduledAt'> & { scheduledAt?: string }
+    >({
+      queryFn: async (payload) => {
+        await delay()
+        const broadcast: BroadcastRecord = {
+          id: `bc-${Date.now()}`,
+          title: payload.title,
+          message: payload.message,
+          broadcastType: payload.broadcastType,
+          target: payload.target,
+          targetValue: payload.targetValue,
+          recipientCount: 0,
+          sentBy: 'Admin',
+          sentAt: payload.scheduledAt ?? new Date().toISOString(),
+          status: 'scheduled',
+        }
+        mockBroadcasts.unshift(broadcast)
+        return { data: broadcast }
+      },
+      invalidatesTags: ['Broadcasts'],
+    }),
+    updateBroadcast: builder.mutation<BroadcastRecord, Partial<BroadcastRecord> & { id: string }>({
+      queryFn: async ({ id, ...updates }) => {
+        await delay()
+        const index = mockBroadcasts.findIndex((b) => b.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Broadcast not found' } }
+        mockBroadcasts[index] = { ...mockBroadcasts[index], ...updates }
+        return { data: mockBroadcasts[index] }
+      },
+      invalidatesTags: ['Broadcasts'],
+    }),
+    deleteBroadcast: builder.mutation<void, string>({
+      queryFn: async (id) => {
+        await delay()
+        const index = mockBroadcasts.findIndex((b) => b.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Broadcast not found' } }
+        mockBroadcasts.splice(index, 1)
+        return { data: undefined }
+      },
+      invalidatesTags: ['Broadcasts'],
+    }),
     sendBroadcast: builder.mutation<
       BroadcastRecord,
       Omit<BroadcastRecord, 'id' | 'sentAt' | 'sentBy' | 'recipientCount' | 'status'>
@@ -251,6 +345,22 @@ export const communicationApi = createApi({
         }
         mockBroadcasts.unshift(broadcast)
         return { data: broadcast }
+      },
+      invalidatesTags: ['Broadcasts'],
+    }),
+    sendBroadcastNow: builder.mutation<BroadcastRecord, string>({
+      queryFn: async (id) => {
+        await delay(500)
+        const index = mockBroadcasts.findIndex((b) => b.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Broadcast not found' } }
+        mockBroadcasts[index] = {
+          ...mockBroadcasts[index],
+          status: 'sent',
+          sentAt: new Date().toISOString(),
+          recipientCount: Math.floor(Math.random() * 5000) + 1000,
+          sentBy: 'Admin',
+        }
+        return { data: mockBroadcasts[index] }
       },
       invalidatesTags: ['Broadcasts'],
     }),
@@ -277,6 +387,8 @@ export const communicationApi = createApi({
 
 export const {
   useGetCommunicationOverviewQuery,
+  useGetCommunicationInboxOverviewQuery,
+  useGetCommunicationInboxQuery,
   useGetConversationsQuery,
   useGetConversationByIdQuery,
   useGetMessagesQuery,
@@ -290,11 +402,17 @@ export const {
   useDeleteMessageTemplateMutation,
   useGetInternalNotesQuery,
   useCreateInternalNoteMutation,
+  useGetSupportTicketsQuery,
+  useUpdateSupportTicketMutation,
   useGetSupportCasesQuery,
   useUpdateSupportCaseMutation,
   useGetSafetyCommunicationsQuery,
   useGetBroadcastsQuery,
+  useCreateBroadcastMutation,
+  useUpdateBroadcastMutation,
+  useDeleteBroadcastMutation,
   useSendBroadcastMutation,
+  useSendBroadcastNowMutation,
   useGetCommunicationHistoryQuery,
   useGetCommunicationAnalyticsQuery,
   useGetActiveTripChatsQuery,
@@ -309,4 +427,6 @@ export {
   CASE_TYPE_LABELS,
   NOTE_TYPE_LABELS,
   SAFETY_TYPE_LABELS,
+  TICKET_TYPE_LABELS,
+  COMMUNICATION_TYPE_LABELS,
 } from '@/services/mock/communicationData'

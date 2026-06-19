@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button, Form, Input, InputNumber, Modal, Select, Table } from 'antd'
+import { Button, DatePicker, Form, Input, InputNumber, Modal, Select, Table } from 'antd'
+import dayjs from 'dayjs'
 import { Plus } from 'lucide-react'
 import {
   AdminActionHost,
@@ -10,28 +11,27 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { TableFilters } from '@/components/common/TableFilters'
 import {
   getRewardsConfigActionItems,
+  REWARD_CATEGORY_LABELS,
+  REWARD_CATEGORY_OPTIONS,
   REWARDS_STATUS_OPTIONS,
 } from '@/features/driver-rewards/driverRewardsConfigHelpers'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
   useCreateBonusCampaignMutation,
   useCreatePenaltyRuleMutation,
-  useCreatePerformanceRuleMutation,
   useCreatePointsRuleMutation,
   useDeleteBonusCampaignMutation,
   useDeletePenaltyRuleMutation,
-  useDeletePerformanceRuleMutation,
   useDeletePointsRuleMutation,
   useGetBonusProgramsListQuery,
   useGetPenaltyRulesListQuery,
-  useGetPerformanceRewardsListQuery,
   useGetRewardRulesListQuery,
   useUpdateBonusCampaignMutation,
   useUpdatePenaltyRuleMutation,
-  useUpdatePerformanceRuleMutation,
   useUpdatePointsRuleMutation,
 } from '@/services/driverRewardsApi'
-import type { BonusCampaign, PenaltyRule, PerformanceRule, PointsRule } from '@/types/driverRewards'
+import type { BonusCampaign, PenaltyRule, PointsRule } from '@/types/driverRewards'
+import { formatDate } from '@/utils/format'
 
 const PAGE_SIZE = 10
 
@@ -86,7 +86,13 @@ export function RewardRulesTab() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<PointsRule | null>(null)
   const [deleteRecord, setDeleteRecord] = useState<PointsRule | null>(null)
-  const [form] = Form.useForm<{ actionName: string; points: number; status: PointsRule['status'] }>()
+  const [form] = Form.useForm<{
+    actionName: string
+    category: PointsRule['category']
+    points: number
+    description: string
+    status: PointsRule['status']
+  }>()
 
   const { data, isLoading } = useGetRewardRulesListQuery({ page, pageSize: PAGE_SIZE, search, status })
   const [createRule, { isLoading: creating }] = useCreatePointsRuleMutation()
@@ -96,13 +102,19 @@ export function RewardRulesTab() {
   const openCreate = () => {
     setEditRecord(null)
     form.resetFields()
-    form.setFieldsValue({ status: 'active', points: 5 })
+    form.setFieldsValue({ status: 'active', points: 5, category: 'ride_completion', description: '' })
     setModalOpen(true)
   }
 
   const openEdit = (record: PointsRule) => {
     setEditRecord(record)
-    form.setFieldsValue({ actionName: record.ruleName, points: record.points, status: record.status })
+    form.setFieldsValue({
+      actionName: record.ruleName,
+      category: record.category,
+      points: record.points,
+      description: record.description ?? '',
+      status: record.status,
+    })
     setModalOpen(true)
   }
 
@@ -132,8 +144,9 @@ export function RewardRulesTab() {
       ruleName: actionName,
       action: actionName,
       actionType: slugify(actionName),
-      category: 'other',
+      category: values.category,
       points: values.points,
+      description: values.description?.trim() || undefined,
       type: values.points > 0 ? 'earn' : values.points < 0 ? 'deduct' : 'neutral',
       status: values.status,
       lastUpdated: new Date().toISOString(),
@@ -152,9 +165,15 @@ export function RewardRulesTab() {
     <>
       <ConfigTableHeader
         search={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        onSearchChange={(v) => {
+          setSearch(v)
+          setPage(1)
+        }}
         status={status}
-        onStatusChange={(v) => { setStatus(v ?? ''); setPage(1) }}
+        onStatusChange={(v) => {
+          setStatus(v ?? '')
+          setPage(1)
+        }}
         searchPlaceholder="Search reward rules..."
         addLabel="Add Reward Rule"
         onAdd={openCreate}
@@ -163,7 +182,7 @@ export function RewardRulesTab() {
         loading={isLoading || creating || updating}
         rowKey="id"
         dataSource={data?.data ?? []}
-        scroll={{ x: 700 }}
+        scroll={{ x: 900 }}
         pagination={{
           current: page,
           total: data?.total ?? 0,
@@ -172,9 +191,14 @@ export function RewardRulesTab() {
           showSizeChanger: false,
         }}
         columns={[
-          { title: 'Action', dataIndex: 'ruleName' },
+          { title: 'Action Name', dataIndex: 'ruleName' },
           {
-            title: 'Points',
+            title: 'Category',
+            dataIndex: 'category',
+            render: (c: PointsRule['category']) => REWARD_CATEGORY_LABELS[c] ?? c,
+          },
+          {
+            title: 'Points Awarded',
             dataIndex: 'points',
             render: (p: number) => <span className="text-emerald-400">+{p}</span>,
           },
@@ -189,6 +213,8 @@ export function RewardRulesTab() {
         title={editRecord ? 'Edit Reward Rule' : 'Add Reward Rule'}
         open={modalOpen}
         confirmLoading={creating || updating}
+        okText="Save"
+        cancelText="Cancel"
         onCancel={() => setModalOpen(false)}
         onOk={handleSave}
         destroyOnClose
@@ -197,8 +223,14 @@ export function RewardRulesTab() {
           <Form.Item name="actionName" label="Action Name" rules={[{ required: true }]}>
             <Input placeholder="e.g. Standard Ride Completion" />
           </Form.Item>
-          <Form.Item name="points" label="Points" rules={[{ required: true }]}>
+          <Form.Item name="category" label="Category" rules={[{ required: true }]}>
+            <Select options={REWARD_CATEGORY_OPTIONS} />
+          </Form.Item>
+          <Form.Item name="points" label="Points Awarded" rules={[{ required: true }]}>
             <InputNumber min={1} className="w-full" />
+          </Form.Item>
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={2} placeholder="Optional rule description" />
           </Form.Item>
           <Form.Item name="status" label="Status" rules={[{ required: true }]}>
             <Select options={REWARDS_STATUS_OPTIONS} />
@@ -225,165 +257,6 @@ export function RewardRulesTab() {
   )
 }
 
-export function PerformanceRewardsTab() {
-  const adminActions = useAdminActions()
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editRecord, setEditRecord] = useState<PerformanceRule | null>(null)
-  const [deleteRecord, setDeleteRecord] = useState<PerformanceRule | null>(null)
-  const [form] = Form.useForm<{
-    metricName: string
-    requirement: string
-    points: number
-    status: PerformanceRule['status']
-  }>()
-
-  const { data, isLoading } = useGetPerformanceRewardsListQuery({ page, pageSize: PAGE_SIZE, search, status })
-  const [createRule, { isLoading: creating }] = useCreatePerformanceRuleMutation()
-  const [updateRule, { isLoading: updating }] = useUpdatePerformanceRuleMutation()
-  const [deleteRule, { isLoading: deleting }] = useDeletePerformanceRuleMutation()
-
-  const openCreate = () => {
-    setEditRecord(null)
-    form.resetFields()
-    form.setFieldsValue({ status: 'active', points: 50 })
-    setModalOpen(true)
-  }
-
-  const openEdit = (record: PerformanceRule) => {
-    setEditRecord(record)
-    form.setFieldsValue({
-      metricName: record.metricLabel,
-      requirement: record.thresholdLabel,
-      points: record.points,
-      status: record.status,
-    })
-    setModalOpen(true)
-  }
-
-  const handleAction = async (key: string, record: PerformanceRule) => {
-    switch (key) {
-      case 'edit':
-        openEdit(record)
-        break
-      case 'delete':
-        setDeleteRecord(record)
-        break
-      case 'enable':
-        await updateRule({ id: record.id, status: 'active' }).unwrap()
-        adminActions.notify('Performance reward enabled', record.metricLabel)
-        break
-      case 'disable':
-        await updateRule({ id: record.id, status: 'inactive' }).unwrap()
-        adminActions.notify('Performance reward disabled', record.metricLabel)
-        break
-    }
-  }
-
-  const handleSave = async () => {
-    const values = await form.validateFields()
-    const payload: Omit<PerformanceRule, 'id' | 'lastUpdated'> = {
-      metric: 'acceptance_rate',
-      metricLabel: values.metricName.trim(),
-      threshold: 0,
-      thresholdLabel: values.requirement.trim(),
-      points: values.points,
-      period: 'monthly',
-      status: values.status,
-    }
-    if (editRecord) {
-      await updateRule({ id: editRecord.id, ...payload }).unwrap()
-      adminActions.notify('Performance reward updated', values.metricName)
-    } else {
-      await createRule(payload).unwrap()
-      adminActions.notify('Performance reward created', values.metricName)
-    }
-    setModalOpen(false)
-  }
-
-  return (
-    <>
-      <ConfigTableHeader
-        search={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1) }}
-        status={status}
-        onStatusChange={(v) => { setStatus(v ?? ''); setPage(1) }}
-        searchPlaceholder="Search performance rewards..."
-        addLabel="Add Performance Reward"
-        onAdd={openCreate}
-      />
-      <Table
-        loading={isLoading || creating || updating}
-        rowKey="id"
-        dataSource={data?.data ?? []}
-        scroll={{ x: 800 }}
-        pagination={{
-          current: page,
-          total: data?.total ?? 0,
-          pageSize: PAGE_SIZE,
-          onChange: setPage,
-          showSizeChanger: false,
-        }}
-        columns={[
-          { title: 'Metric', dataIndex: 'metricLabel' },
-          { title: 'Requirement', dataIndex: 'thresholdLabel' },
-          {
-            title: 'Points',
-            dataIndex: 'points',
-            render: (p: number) => <span className="text-emerald-400">+{p}</span>,
-          },
-          { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-          createActionsColumn<PerformanceRule>(
-            (record) => getRewardsConfigActionItems(record.status),
-            (key, record) => void handleAction(key, record),
-          ),
-        ]}
-      />
-      <Modal
-        title={editRecord ? 'Edit Performance Reward' : 'Add Performance Reward'}
-        open={modalOpen}
-        confirmLoading={creating || updating}
-        onCancel={() => setModalOpen(false)}
-        onOk={handleSave}
-        destroyOnClose
-      >
-        <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item name="metricName" label="Metric Name" rules={[{ required: true }]}>
-            <Input placeholder="e.g. Acceptance Rate" />
-          </Form.Item>
-          <Form.Item name="requirement" label="Requirement" rules={[{ required: true }]}>
-            <Input placeholder="e.g. 95%+" />
-          </Form.Item>
-          <Form.Item name="points" label="Points" rules={[{ required: true }]}>
-            <InputNumber min={1} className="w-full" />
-          </Form.Item>
-          <Form.Item name="status" label="Status" rules={[{ required: true }]}>
-            <Select options={REWARDS_STATUS_OPTIONS} />
-          </Form.Item>
-        </Form>
-      </Modal>
-      <ConfirmationModal
-        open={Boolean(deleteRecord)}
-        title="Delete Performance Reward"
-        description={`Delete "${deleteRecord?.metricLabel}"?`}
-        confirmLabel="Delete"
-        danger
-        loading={deleting}
-        onCancel={() => setDeleteRecord(null)}
-        onConfirm={async () => {
-          if (!deleteRecord) return
-          await deleteRule(deleteRecord.id).unwrap()
-          adminActions.notify('Performance reward deleted', deleteRecord.metricLabel)
-          setDeleteRecord(null)
-        }}
-      />
-      <AdminActionHost actions={adminActions} />
-    </>
-  )
-}
-
 export function BonusProgramsTab() {
   const adminActions = useAdminActions()
   const [page, setPage] = useState(1)
@@ -397,6 +270,8 @@ export function BonusProgramsTab() {
     description: string
     requirement: string
     rewardPoints: number
+    startDate: dayjs.Dayjs
+    endDate: dayjs.Dayjs
     status: 'active' | 'inactive'
   }>()
 
@@ -408,7 +283,13 @@ export function BonusProgramsTab() {
   const openCreate = () => {
     setEditRecord(null)
     form.resetFields()
-    form.setFieldsValue({ status: 'active', rewardPoints: 100 })
+    const start = dayjs()
+    form.setFieldsValue({
+      status: 'active',
+      rewardPoints: 100,
+      startDate: start,
+      endDate: start.add(30, 'day'),
+    })
     setModalOpen(true)
   }
 
@@ -419,6 +300,8 @@ export function BonusProgramsTab() {
       description: record.description,
       requirement: record.requirement,
       rewardPoints: record.rewardPoints,
+      startDate: dayjs(record.startDate),
+      endDate: dayjs(record.endDate),
       status: bonusProgramStatus(record),
     })
     setModalOpen(true)
@@ -446,8 +329,6 @@ export function BonusProgramsTab() {
   const handleSave = async () => {
     const values = await form.validateFields()
     const enabled = values.status === 'active'
-    const now = new Date()
-    const end = new Date(now.getTime() + 30 * 86400000)
     const base = {
       name: values.programName.trim(),
       description: values.description.trim(),
@@ -460,8 +341,8 @@ export function BonusProgramsTab() {
       targetCities: [] as BonusCampaign['targetCities'],
       tripTarget: 0,
       budget: 0,
-      startDate: now.toISOString(),
-      endDate: end.toISOString(),
+      startDate: values.startDate.toISOString(),
+      endDate: values.endDate.toISOString(),
     }
     if (editRecord) {
       await updateProgram({ id: editRecord.id, ...base }).unwrap()
@@ -477,18 +358,24 @@ export function BonusProgramsTab() {
     <>
       <ConfigTableHeader
         search={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        onSearchChange={(v) => {
+          setSearch(v)
+          setPage(1)
+        }}
         status={status}
-        onStatusChange={(v) => { setStatus(v ?? ''); setPage(1) }}
+        onStatusChange={(v) => {
+          setStatus(v ?? '')
+          setPage(1)
+        }}
         searchPlaceholder="Search bonus programs..."
-        addLabel="Add Bonus Program"
+        addLabel="Create Bonus Program"
         onAdd={openCreate}
       />
       <Table
         loading={isLoading || creating || updating}
         rowKey="id"
         dataSource={data?.data ?? []}
-        scroll={{ x: 900 }}
+        scroll={{ x: 1000 }}
         pagination={{
           current: page,
           total: data?.total ?? 0,
@@ -497,18 +384,28 @@ export function BonusProgramsTab() {
           showSizeChanger: false,
         }}
         columns={[
-          { title: 'Program Name', dataIndex: 'name' },
+          { title: 'Bonus Name', dataIndex: 'name' },
           { title: 'Requirement', dataIndex: 'requirement' },
           {
-            title: 'Reward Points',
+            title: 'Reward',
             dataIndex: 'rewardPoints',
-            render: (p: number) => <span className="text-emerald-400">+{p}</span>,
+            render: (p: number) => <span className="text-emerald-400">+{p} pts</span>,
           },
           {
             title: 'Status',
             render: (_: unknown, record: BonusCampaign) => (
               <StatusBadge status={bonusProgramStatus(record)} />
             ),
+          },
+          {
+            title: 'Start Date',
+            dataIndex: 'startDate',
+            render: (d: string) => formatDate(d),
+          },
+          {
+            title: 'End Date',
+            dataIndex: 'endDate',
+            render: (d: string) => formatDate(d),
           },
           createActionsColumn<BonusCampaign>(
             (record) => getRewardsConfigActionItems(bonusProgramStatus(record)),
@@ -517,25 +414,33 @@ export function BonusProgramsTab() {
         ]}
       />
       <Modal
-        title={editRecord ? 'Edit Bonus Program' : 'Add Bonus Program'}
+        title={editRecord ? 'Edit Bonus Program' : 'Create Bonus Program'}
         open={modalOpen}
         confirmLoading={creating || updating}
+        okText="Save"
+        cancelText="Cancel"
         onCancel={() => setModalOpen(false)}
         onOk={handleSave}
         destroyOnClose
       >
         <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item name="programName" label="Program Name" rules={[{ required: true }]}>
+          <Form.Item name="programName" label="Bonus Name" rules={[{ required: true }]}>
             <Input />
-          </Form.Item>
-          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
-            <Input.TextArea rows={2} />
           </Form.Item>
           <Form.Item name="requirement" label="Requirement" rules={[{ required: true }]}>
             <Input placeholder="e.g. Complete 20 rides" />
           </Form.Item>
-          <Form.Item name="rewardPoints" label="Reward Points" rules={[{ required: true }]}>
+          <Form.Item name="rewardPoints" label="Reward (Points)" rules={[{ required: true }]}>
             <InputNumber min={1} className="w-full" />
+          </Form.Item>
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.Item name="startDate" label="Start Date" rules={[{ required: true }]}>
+            <DatePicker className="w-full" />
+          </Form.Item>
+          <Form.Item name="endDate" label="End Date" rules={[{ required: true }]}>
+            <DatePicker className="w-full" />
           </Form.Item>
           <Form.Item name="status" label="Status" rules={[{ required: true }]}>
             <Select options={REWARDS_STATUS_OPTIONS} />
@@ -571,7 +476,7 @@ export function PenaltyRulesTab() {
   const [editRecord, setEditRecord] = useState<PenaltyRule | null>(null)
   const [deleteRecord, setDeleteRecord] = useState<PenaltyRule | null>(null)
   const [form] = Form.useForm<{
-    violationName: string
+    ruleName: string
     deductionPoints: number
     status: PenaltyRule['status']
   }>()
@@ -591,7 +496,7 @@ export function PenaltyRulesTab() {
   const openEdit = (record: PenaltyRule) => {
     setEditRecord(record)
     form.setFieldsValue({
-      violationName: record.ruleName,
+      ruleName: record.ruleName,
       deductionPoints: Math.abs(record.points),
       status: record.status,
     })
@@ -619,19 +524,19 @@ export function PenaltyRulesTab() {
 
   const handleSave = async () => {
     const values = await form.validateFields()
-    const violationName = values.violationName.trim()
+    const ruleName = values.ruleName.trim()
     const payload: Omit<PenaltyRule, 'id' | 'lastUpdated'> = {
-      ruleName: violationName,
-      actionType: slugify(violationName),
+      ruleName,
+      actionType: slugify(ruleName),
       points: -Math.abs(values.deductionPoints),
       status: values.status,
     }
     if (editRecord) {
       await updateRule({ id: editRecord.id, ...payload }).unwrap()
-      adminActions.notify('Penalty rule updated', violationName)
+      adminActions.notify('Penalty rule updated', ruleName)
     } else {
       await createRule(payload).unwrap()
-      adminActions.notify('Penalty rule created', violationName)
+      adminActions.notify('Penalty rule created', ruleName)
     }
     setModalOpen(false)
   }
@@ -640,9 +545,15 @@ export function PenaltyRulesTab() {
     <>
       <ConfigTableHeader
         search={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        onSearchChange={(v) => {
+          setSearch(v)
+          setPage(1)
+        }}
         status={status}
-        onStatusChange={(v) => { setStatus(v ?? ''); setPage(1) }}
+        onStatusChange={(v) => {
+          setStatus(v ?? '')
+          setPage(1)
+        }}
         searchPlaceholder="Search penalty rules..."
         addLabel="Add Penalty Rule"
         onAdd={openCreate}
@@ -660,11 +571,11 @@ export function PenaltyRulesTab() {
           showSizeChanger: false,
         }}
         columns={[
-          { title: 'Violation', dataIndex: 'ruleName' },
+          { title: 'Rule Name', dataIndex: 'ruleName' },
           {
-            title: 'Deduction',
+            title: 'Deduction Points',
             dataIndex: 'points',
-            render: (p: number) => <span className="text-red-400">{p}</span>,
+            render: (p: number) => <span className="text-red-400">-{Math.abs(p)}</span>,
           },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
           createActionsColumn<PenaltyRule>(
@@ -677,13 +588,15 @@ export function PenaltyRulesTab() {
         title={editRecord ? 'Edit Penalty Rule' : 'Add Penalty Rule'}
         open={modalOpen}
         confirmLoading={creating || updating}
+        okText="Save"
+        cancelText="Cancel"
         onCancel={() => setModalOpen(false)}
         onOk={handleSave}
         destroyOnClose
       >
         <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item name="violationName" label="Violation Name" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="ruleName" label="Rule Name" rules={[{ required: true }]}>
+            <Input placeholder="e.g. Ride Cancellation" />
           </Form.Item>
           <Form.Item name="deductionPoints" label="Deduction Points" rules={[{ required: true }]}>
             <InputNumber min={1} className="w-full" />

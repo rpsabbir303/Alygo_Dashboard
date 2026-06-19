@@ -53,24 +53,15 @@ export const NAVIGATION: NavItem[] = [
       { key: 'driving-hours', label: 'Driving Hours', path: '/operations/driving-hours' },
       { key: 'destination-filters', label: 'Destination Filter Usage & Analytics', path: '/operations/destination-filters' },
       { key: 'policy-center', label: 'Operations Policy Center', path: '/operations/policy-center' },
-      { key: 'safety-incidents', label: 'Safety & Incidents', path: '/operations/safety-incidents' },
+      { key: 'safety-incidents', label: 'Safety & Incident Management', path: '/operations/safety-incidents' },
     ],
   },
   {
     key: 'communication',
     label: 'Communication Center',
+    path: '/communication',
     icon: MessageSquare,
     permission: 'communication.view',
-    children: [
-      { key: 'conversations', label: 'Conversations', path: '/communication/conversations' },
-      { key: 'active-trip-chats', label: 'Active Trip Chats', path: '/communication/active-trip-chats' },
-      { key: 'driver-support', label: 'Driver Support', path: '/communication/driver-support' },
-      { key: 'passenger-support', label: 'Passenger Support', path: '/communication/passenger-support' },
-      { key: 'safety-comms', label: 'Safety Communications', path: '/communication/safety' },
-      { key: 'broadcast', label: 'Broadcast Center', path: '/communication/broadcast' },
-      { key: 'templates', label: 'Message Templates', path: '/communication/templates' },
-      { key: 'comm-analytics', label: 'Communication Analytics', path: '/communication/analytics' },
-    ],
   },
   {
     key: 'users',
@@ -80,9 +71,9 @@ export const NAVIGATION: NavItem[] = [
     children: [
       { key: 'drivers', label: 'Driver Management', path: '/drivers' },
       { key: 'passengers', label: 'Passenger Management', path: '/passengers' },
-      { key: 'driver-rewards', label: 'Driver Rewards & Performance', path: '/driver-rewards' },
+      { key: 'driver-rewards', label: 'Driver Rewards Management', path: '/driver-rewards' },
       { key: 'tier-management', label: 'Tier Management', path: '/drivers/tiers' },
-      { key: 'waitlist', label: 'Driver Capacity & Waitlist', path: '/drivers/waitlist' },
+      { key: 'waitlist', label: 'Driver Capacity Management', path: '/drivers/waitlist' },
     ],
   },
   {

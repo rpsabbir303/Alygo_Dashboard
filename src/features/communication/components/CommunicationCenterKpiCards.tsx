@@ -1,21 +1,16 @@
-import { AlertTriangle, CheckCircle, Shield, Siren } from 'lucide-react'
-import { useGetSafetyOverviewQuery } from '@/services/safetyIncidentApi'
-import type { SafetyOverview } from '@/types/safetyIncident'
+import { Megaphone, MessageSquare, Mail, FolderOpen } from 'lucide-react'
+import { useGetCommunicationInboxOverviewQuery } from '@/services/communicationApi'
 import { formatNumber } from '@/utils/format'
 
-const overviewConfig: Array<{
-  key: keyof SafetyOverview
-  label: string
-  icon: typeof Shield
-}> = [
-  { key: 'openCases', label: 'Open Cases', icon: AlertTriangle },
-  { key: 'criticalCases', label: 'Critical Cases', icon: Siren },
-  { key: 'sosAlerts', label: 'SOS Alerts', icon: Shield },
-  { key: 'resolvedCases', label: 'Resolved Cases', icon: CheckCircle },
+const kpiConfig = [
+  { key: 'totalConversations' as const, label: 'Total Conversations', icon: MessageSquare },
+  { key: 'unreadMessages' as const, label: 'Unread Messages', icon: Mail },
+  { key: 'openCases' as const, label: 'Open Cases', icon: FolderOpen },
+  { key: 'broadcastsSentToday' as const, label: 'Broadcasts Sent Today', icon: Megaphone },
 ]
 
-export function SafetyOverviewCards() {
-  const { data, isLoading } = useGetSafetyOverviewQuery()
+export function CommunicationCenterKpiCards() {
+  const { data, isLoading } = useGetCommunicationInboxOverviewQuery()
 
   if (isLoading || !data) {
     return (
@@ -29,7 +24,7 @@ export function SafetyOverviewCards() {
 
   return (
     <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {overviewConfig.map(({ key, label, icon: Icon }) => (
+      {kpiConfig.map(({ key, label, icon: Icon }) => (
         <div key={key} className="glass-card p-5">
           <div className="w-fit rounded-xl bg-indigo-500/10 p-2.5">
             <Icon className="h-5 w-5 text-indigo-400" />

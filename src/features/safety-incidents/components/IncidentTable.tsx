@@ -7,10 +7,11 @@ import {
 } from '@/components/admin'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
+  ASSIGN_OPTIONS,
+  useAddIncidentNoteMutation,
   useAssignIncidentMutation,
-  useEscalateIncidentMutation,
+  useCloseIncidentMutation,
   useGetIncidentsQuery,
-  useGetSafetyTeamQuery,
   useResolveIncidentMutation,
 } from '@/services/safetyIncidentApi'
 import type { SafetyIncident } from '@/types/safetyIncident'
@@ -27,16 +28,20 @@ import { IncidentDetailDrawer } from '@/features/safety-incidents/components/Inc
 export function IncidentTable() {
   const adminActions = useAdminActions()
   const { data = [], isLoading } = useGetIncidentsQuery()
-  const { data: team = [] } = useGetSafetyTeamQuery()
   const [selected, setSelected] = useState<SafetyIncident | null>(null)
   const [assignRecord, setAssignRecord] = useState<SafetyIncident | null>(null)
   const [resolveRecord, setResolveRecord] = useState<SafetyIncident | null>(null)
+  const [closeRecord, setCloseRecord] = useState<SafetyIncident | null>(null)
+  const [noteRecord, setNoteRecord] = useState<SafetyIncident | null>(null)
   const [assignTo, setAssignTo] = useState('')
   const [resolveNote, setResolveNote] = useState('')
+  const [closeNote, setCloseNote] = useState('')
+  const [internalNote, setInternalNote] = useState('')
 
   const [assignIncident, { isLoading: assigning }] = useAssignIncidentMutation()
   const [resolveIncident, { isLoading: resolving }] = useResolveIncidentMutation()
-  const [escalateIncident] = useEscalateIncidentMutation()
+  const [closeIncident, { isLoading: closing }] = useCloseIncidentMutation()
+  const [addIncidentNote, { isLoading: addingNote }] = useAddIncidentNoteMutation()
 
   const handleAction = (key: string, record: SafetyIncident) => {
     switch (key) {
@@ -45,22 +50,19 @@ export function IncidentTable() {
         break
       case 'assign':
         setAssignRecord(record)
-        setAssignTo(team[0]?.name ?? 'Safety Team Alpha')
+        setAssignTo(record.assignedTo ?? ASSIGN_OPTIONS[0].value)
+        break
+      case 'note':
+        setNoteRecord(record)
+        setInternalNote('')
         break
       case 'resolve':
         setResolveRecord(record)
+        setResolveNote('')
         break
-      case 'escalate':
-        adminActions.openConfirm({
-          title: 'Escalate Incident',
-          description: `Escalate case ${record.caseId} to senior safety team?`,
-          confirmLabel: 'Escalate',
-          danger: true,
-          onConfirm: async () => {
-            await escalateIncident(record.id).unwrap()
-            adminActions.notify(`Case ${record.caseId} escalated`)
-          },
-        })
+      case 'close':
+        setCloseRecord(record)
+        setCloseNote('')
         break
     }
   }
@@ -71,16 +73,17 @@ export function IncidentTable() {
         loading={isLoading}
         rowKey="id"
         dataSource={data}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1300 }}
         {...createTableRowProps<SafetyIncident>((record) => setSelected(record))}
         columns={[
           { title: 'Case ID', dataIndex: 'caseId', width: 140 },
-          { title: 'Type', dataIndex: 'type', render: (t: string) => <Tag>{typeLabel(t)}</Tag> },
+          { title: 'Case Type', dataIndex: 'type', render: (t: string) => <Tag>{typeLabel(t)}</Tag> },
           { title: 'Driver', dataIndex: 'driverName' },
           { title: 'Passenger', dataIndex: 'passengerName' },
-          { title: 'Status', dataIndex: 'status', render: (s: string) => <Tag color={statusColor(s)}>{statusLabel(s)}</Tag> },
           { title: 'Priority', dataIndex: 'priority', render: (p: string) => <Tag color={priorityColor(p)}>{priorityLabel(p)}</Tag> },
-          { title: 'Created At', dataIndex: 'createdAt', render: (d: string) => new Date(d).toLocaleString() },
+          { title: 'Status', dataIndex: 'status', render: (s: string) => <Tag color={statusColor(s)}>{statusLabel(s)}</Tag> },
+          { title: 'Created Date', dataIndex: 'createdAt', render: (d: string) => new Date(d).toLocaleString() },
+          { title: 'Assigned To', dataIndex: 'assignedTo', render: (v: string | undefined) => v ?? '—' },
           createActionsColumn<SafetyIncident>(
             (record) => getIncidentActionItems(record),
             (key, record) => handleAction(key, record),
@@ -108,11 +111,32 @@ export function IncidentTable() {
         destroyOnClose
       >
         <Form layout="vertical" className="mt-4">
-          <Form.Item label="Safety Team">
-            <Select
-              value={assignTo}
-              onChange={setAssignTo}
-              options={team.filter((m) => m.status === 'active').map((m) => ({ value: m.name, label: `${m.name} (${m.role})` }))}
+          <Form.Item label="Assign To">
+            <Select value={assignTo} onChange={setAssignTo} options={ASSIGN_OPTIONS} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={`Add Internal Note — ${noteRecord?.caseId}`}
+        open={Boolean(noteRecord)}
+        confirmLoading={addingNote}
+        onCancel={() => setNoteRecord(null)}
+        onOk={async () => {
+          if (!noteRecord || !internalNote.trim()) return
+          await addIncidentNote({ id: noteRecord.id, content: internalNote.trim() }).unwrap()
+          adminActions.notify('Internal note added')
+          setNoteRecord(null)
+        }}
+        destroyOnClose
+      >
+        <Form layout="vertical" className="mt-4">
+          <Form.Item label="Note">
+            <Input.TextArea
+              rows={3}
+              value={internalNote}
+              onChange={(e) => setInternalNote(e.target.value)}
+              placeholder="Add internal note for the safety team..."
             />
           </Form.Item>
         </Form>
@@ -133,7 +157,37 @@ export function IncidentTable() {
       >
         <Form layout="vertical" className="mt-4">
           <Form.Item label="Resolution Notes">
-            <Input.TextArea rows={3} value={resolveNote} onChange={(e) => setResolveNote(e.target.value)} placeholder="Describe resolution..." />
+            <Input.TextArea
+              rows={3}
+              value={resolveNote}
+              onChange={(e) => setResolveNote(e.target.value)}
+              placeholder="Describe resolution..."
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={`Close Case — ${closeRecord?.caseId}`}
+        open={Boolean(closeRecord)}
+        confirmLoading={closing}
+        onCancel={() => setCloseRecord(null)}
+        onOk={async () => {
+          if (!closeRecord) return
+          await closeIncident({ id: closeRecord.id, note: closeNote }).unwrap()
+          adminActions.notify(`Case ${closeRecord.caseId} closed`)
+          setCloseRecord(null)
+        }}
+        destroyOnClose
+      >
+        <Form layout="vertical" className="mt-4">
+          <Form.Item label="Closing Notes (optional)">
+            <Input.TextArea
+              rows={3}
+              value={closeNote}
+              onChange={(e) => setCloseNote(e.target.value)}
+              placeholder="Add any final notes before closing..."
+            />
           </Form.Item>
         </Form>
       </Modal>
