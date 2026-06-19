@@ -26,6 +26,11 @@ import type {
   RewardNotificationTemplate,
   RulesEngineAnalytics,
 } from '@/types/driverRewards'
+import type {
+  DriverRewardsListParams,
+  DriverRewardsListResponse,
+  RewardsConfigOverview,
+} from '@/types/driverRewardsConfig'
 import { createDefaultLevel, createPointsRule } from '@/features/driver-rewards/utils/tierDefaults'
 
 export let mockDriverLevels: DriverLevel[] = [
@@ -59,12 +64,12 @@ export let mockPerformanceRules: PerformanceRule[] = [
 ]
 
 export let mockPenaltyRules: PenaltyRule[] = [
-  { id: 'pen-1', ruleName: 'Accepted Ride Cancellation', actionType: 'ride_cancelled', points: -10, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
-  { id: 'pen-2', ruleName: 'Late Arrival', actionType: 'late_arrival', points: -5, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
-  { id: 'pen-3', ruleName: 'Passenger Complaint', actionType: 'passenger_complaint', points: -15, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
-  { id: 'pen-4', ruleName: 'Fraud Warning', actionType: 'fraud_warning', points: -100, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
-  { id: 'pen-5', ruleName: 'Compliance Violation', actionType: 'compliance_violation', points: -50, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
-  { id: 'pen-6', ruleName: 'Safety Incident', actionType: 'safety_incident', points: -75, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'pen-1', ruleName: 'Accepted Ride Cancellation', actionType: 'ride_cancelled', points: -10, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'pen-2', ruleName: 'Late Arrival', actionType: 'late_arrival', points: -15, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'pen-3', ruleName: 'Passenger Complaint', actionType: 'passenger_complaint', points: -25, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'pen-4', ruleName: 'Fraud Warning', actionType: 'fraud_warning', points: -50, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'pen-5', ruleName: 'Compliance Violation', actionType: 'compliance_violation', points: -100, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
+  { id: 'pen-6', ruleName: 'Safety Incident', actionType: 'safety_incident', points: -150, status: 'active', lastUpdated: '2026-06-01T00:00:00Z', createdBy: 'Admin', updatedBy: 'Admin', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z' },
 ]
 
 export let mockQualificationRules: QualificationRule[] = mockDriverLevels.map((level) => ({
@@ -492,6 +497,7 @@ export let mockBonusCampaigns: BonusCampaign[] = [
   {
     id: 'bc-1',
     name: 'Weekend Bonus',
+    requirement: 'Complete 20 rides',
     campaignType: 'demand_based',
     targetTiers: ['journey', 'pro_go', 'elite', 'platinum', 'diamond'],
     targetCities: ['San Francisco', 'Oakland'],
@@ -508,6 +514,7 @@ export let mockBonusCampaigns: BonusCampaign[] = [
   {
     id: 'bc-2',
     name: 'Airport Challenge',
+    requirement: 'Complete 10 airport rides',
     campaignType: 'city_based',
     targetTier: 'pro_go',
     targetTiers: ['pro_go', 'elite', 'platinum', 'diamond'],
@@ -526,6 +533,7 @@ export let mockBonusCampaigns: BonusCampaign[] = [
   {
     id: 'bc-3',
     name: 'Peak Hour Challenge',
+    requirement: 'Complete 15 peak rides',
     campaignType: 'demand_based',
     targetTiers: ['elite', 'platinum', 'diamond'],
     targetCities: ['San Francisco', 'San Jose', 'Oakland'],
@@ -542,6 +550,7 @@ export let mockBonusCampaigns: BonusCampaign[] = [
   {
     id: 'bc-4',
     name: 'Diamond Tier Exclusive',
+    requirement: 'Monthly retention reward',
     campaignType: 'tier_based',
     targetTier: 'diamond',
     targetTiers: ['diamond'],
@@ -1080,5 +1089,102 @@ export function buildDriverRewardsPublicConfig(): DriverRewardsPublicConfig {
     penaltyRules: mockPenaltyRules
       .filter((r) => r.status === 'active')
       .map((r) => ({ ruleName: r.ruleName, points: r.points })),
+  }
+}
+
+export function paginateDriverRewardsList<T extends object>(
+  items: T[],
+  params: DriverRewardsListParams,
+  searchFields: (keyof T)[],
+  statusField: keyof T = 'status' as keyof T,
+): DriverRewardsListResponse<T> {
+  const page = params.page ?? 1
+  const pageSize = params.pageSize ?? 10
+  const search = (params.search ?? '').trim().toLowerCase()
+  const status = (params.status ?? '').trim()
+
+  let filtered = [...items]
+
+  if (search) {
+    filtered = filtered.filter((item) =>
+      searchFields.some((field) => String(item[field] ?? '').toLowerCase().includes(search)),
+    )
+  }
+
+  if (status) {
+    filtered = filtered.filter((item) => String(item[statusField] ?? '') === status)
+  }
+
+  const start = (page - 1) * pageSize
+  return {
+    data: filtered.slice(start, start + pageSize),
+    total: filtered.length,
+    page,
+    pageSize,
+  }
+}
+
+export function paginateBonusPrograms(
+  items: BonusCampaign[],
+  params: DriverRewardsListParams,
+): DriverRewardsListResponse<BonusCampaign> {
+  const page = params.page ?? 1
+  const pageSize = params.pageSize ?? 10
+  const search = (params.search ?? '').trim().toLowerCase()
+  const status = (params.status ?? '').trim()
+
+  let filtered = [...items]
+
+  if (search) {
+    filtered = filtered.filter(
+      (item) =>
+        item.name.toLowerCase().includes(search) ||
+        item.requirement.toLowerCase().includes(search) ||
+        item.description.toLowerCase().includes(search),
+    )
+  }
+
+  if (status === 'active') {
+    filtered = filtered.filter((item) => item.enabled && item.status === 'active')
+  } else if (status === 'inactive') {
+    filtered = filtered.filter((item) => !item.enabled || item.status !== 'active')
+  }
+
+  const start = (page - 1) * pageSize
+  return {
+    data: filtered.slice(start, start + pageSize),
+    total: filtered.length,
+    page,
+    pageSize,
+  }
+}
+
+export function computeRewardsConfigOverview(): RewardsConfigOverview {
+  const highestReward = mockPointsRules.reduce(
+    (max, rule) => (rule.points > max.points ? rule : max),
+    mockPointsRules[0],
+  )
+  const highestPenalty = mockPenaltyRules.reduce(
+    (min, rule) => (rule.points < min.points ? rule : min),
+    mockPenaltyRules[0],
+  )
+
+  const activeConfigurations =
+    mockPointsRules.filter((r) => r.status === 'active').length +
+    mockPerformanceRules.filter((r) => r.status === 'active').length +
+    mockBonusCampaigns.filter((c) => c.enabled && c.status === 'active').length +
+    mockPenaltyRules.filter((r) => r.status === 'active').length
+
+  return {
+    totalRewardRules: mockPointsRules.length,
+    totalBonusPrograms: mockBonusCampaigns.length,
+    totalPenaltyRules: mockPenaltyRules.length,
+    highestRewardAction: highestReward
+      ? `${highestReward.ruleName} (+${highestReward.points} pts)`
+      : '—',
+    highestPenaltyRule: highestPenalty
+      ? `${highestPenalty.ruleName} (${highestPenalty.points} pts)`
+      : '—',
+    activeConfigurations,
   }
 }

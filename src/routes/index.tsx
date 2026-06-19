@@ -20,6 +20,11 @@ const LiveTripsPage = lazy(() => import('@/features/operations/LiveTripsPage'))
 const RideMonitoringPage = lazy(() => import('@/features/operations/RideMonitoringPage'))
 const CancellationManagementPage = lazy(() => import('@/features/cancellations/CancellationManagementPage'))
 const DriverRewardsPage = lazy(() => import('@/features/driver-rewards/DriverRewardsPage'))
+const LegacyDriverRewardsRedirect = lazy(() =>
+  import('@/features/driver-rewards/LegacyDriverRewardsRedirect').then((m) => ({
+    default: m.LegacyDriverRewardsRedirect,
+  })),
+)
 const TierManagementPage = lazy(() => import('@/features/driver-rewards/TierManagementPage'))
 const LostFoundManagementPage = lazy(() => import('@/features/lost-found/LostFoundManagementPage'))
 const TripCompletionReviewPage = lazy(() => import('@/features/trip-completion-review/TripCompletionReviewPage'))
@@ -28,7 +33,7 @@ const DestinationFilterManagementPage = lazy(() => import('@/features/destinatio
 const OperationsPolicyCenterPage = lazy(() => import('@/features/operations-policy/OperationsPolicyCenterPage'))
 const LocationDashboardPage = lazy(() => import('@/features/locations/LocationDashboardPage'))
 const SafetyIncidentPage = lazy(() => import('@/features/safety-incidents/SafetyIncidentPage'))
-const BackgroundCheckFeePage = lazy(() => import('@/features/background-check-fees/BackgroundCheckFeePage'))
+const ComplianceCenterPage = lazy(() => import('@/features/compliance/ComplianceCenterPage'))
 const ConversationsPage = lazy(() => import('@/features/communication/pages/ConversationsPage'))
 const ActiveTripChatsPage = lazy(() => import('@/features/communication/pages/ActiveTripChatsPage'))
 const DriverSupportPage = lazy(() => import('@/features/communication/pages/DriverSupportPage'))
@@ -37,14 +42,7 @@ const SafetyCommunicationsPage = lazy(() => import('@/features/communication/pag
 const BroadcastCenterPage = lazy(() => import('@/features/communication/pages/BroadcastCenterPage'))
 const MessageTemplatesPage = lazy(() => import('@/features/communication/pages/MessageTemplatesPage'))
 const CommunicationAnalyticsPage = lazy(() => import('@/features/communication/pages/CommunicationAnalyticsPage'))
-const ComplianceCenterPage = lazy(() => import('@/features/compliance/ComplianceCenterPage'))
-const BackgroundChecksPage = lazy(() => import('@/features/compliance/BackgroundChecksPage'))
-const DocumentMonitoringPage = lazy(() => import('@/features/compliance/DocumentMonitoringPage'))
-const DriverRestrictionsPage = lazy(() => import('@/features/compliance/DriverRestrictionsPage'))
-const EligibilityRulesPage = lazy(() => import('@/features/eligibility/EligibilityRulesPage'))
-const VehicleCategoriesPage = lazy(() => import('@/features/eligibility/VehicleCategoriesPage'))
-const CategoryAssignmentsPage = lazy(() => import('@/features/eligibility/CategoryAssignmentsPage'))
-const PremiumVehiclesPage = lazy(() => import('@/features/eligibility/PremiumVehiclesPage'))
+const VehicleEligibilityPage = lazy(() => import('@/features/vehicle-eligibility/VehicleEligibilityPage'))
 const RideCategoriesPage = lazy(() => import('@/features/ride-categories/RideCategoriesPage'))
 const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
 const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
@@ -107,7 +105,8 @@ export const router = createBrowserRouter([
       { path: 'communication/internal-notes', element: <Navigate to="/communication/conversations" replace /> },
       { path: 'communication/analytics', element: withSuspense(<CommunicationAnalyticsPage />) },
       { path: 'drivers', element: withSuspense(<DriversPage />) },
-      { path: 'drivers/rewards', element: withSuspense(<DriverRewardsPage />) },
+      { path: 'driver-rewards', element: withSuspense(<DriverRewardsPage />) },
+      { path: 'drivers/rewards', element: withSuspense(<LegacyDriverRewardsRedirect />) },
       { path: 'drivers/tiers', element: withSuspense(<TierManagementPage />) },
       { path: 'drivers/rewards/tier-management', element: <Navigate to="/drivers/tiers" replace /> },
       { path: 'drivers/waitlist', element: withSuspense(<DriverWaitlistPage />) },
@@ -115,14 +114,15 @@ export const router = createBrowserRouter([
       { path: 'passengers', element: withSuspense(<PassengersPage />) },
       { path: 'passengers/:id', element: withSuspense(<PassengerProfilePage />) },
       { path: 'compliance', element: withSuspense(<ComplianceCenterPage />) },
-      { path: 'compliance/background-checks', element: withSuspense(<BackgroundChecksPage />) },
-      { path: 'compliance/background-check-fees', element: withSuspense(<BackgroundCheckFeePage />) },
-      { path: 'compliance/documents', element: withSuspense(<DocumentMonitoringPage />) },
-      { path: 'compliance/restrictions', element: withSuspense(<DriverRestrictionsPage />) },
-      { path: 'eligibility/rules', element: withSuspense(<EligibilityRulesPage />) },
-      { path: 'eligibility/categories', element: withSuspense(<VehicleCategoriesPage />) },
-      { path: 'eligibility/assignments', element: withSuspense(<CategoryAssignmentsPage />) },
-      { path: 'eligibility/premium-vehicles', element: withSuspense(<PremiumVehiclesPage />) },
+      { path: 'compliance/background-checks', element: <Navigate to="/compliance?tab=background-checks" replace /> },
+      { path: 'compliance/background-check-fees', element: <Navigate to="/compliance?tab=fees" replace /> },
+      { path: 'compliance/documents', element: <Navigate to="/compliance?tab=documents" replace /> },
+      { path: 'compliance/restrictions', element: <Navigate to="/compliance?tab=restrictions" replace /> },
+      { path: 'vehicle-eligibility', element: withSuspense(<VehicleEligibilityPage />) },
+      { path: 'eligibility/rules', element: <Navigate to="/vehicle-eligibility" replace /> },
+      { path: 'eligibility/categories', element: <Navigate to="/vehicle-eligibility" replace /> },
+      { path: 'eligibility/assignments', element: <Navigate to="/vehicle-eligibility" replace /> },
+      { path: 'eligibility/premium-vehicles', element: <Navigate to="/vehicle-eligibility" replace /> },
       { path: 'ride-categories', element: withSuspense(<RideCategoriesPage />) },
       { path: 'categories/:category', element: <Navigate to="/ride-categories" replace /> },
       { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },

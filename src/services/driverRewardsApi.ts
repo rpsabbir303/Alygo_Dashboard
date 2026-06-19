@@ -57,8 +57,17 @@ import {
   mockQualificationRules,
   buildDriverRewardsPublicConfig,
   computePointsRulesOverview,
+  computeRewardsConfigOverview,
   computeRulesEngineAnalytics,
+  paginateBonusPrograms,
+  paginateDriverRewardsList,
 } from '@/services/mock/driverRewardsData'
+import type {
+  DriverRewardsListParams,
+  DriverRewardsListResponse,
+  RewardsConfigOverview,
+} from '@/types/driverRewardsConfig'
+import type { DriverRewardsAuditFields } from '@/types/driverRewards'
 import {
   deriveActiveBenefitLabels,
   deriveLockedBenefitLabels,
@@ -66,6 +75,32 @@ import {
 } from '@/features/driver-rewards/utils/tierConfigHelpers'
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function stampCreate<T extends DriverRewardsAuditFields>(
+  entity: T,
+  changedBy = 'Admin',
+): T {
+  const now = new Date().toISOString()
+  return {
+    ...entity,
+    createdBy: changedBy,
+    updatedBy: changedBy,
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
+function stampUpdate<T extends DriverRewardsAuditFields>(
+  entity: T,
+  changedBy = 'Admin',
+): T {
+  const now = new Date().toISOString()
+  return {
+    ...entity,
+    updatedBy: changedBy,
+    updatedAt: now,
+  }
+}
 
 const levelOrder: DriverLevelName[] = ['journey', 'pro_go', 'elite', 'platinum', 'diamond']
 
@@ -253,6 +288,66 @@ export const driverRewardsApi = createApi({
       queryFn: async () => ({ data: computePointsRulesOverview() }),
       providesTags: ['PointsRules', 'BonusCampaigns'],
     }),
+    getRewardsConfigOverview: builder.query<RewardsConfigOverview, void>({
+      queryFn: async () => {
+        await delay()
+        return { data: computeRewardsConfigOverview() }
+      },
+      providesTags: ['PointsRules', 'PerformanceRules', 'PenaltyRules', 'BonusCampaigns'],
+    }),
+    getRewardRulesList: builder.query<
+      DriverRewardsListResponse<PointsRule>,
+      DriverRewardsListParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        return {
+          data: paginateDriverRewardsList(mockPointsRules, params ?? {}, [
+            'ruleName',
+            'action',
+            'actionType',
+          ]),
+        }
+      },
+      providesTags: ['PointsRules'],
+    }),
+    getPerformanceRewardsList: builder.query<
+      DriverRewardsListResponse<PerformanceRule>,
+      DriverRewardsListParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        return {
+          data: paginateDriverRewardsList(mockPerformanceRules, params ?? {}, [
+            'metricLabel',
+            'thresholdLabel',
+          ]),
+        }
+      },
+      providesTags: ['PerformanceRules'],
+    }),
+    getPenaltyRulesList: builder.query<
+      DriverRewardsListResponse<PenaltyRule>,
+      DriverRewardsListParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        return {
+          data: paginateDriverRewardsList(mockPenaltyRules, params ?? {}, ['ruleName', 'actionType']),
+        }
+      },
+      providesTags: ['PenaltyRules'],
+    }),
+    getBonusProgramsList: builder.query<
+      DriverRewardsListResponse<BonusCampaign>,
+      DriverRewardsListParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        return { data: paginateBonusPrograms(mockBonusCampaigns, params ?? {}) }
+      },
+      providesTags: ['BonusCampaigns'],
+    }),
     getPointsRules: builder.query<PointsRule[], void>({
       queryFn: async () => ({ data: [...mockPointsRules] }),
       providesTags: ['PointsRules'],
@@ -262,7 +357,11 @@ export const driverRewardsApi = createApi({
         await delay()
         const index = mockPointsRules.findIndex((r) => r.id === id)
         if (index === -1) return { error: { status: 404, data: 'Rule not found' } }
-        mockPointsRules[index] = { ...mockPointsRules[index], ...updates, lastUpdated: new Date().toISOString() }
+        mockPointsRules[index] = stampUpdate({
+          ...mockPointsRules[index],
+          ...updates,
+          lastUpdated: new Date().toISOString(),
+        })
         return { data: mockPointsRules[index] }
       },
       invalidatesTags: ['PointsRules'],
@@ -270,7 +369,11 @@ export const driverRewardsApi = createApi({
     createPointsRule: builder.mutation<PointsRule, Omit<PointsRule, 'id'>>({
       queryFn: async (payload) => {
         await delay()
-        const rule: PointsRule = { ...payload, id: `pr-${Date.now()}`, lastUpdated: new Date().toISOString() }
+        const rule: PointsRule = stampCreate({
+          ...payload,
+          id: `pr-${Date.now()}`,
+          lastUpdated: new Date().toISOString(),
+        })
         mockPointsRules.unshift(rule)
         return { data: rule }
       },
@@ -311,7 +414,11 @@ export const driverRewardsApi = createApi({
     createPerformanceRule: builder.mutation<PerformanceRule, Omit<PerformanceRule, 'id' | 'lastUpdated'>>({
       queryFn: async (payload) => {
         await delay()
-        const rule: PerformanceRule = { ...payload, id: `perf-${Date.now()}`, lastUpdated: new Date().toISOString() }
+        const rule: PerformanceRule = stampCreate({
+          ...payload,
+          id: `perf-${Date.now()}`,
+          lastUpdated: new Date().toISOString(),
+        })
         mockPerformanceRules.unshift(rule)
         return { data: rule }
       },
@@ -322,7 +429,11 @@ export const driverRewardsApi = createApi({
         await delay()
         const index = mockPerformanceRules.findIndex((r) => r.id === id)
         if (index === -1) return { error: { status: 404, data: 'Rule not found' } }
-        mockPerformanceRules[index] = { ...mockPerformanceRules[index], ...updates, lastUpdated: new Date().toISOString() }
+        mockPerformanceRules[index] = stampUpdate({
+          ...mockPerformanceRules[index],
+          ...updates,
+          lastUpdated: new Date().toISOString(),
+        })
         return { data: mockPerformanceRules[index] }
       },
       invalidatesTags: ['PerformanceRules', 'PointsRules'],
@@ -344,7 +455,11 @@ export const driverRewardsApi = createApi({
     createPenaltyRule: builder.mutation<PenaltyRule, Omit<PenaltyRule, 'id' | 'lastUpdated'>>({
       queryFn: async (payload) => {
         await delay()
-        const rule: PenaltyRule = { ...payload, id: `pen-${Date.now()}`, lastUpdated: new Date().toISOString() }
+        const rule: PenaltyRule = stampCreate({
+          ...payload,
+          id: `pen-${Date.now()}`,
+          lastUpdated: new Date().toISOString(),
+        })
         mockPenaltyRules.unshift(rule)
         return { data: rule }
       },
@@ -355,7 +470,11 @@ export const driverRewardsApi = createApi({
         await delay()
         const index = mockPenaltyRules.findIndex((r) => r.id === id)
         if (index === -1) return { error: { status: 404, data: 'Rule not found' } }
-        mockPenaltyRules[index] = { ...mockPenaltyRules[index], ...updates, lastUpdated: new Date().toISOString() }
+        mockPenaltyRules[index] = stampUpdate({
+          ...mockPenaltyRules[index],
+          ...updates,
+          lastUpdated: new Date().toISOString(),
+        })
         return { data: mockPenaltyRules[index] }
       },
       invalidatesTags: ['PenaltyRules', 'PointsRules'],
@@ -798,7 +917,7 @@ export const driverRewardsApi = createApi({
     createBonusCampaign: builder.mutation<BonusCampaign, Omit<BonusCampaign, 'id' | 'spent'>>({
       queryFn: async (payload) => {
         await delay()
-        const campaign: BonusCampaign = {
+        const campaign: BonusCampaign = stampCreate({
           ...payload,
           id: `bc-${Date.now()}`,
           spent: 0,
@@ -807,7 +926,8 @@ export const driverRewardsApi = createApi({
           enabled: payload.enabled ?? true,
           tripTarget: payload.tripTarget ?? 0,
           rewardPoints: payload.rewardPoints ?? 0,
-        }
+          requirement: payload.requirement ?? payload.description ?? '',
+        })
         mockBonusCampaigns.unshift(campaign)
         return { data: campaign }
       },
@@ -818,7 +938,7 @@ export const driverRewardsApi = createApi({
         await delay()
         const index = mockBonusCampaigns.findIndex((c) => c.id === id)
         if (index === -1) return { error: { status: 404, data: 'Campaign not found' } }
-        mockBonusCampaigns[index] = { ...mockBonusCampaigns[index], ...updates }
+        mockBonusCampaigns[index] = stampUpdate({ ...mockBonusCampaigns[index], ...updates })
         return { data: mockBonusCampaigns[index] }
       },
       invalidatesTags: ['BonusCampaigns'],
@@ -873,6 +993,11 @@ export const {
   useCreateDriverLevelMutation,
   useDuplicateDriverLevelMutation,
   useGetPointsRulesOverviewQuery,
+  useGetRewardsConfigOverviewQuery,
+  useGetRewardRulesListQuery,
+  useGetPerformanceRewardsListQuery,
+  useGetPenaltyRulesListQuery,
+  useGetBonusProgramsListQuery,
   useGetPointsRulesQuery,
   useDuplicatePointsRuleMutation,
   useGetPerformanceRulesQuery,

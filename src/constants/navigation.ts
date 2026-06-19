@@ -80,7 +80,7 @@ export const NAVIGATION: NavItem[] = [
     children: [
       { key: 'drivers', label: 'Driver Management', path: '/drivers' },
       { key: 'passengers', label: 'Passenger Management', path: '/passengers' },
-      { key: 'driver-rewards', label: 'Driver Rewards & Performance', path: '/drivers/rewards' },
+      { key: 'driver-rewards', label: 'Driver Rewards & Performance', path: '/driver-rewards' },
       { key: 'tier-management', label: 'Tier Management', path: '/drivers/tiers' },
       { key: 'waitlist', label: 'Driver Capacity & Waitlist', path: '/drivers/waitlist' },
     ],
@@ -88,27 +88,16 @@ export const NAVIGATION: NavItem[] = [
   {
     key: 'compliance',
     label: 'Compliance',
+    path: '/compliance',
     icon: Shield,
     permission: 'compliance.view',
-    children: [
-      { key: 'compliance-center', label: 'Compliance Center', path: '/compliance' },
-      { key: 'background-checks', label: 'Background Checks', path: '/compliance/background-checks' },
-      { key: 'background-check-fees', label: 'Background Check Fees', path: '/compliance/background-check-fees' },
-      { key: 'document-monitoring', label: 'Document Monitoring', path: '/compliance/documents' },
-      { key: 'driver-restrictions', label: 'Driver Restrictions', path: '/compliance/restrictions' },
-    ],
   },
   {
-    key: 'eligibility',
+    key: 'vehicle-eligibility',
     label: 'Vehicle Eligibility Engine',
+    path: '/vehicle-eligibility',
     icon: FileCheck,
     permission: 'eligibility.view',
-    children: [
-      { key: 'eligibility-rules', label: 'Eligibility Rules', path: '/eligibility/rules' },
-      { key: 'vehicle-categories', label: 'Vehicle Categories', path: '/eligibility/categories' },
-      { key: 'category-assignments', label: 'Category Assignments', path: '/eligibility/assignments' },
-      { key: 'premium-vehicles', label: 'Premium Vehicle Lists', path: '/eligibility/premium-vehicles' },
-    ],
   },
   {
     key: 'ride-categories',

@@ -14,6 +14,8 @@ import {
   mockBackgroundCheckPaymentRules,
 } from '@/services/mock/backgroundCheckFeeData'
 
+import type { ComplianceListParams, ComplianceListResponse } from '@/types/complianceCenter'
+
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const backgroundCheckFeeApi = createApi({
@@ -28,9 +30,46 @@ export const backgroundCheckFeeApi = createApi({
       },
       providesTags: ['BackgroundCheckFeeOverview'],
     }),
-    getBackgroundCheckFees: builder.query<BackgroundCheckFeeConfig[], void>({
-      queryFn: async () => ({ data: [...mockBackgroundCheckFees] }),
+    getBackgroundCheckFees: builder.query<
+      ComplianceListResponse<BackgroundCheckFeeConfig>,
+      ComplianceListParams | void
+    >({
+      queryFn: async (params) => {
+        await delay()
+        const search = (params?.search ?? '').trim().toLowerCase()
+        let filtered = [...mockBackgroundCheckFees]
+        if (search) {
+          filtered = filtered.filter(
+            (f) =>
+              f.feeName.toLowerCase().includes(search) ||
+              f.state.toLowerCase().includes(search),
+          )
+        }
+        const page = params?.page ?? 1
+        const pageSize = params?.pageSize ?? 10
+        const start = (page - 1) * pageSize
+        return {
+          data: {
+            data: filtered.slice(start, start + pageSize),
+            total: filtered.length,
+            page,
+            pageSize,
+          },
+        }
+      },
       providesTags: ['BackgroundCheckFees'],
+    }),
+    createBackgroundCheckFee: builder.mutation<
+      BackgroundCheckFeeConfig,
+      Omit<BackgroundCheckFeeConfig, 'id'>
+    >({
+      queryFn: async (values) => {
+        await delay()
+        const fee: BackgroundCheckFeeConfig = { id: `bcf-${Date.now()}`, ...values }
+        mockBackgroundCheckFees.unshift(fee)
+        return { data: fee }
+      },
+      invalidatesTags: ['BackgroundCheckFees', 'BackgroundCheckFeeAuditLogs'],
     }),
     updateBackgroundCheckFee: builder.mutation<
       BackgroundCheckFeeConfig,
@@ -74,6 +113,7 @@ export const backgroundCheckFeeApi = createApi({
 export const {
   useGetBackgroundCheckFeeOverviewQuery,
   useGetBackgroundCheckFeesQuery,
+  useCreateBackgroundCheckFeeMutation,
   useUpdateBackgroundCheckFeeMutation,
   useGetBackgroundCheckPaymentRulesQuery,
   useUpdateBackgroundCheckPaymentRulesMutation,

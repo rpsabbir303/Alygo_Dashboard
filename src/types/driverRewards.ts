@@ -1,5 +1,12 @@
 export type DriverRewardsEntityStatus = 'active' | 'inactive'
 
+export interface DriverRewardsAuditFields {
+  createdBy?: string
+  updatedBy?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 export type DriverLevelName = 'journey' | 'pro' | 'pro_go' | 'elite' | 'platinum' | 'diamond' | string
 
 export type TierStandingStatus = 'good_standing' | 'at_risk' | 'under_review' | 'suspended'
@@ -132,7 +139,7 @@ export interface DriverLevel {
   sortOrder: number
 }
 
-export interface PointsRule {
+export interface PointsRule extends DriverRewardsAuditFields {
   id: string
   ruleName: string
   action: string
@@ -165,7 +172,7 @@ export type PerformanceMetricKey =
 
 export type RuleEvaluationPeriod = 'daily' | 'weekly' | 'monthly' | 'period'
 
-export interface PerformanceRule {
+export interface PerformanceRule extends DriverRewardsAuditFields {
   id: string
   metric: PerformanceMetricKey
   metricLabel: string
@@ -178,7 +185,7 @@ export interface PerformanceRule {
   lastUpdated: string
 }
 
-export interface PenaltyRule {
+export interface PenaltyRule extends DriverRewardsAuditFields {
   id: string
   ruleName: string
   actionType: string
@@ -265,9 +272,10 @@ export interface BonusRule {
   status: DriverRewardsEntityStatus
 }
 
-export interface BonusCampaign {
+export interface BonusCampaign extends DriverRewardsAuditFields {
   id: string
   name: string
+  requirement: string
   campaignType: BonusCampaignType
   targetTier?: DriverLevelName
   targetTiers: DriverLevelName[]

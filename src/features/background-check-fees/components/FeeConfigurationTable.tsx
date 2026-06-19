@@ -22,7 +22,8 @@ import { formatCurrency } from '@/utils/format'
 
 export function FeeConfigurationTable() {
   const adminActions = useAdminActions()
-  const { data = [], isLoading } = useGetBackgroundCheckFeesQuery()
+  const { data, isLoading } = useGetBackgroundCheckFeesQuery()
+  const fees = data?.data ?? []
   const [editRecord, setEditRecord] = useState<BackgroundCheckFeeConfig | null>(null)
   const [updateFee, { isLoading: updating }] = useUpdateBackgroundCheckFeeMutation()
 
@@ -53,7 +54,7 @@ export function FeeConfigurationTable() {
       <Table
         loading={isLoading}
         rowKey="id"
-        dataSource={data}
+        dataSource={fees}
         scroll={{ x: 1100 }}
         {...createTableRowProps<BackgroundCheckFeeConfig>((record) =>
           adminActions.openDrawer(record.feeName, buildFeeDetailFields(record)),

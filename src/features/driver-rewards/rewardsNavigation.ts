@@ -1,35 +1,39 @@
 export const REWARDS_TAB_KEYS = [
-  'points-rules',
-  'performance-rules',
+  'overview',
+  'reward-rules',
+  'performance-rewards',
+  'bonus-programs',
   'penalty-rules',
-  'bonus-campaigns',
-  'rewards-wallet',
-  'driver-rankings',
-  'incentive-programs',
-  'achievements',
-  'rules-analytics',
-  'tier-analytics',
 ] as const
 
 export type RewardsTabKey = (typeof REWARDS_TAB_KEYS)[number]
 
 export const REWARDS_TAB_LABELS: Record<RewardsTabKey, string> = {
-  'points-rules': 'Points Rules Engine',
-  'performance-rules': 'Performance Rules',
+  overview: 'Overview',
+  'reward-rules': 'Reward Rules',
+  'performance-rewards': 'Performance Rewards',
+  'bonus-programs': 'Bonus Programs',
   'penalty-rules': 'Penalty Rules',
-  'bonus-campaigns': 'Bonus Campaigns',
-  'rewards-wallet': 'Rewards Wallet',
-  'driver-rankings': 'Driver Rankings',
-  'incentive-programs': 'Incentive Programs',
-  achievements: 'Driver Achievements',
-  'rules-analytics': 'Rules Analytics',
-  'tier-analytics': 'Tier Analytics',
 }
 
-export const DEFAULT_REWARDS_TAB: RewardsTabKey = 'points-rules'
+export const DEFAULT_REWARDS_TAB: RewardsTabKey = 'overview'
 
 export function rewardsTabPath(tab: RewardsTabKey) {
-  return `/drivers/rewards?tab=${tab}`
+  return `/driver-rewards?tab=${tab}`
+}
+
+const LEGACY_TAB_MAP: Record<string, RewardsTabKey> = {
+  'points-rules': 'reward-rules',
+  'performance-rules': 'performance-rewards',
+  'bonus-campaigns': 'bonus-programs',
+  'penalty-rules': 'penalty-rules',
+  overview: 'overview',
+}
+
+export function resolveRewardsTab(tab: string | null): RewardsTabKey {
+  if (!tab) return DEFAULT_REWARDS_TAB
+  if (REWARDS_TAB_KEYS.includes(tab as RewardsTabKey)) return tab as RewardsTabKey
+  return LEGACY_TAB_MAP[tab] ?? DEFAULT_REWARDS_TAB
 }
 
 /** Legacy tier tabs consolidated into /drivers/tiers */

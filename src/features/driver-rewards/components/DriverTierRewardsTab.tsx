@@ -2,8 +2,6 @@ import { Progress, Table, Tag } from 'antd'
 import { Award, Crown, Gift, History, Shield, Star, Trophy, Wallet } from 'lucide-react'
 import { useGetDriverMyTierSnapshotQuery } from '@/services/driverRewardsApi'
 import { formatCurrency, formatDateTime, formatNumber } from '@/utils/format'
-import { DriverMyTierPreview } from '@/features/driver-rewards/components/DriverMyTierPreview'
-import { HowPointsWorkSection } from '@/features/driver-rewards/components/HowPointsWorkSection'
 
 interface DriverTierRewardsTabProps {
   driverId: string
@@ -36,7 +34,6 @@ export function DriverTierRewardsTab({ driverId, driverName }: DriverTierRewards
     rewardsEarned,
     wallet,
     pointsHistory,
-    rewardsConfig,
   } = data
 
   return (
@@ -173,12 +170,6 @@ export function DriverTierRewardsTab({ driverId, driverName }: DriverTierRewards
         </div>
       )}
 
-      <div className="glass-card p-5">
-        <h4 className="mb-4 font-semibold text-white">How Points Work</h4>
-        <HowPointsWorkSection config={rewardsConfig} />
-      </div>
-
-      <DriverMyTierPreview snapshot={data} />
     </div>
   )
 }
