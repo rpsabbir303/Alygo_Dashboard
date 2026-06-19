@@ -1,1 +1,1 @@
-export { EventReservationsPage as default } from './ScheduledRidesPage'
+export { default } from '@/features/reservations/ReservationCenterPage'

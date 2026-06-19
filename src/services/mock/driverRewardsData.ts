@@ -1,42 +1,103 @@
 import type {
   Achievement,
+  BonusCampaign,
   BonusRule,
+  DemotionRule,
   DriverLevel,
   DriverPerformanceRecord,
+  DriverPointsHistoryEntry,
   DriverRewardsOverview,
   DriverRewardsOverviewCharts,
+  DriverRewardsPublicConfig,
+  DriverRewardsWallet,
+  DriverTierHistory,
   EarningsAnalyticsData,
+  IncentiveProgram,
   LevelAnalyticsData,
   LevelBenefit,
+  PenaltyRule,
+  PerformanceRule,
   PointsRule,
+  PointsRulesOverview,
   ProgressionRule,
   Promotion,
+  PromotionEngineSettings,
+  QualificationRule,
   RewardNotificationTemplate,
+  RulesEngineAnalytics,
 } from '@/types/driverRewards'
 import { createDefaultLevel, createPointsRule } from '@/features/driver-rewards/utils/tierDefaults'
 
 export let mockDriverLevels: DriverLevel[] = [
-  createDefaultLevel('lvl-journey', 'journey', 'Journey', 'Entry level for new drivers starting their Alygo career.', 0, 4.5, 0, 0, 80, 90, 1),
-  createDefaultLevel('lvl-pro-go', 'pro_go', 'Pro Go', 'Drivers demonstrating consistent performance and reliability.', 500, 4.7, 100, 50, 85, 92, 2),
-  createDefaultLevel('lvl-elite', 'elite', 'Elite', 'High-performing drivers with strong ratings and trip volume.', 1500, 4.8, 300, 150, 88, 94, 3),
-  createDefaultLevel('lvl-platinum', 'platinum', 'Platinum', 'Top-tier drivers with premium service quality.', 3000, 4.85, 600, 300, 90, 95, 3),
-  createDefaultLevel('lvl-diamond', 'diamond', 'Diamond', 'Elite drivers with exceptional performance across all metrics.', 5000, 4.9, 1000, 500, 92, 97, 4),
+  createDefaultLevel('lvl-journey', 'journey', 'Journey', 'Entry tier for new drivers starting their Alygo career.', 1, 1, { completedTrips: 0, driverRating: 4.5, acceptanceRate: 80 }, undefined, 842, 0),
+  createDefaultLevel('lvl-pro-go', 'pro_go', 'Pro Go', 'Consistent performers with reliable service quality.', 2, 2, { completedTrips: 100, driverRating: 4.5, acceptanceRate: 85 }, undefined, 628, 1000),
+  createDefaultLevel('lvl-elite', 'elite', 'Elite', 'High-performing drivers with strong ratings and trip volume.', 3, 3, { completedTrips: 500, driverRating: 4.7, acceptanceRate: 90 }, undefined, 412, 5000),
+  createDefaultLevel('lvl-platinum', 'platinum', 'Platinum', 'Top-tier drivers with premium service quality.', 4, 4, { completedTrips: 2000, driverRating: 4.8, acceptanceRate: 92 }, undefined, 186, 12000),
+  createDefaultLevel('lvl-diamond', 'diamond', 'Diamond', 'Elite drivers with exceptional performance across all metrics.', 5, 5, { completedTrips: 5000, driverRating: 4.9, acceptanceRate: 95 }, undefined, 74, 25000),
 ]
 
 export let mockPointsRules: PointsRule[] = [
-  createPointsRule('pr-1', 'Complete Trip', 'trip_complete', 5),
-  createPointsRule('pr-2', '5-Star Rating', 'five_star_rating', 2),
-  createPointsRule('pr-3', 'Airport Ride', 'airport_ride', 3),
-  createPointsRule('pr-4', 'Peak Hour Ride', 'peak_hour_ride', 2),
-  createPointsRule('pr-5', 'Scheduled Ride', 'scheduled_ride', 2),
-  createPointsRule('pr-6', 'Black Ride', 'black_ride', 3),
-  createPointsRule('pr-7', 'Black SUV Ride', 'black_suv_ride', 4),
-  createPointsRule('pr-8', 'Passenger Tip Received', 'passenger_tip', 1),
-  createPointsRule('pr-9', 'Accepted Ride Cancelled', 'ride_cancelled', -10),
-  createPointsRule('pr-10', 'Policy Violation', 'policy_violation', -50),
-  createPointsRule('pr-11', 'Fraud Activity', 'fraud_activity', -100),
-  createPointsRule('pr-12', 'Late Arrival', 'late_arrival', -5),
-  createPointsRule('pr-13', 'No Show Cancellation', 'no_show', 0),
+  createPointsRule('pr-1', 'Standard Ride Completion', 'standard_ride_complete', 5, 'ride_completion'),
+  createPointsRule('pr-2', 'Comfort Ride Completion', 'comfort_ride_complete', 8, 'ride_completion'),
+  createPointsRule('pr-3', 'Black Ride Completion', 'black_ride_complete', 12, 'ride_completion'),
+  createPointsRule('pr-4', 'Black SUV Ride Completion', 'black_suv_ride_complete', 15, 'ride_completion'),
+  createPointsRule('pr-5', 'Airport Ride', 'airport_ride', 10, 'airport'),
+  createPointsRule('pr-6', 'Scheduled Ride', 'scheduled_ride', 8, 'scheduled'),
+  createPointsRule('pr-7', 'Peak Hour Ride', 'peak_hour_ride', 5, 'peak_hour'),
+  createPointsRule('pr-8', '5-Star Rating', 'five_star_rating', 2, 'rating'),
+  createPointsRule('pr-9', 'Passenger Tip Received', 'passenger_tip', 1, 'bonus'),
+]
+
+export let mockPerformanceRules: PerformanceRule[] = [
+  { id: 'perf-1', metric: 'acceptance_rate', metricLabel: 'Acceptance Rate', threshold: 95, thresholdLabel: '95%+', points: 50, period: 'monthly', status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'perf-2', metric: 'acceptance_rate', metricLabel: 'Acceptance Rate', threshold: 90, thresholdLabel: '90%+', points: 25, period: 'monthly', status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'perf-3', metric: 'completion_rate', metricLabel: 'Completion Rate', threshold: 98, thresholdLabel: '98%+', points: 40, period: 'monthly', status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'perf-4', metric: 'customer_rating', metricLabel: 'Customer Rating', threshold: 4.9, thresholdLabel: '4.9+', points: 50, period: 'monthly', status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'perf-5', metric: 'on_time_arrival', metricLabel: 'On-Time Arrival', threshold: 95, thresholdLabel: '95%+', points: 30, period: 'monthly', status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'perf-6', metric: 'complaint_free_period', metricLabel: 'Complaint-Free Period', threshold: 30, thresholdLabel: '30 days', points: 100, period: 'period', periodDays: 30, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'perf-7', metric: 'safe_driving_score', metricLabel: 'Safe Driving Score', threshold: 90, thresholdLabel: '90+', points: 35, period: 'monthly', status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+]
+
+export let mockPenaltyRules: PenaltyRule[] = [
+  { id: 'pen-1', ruleName: 'Accepted Ride Cancellation', actionType: 'ride_cancelled', points: -10, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'pen-2', ruleName: 'Late Arrival', actionType: 'late_arrival', points: -5, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'pen-3', ruleName: 'Passenger Complaint', actionType: 'passenger_complaint', points: -15, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'pen-4', ruleName: 'Fraud Warning', actionType: 'fraud_warning', points: -100, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'pen-5', ruleName: 'Compliance Violation', actionType: 'compliance_violation', points: -50, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+  { id: 'pen-6', ruleName: 'Safety Incident', actionType: 'safety_incident', points: -75, status: 'active', lastUpdated: '2026-06-01T00:00:00Z' },
+]
+
+export let mockQualificationRules: QualificationRule[] = mockDriverLevels.map((level) => ({
+  id: `qual-${level.id}`,
+  tier: level.name,
+  tierLabel: level.label,
+  requiredTrips: level.requirements.completedTrips,
+  requiredRating: level.requirements.driverRating,
+  requiredAcceptanceRate: level.requirements.acceptanceRate,
+  requiredCompletionRate: level.requiredCompletionRate,
+  requiredSafetyScore: level.requirements.safetyScore,
+  requiredComplianceScore: level.requirements.complianceScore,
+  requiredPoints: level.requiredPoints,
+  status: level.status,
+  lastUpdated: '2026-06-01T00:00:00Z',
+}))
+
+export let mockDriverPointsHistory: DriverPointsHistoryEntry[] = [
+  { id: 'ph-1', driverId: 'DR-1000', driverName: 'Marcus Johnson', ruleId: 'pr-1', ruleName: 'Standard Ride Completion', points: 5, reason: 'Trip TR-5021 completed', createdAt: '2026-06-13T14:00:00Z' },
+  { id: 'ph-2', driverId: 'DR-1000', driverName: 'Marcus Johnson', ruleId: 'pr-8', ruleName: '5-Star Rating', points: 2, reason: 'Passenger rated 5 stars', createdAt: '2026-06-13T14:30:00Z' },
+  { id: 'ph-3', driverId: 'DR-1000', driverName: 'Marcus Johnson', ruleId: 'pr-5', ruleName: 'Airport Ride', points: 10, reason: 'Airport trip TR-5018', createdAt: '2026-06-12T09:00:00Z' },
+  { id: 'ph-4', driverId: 'DR-1000', driverName: 'Marcus Johnson', ruleId: 'pen-1', ruleName: 'Accepted Ride Cancellation', points: -10, reason: 'Cancelled accepted trip TR-5002', createdAt: '2026-06-10T08:00:00Z' },
+  { id: 'ph-5', driverId: 'DR-1001', driverName: 'Elena Rodriguez', ruleId: 'pr-3', ruleName: 'Black Ride Completion', points: 12, reason: 'Black ride TR-5030', createdAt: '2026-06-13T16:00:00Z' },
+  { id: 'ph-6', driverId: 'DR-1003', driverName: 'Lisa Martinez', ruleId: 'perf-4', ruleName: 'Customer Rating 4.9+', points: 50, reason: 'Monthly performance bonus', createdAt: '2026-06-01T00:00:00Z' },
+]
+
+export let mockDriverRewardsWallets: DriverRewardsWallet[] = [
+  { driverId: 'DR-1000', driverName: 'Marcus Johnson', lifetimePoints: 8420, currentPoints: 1820, pointsEarned: 1920, pointsLost: 100 },
+  { driverId: 'DR-1001', driverName: 'Elena Rodriguez', lifetimePoints: 12400, currentPoints: 3240, pointsEarned: 3380, pointsLost: 140 },
+  { driverId: 'DR-1002', driverName: 'David Kim', lifetimePoints: 2100, currentPoints: 620, pointsEarned: 680, pointsLost: 60 },
+  { driverId: 'DR-1003', driverName: 'Lisa Martinez', lifetimePoints: 18600, currentPoints: 5420, pointsEarned: 5580, pointsLost: 160 },
+  { driverId: 'DR-1004', driverName: 'Carlos Ruiz', lifetimePoints: 980, currentPoints: 180, pointsEarned: 220, pointsLost: 40 },
+  { driverId: 'DR-1005', driverName: 'Jennifer Park', lifetimePoints: 7200, currentPoints: 1680, pointsEarned: 1780, pointsLost: 100 },
 ]
 
 export let mockBonusRules: BonusRule[] = [
@@ -47,25 +108,25 @@ export let mockBonusRules: BonusRule[] = [
 ]
 
 export let mockLevelBenefits: LevelBenefit[] = [
-  { id: 'ben-1', level: 'journey', name: 'Basic Driver Support', description: 'Standard email and in-app support.', status: 'active' },
-  { id: 'ben-2', level: 'pro_go', name: 'Priority Support', description: 'Faster response times for support tickets.', status: 'active' },
-  { id: 'ben-3', level: 'pro_go', name: 'Airport Queue Priority', description: 'Priority queue at airport pickup zones.', status: 'active' },
-  { id: 'ben-4', level: 'elite', name: 'Bonus Opportunities', description: 'Access to exclusive bonus promotions.', status: 'active' },
-  { id: 'ben-5', level: 'elite', name: 'Priority Queue Access', description: 'Higher priority in trip dispatch queue.', status: 'active' },
-  { id: 'ben-6', level: 'elite', name: 'Scheduled Ride Priority', description: 'First access to scheduled ride requests.', status: 'active' },
-  { id: 'ben-7', level: 'platinum', name: 'Premium Support', description: 'Dedicated support line for platinum drivers.', status: 'active' },
-  { id: 'ben-8', level: 'platinum', name: 'Higher Ride Priority', description: 'First access to high-value trip requests.', status: 'active' },
-  { id: 'ben-9', level: 'platinum', name: 'Enhanced Bonus Multipliers', description: 'Increased bonus payout multipliers.', status: 'active' },
-  { id: 'ben-10', level: 'diamond', name: 'VIP Support', description: '24/7 VIP support with dedicated agent.', status: 'active' },
-  { id: 'ben-11', level: 'diamond', name: 'Exclusive Promotions', description: 'Access to diamond-only bonus campaigns.', status: 'active' },
-  { id: 'ben-12', level: 'diamond', name: 'Highest Ride Priority', description: 'Top priority for all trip requests.', status: 'active' },
-  { id: 'ben-13', level: 'diamond', name: 'Priority Airport Access', description: 'Top priority at all airport zones.', status: 'active' },
+  { id: 'ben-1', level: 'journey', name: 'Basic Driver Support', description: 'Standard email and in-app support.', category: 'support', status: 'active' },
+  { id: 'ben-2', level: 'pro_go', name: 'Priority Support', description: 'Faster response times for support tickets.', category: 'support', status: 'active' },
+  { id: 'ben-3', level: 'pro_go', name: 'Airport Queue Priority', description: 'Priority queue at airport pickup zones.', category: 'queue', status: 'active' },
+  { id: 'ben-4', level: 'elite', name: 'Bonus Opportunities', description: 'Access to exclusive bonus promotions.', category: 'rewards', status: 'active' },
+  { id: 'ben-5', level: 'elite', name: 'Priority Queue Access', description: 'Higher priority in trip dispatch queue.', category: 'dispatch', status: 'active' },
+  { id: 'ben-6', level: 'elite', name: 'Scheduled Ride Priority', description: 'First access to scheduled ride requests.', category: 'dispatch', status: 'active' },
+  { id: 'ben-7', level: 'platinum', name: 'Premium Support', description: 'Dedicated support line for platinum drivers.', category: 'support', status: 'active' },
+  { id: 'ben-8', level: 'platinum', name: 'Higher Ride Priority', description: 'First access to high-value trip requests.', category: 'dispatch', status: 'active' },
+  { id: 'ben-9', level: 'platinum', name: 'Enhanced Bonus Multipliers', description: 'Increased bonus payout multipliers.', category: 'rewards', status: 'active' },
+  { id: 'ben-10', level: 'diamond', name: 'VIP Support', description: '24/7 VIP support with dedicated agent.', category: 'support', status: 'active' },
+  { id: 'ben-11', level: 'diamond', name: 'Exclusive Promotions', description: 'Access to diamond-only bonus campaigns.', category: 'rewards', status: 'active' },
+  { id: 'ben-12', level: 'diamond', name: 'Highest Ride Priority', description: 'Top priority for all trip requests.', category: 'dispatch', status: 'active' },
+  { id: 'ben-13', level: 'diamond', name: 'Priority Airport Access', description: 'Top priority at all airport zones.', category: 'queue', status: 'active' },
 ]
 
 const rawDriverPerformance = [
   {
     id: 'dp-1',
-    driverId: 'd-204',
+    driverId: 'DR-1000',
     driverName: 'Marcus Johnson',
     currentLevel: 'elite',
     currentPoints: 1820,
@@ -100,7 +161,7 @@ const rawDriverPerformance = [
   },
   {
     id: 'dp-2',
-    driverId: 'd-118',
+    driverId: 'DR-1001',
     driverName: 'Elena Rodriguez',
     currentLevel: 'platinum',
     currentPoints: 3240,
@@ -135,7 +196,7 @@ const rawDriverPerformance = [
   },
   {
     id: 'dp-3',
-    driverId: 'd-301',
+    driverId: 'DR-1002',
     driverName: 'David Kim',
     currentLevel: 'pro_go',
     currentPoints: 620,
@@ -167,7 +228,7 @@ const rawDriverPerformance = [
   },
   {
     id: 'dp-4',
-    driverId: 'd-445',
+    driverId: 'DR-1003',
     driverName: 'Lisa Martinez',
     currentLevel: 'diamond',
     currentPoints: 5420,
@@ -203,7 +264,7 @@ const rawDriverPerformance = [
   },
   {
     id: 'dp-5',
-    driverId: 'd-522',
+    driverId: 'DR-1004',
     driverName: 'Carlos Ruiz',
     currentLevel: 'journey',
     currentPoints: 180,
@@ -233,7 +294,7 @@ const rawDriverPerformance = [
   },
   {
     id: 'dp-6',
-    driverId: 'd-633',
+    driverId: 'DR-1005',
     driverName: 'Jennifer Park',
     currentLevel: 'elite',
     currentPoints: 1680,
@@ -271,7 +332,16 @@ export let mockDriverPerformance: DriverPerformanceRecord[] = rawDriverPerforman
   status: d.status as DriverPerformanceRecord['status'],
   acceptanceRate: [94, 97, 89, 98, 82, 93][i],
   completionRate: [96, 98, 94, 99, 88, 95][i],
-  nextTierProgress: [68, 82, 45, 100, 22, 58][i],
+  cancellationRate: [4, 2, 8, 1, 12, 5][i],
+  safetyScore: [92, 96, 88, 98, 78, 91][i],
+  complianceScore: [95, 98, 90, 99, 82, 94][i],
+  customerSatisfactionScore: [91, 95, 86, 97, 80, 92][i],
+  nextTierProgress: [78, 82, 45, 100, 22, 58][i],
+  nextTierLabel: ['Platinum', 'Diamond', 'Elite', 'Diamond', 'Pro', 'Platinum'][i],
+  tierStatus: (['good_standing', 'good_standing', 'good_standing', 'good_standing', 'at_risk', 'good_standing'] as const)[i],
+  city: ['San Francisco', 'San Francisco', 'Oakland', 'San Jose', 'San Francisco', 'Berkeley'][i],
+  region: 'Bay Area',
+  country: 'United States',
   rewardsSuspended: false,
   bonusHistory: [
     { name: 'Weekend Warrior Bonus', amount: 50, date: '2026-06-07T00:00:00Z' },
@@ -341,19 +411,19 @@ export let mockPromotions: Promotion[] = [
 ]
 
 export let mockAchievements: Achievement[] = [
-  { id: 'ach-1', name: '100 Trips Completed', reward: 'Bronze Badge', pointsAwarded: 50, status: 'active' },
-  { id: 'ach-2', name: '500 Trips Completed', reward: 'Silver Badge', pointsAwarded: 150, status: 'active' },
-  { id: 'ach-3', name: '1000 Trips Completed', reward: 'Gold Badge', pointsAwarded: 300, status: 'active' },
-  { id: 'ach-4', name: '5000 Trips Completed', reward: 'Platinum Badge', pointsAwarded: 750, status: 'active' },
-  { id: 'ach-5', name: '100 Online Hours', reward: 'Dedicated Driver', pointsAwarded: 75, status: 'active' },
-  { id: 'ach-6', name: '500 Online Hours', reward: 'Road Warrior', pointsAwarded: 200, status: 'active' },
-  { id: 'ach-7', name: '1000 Online Hours', reward: 'Marathon Driver', pointsAwarded: 400, status: 'active' },
-  { id: 'ach-8', name: '4.90 Rating', reward: 'Five Star Pro', pointsAwarded: 100, status: 'active' },
-  { id: 'ach-9', name: '4.95 Rating', reward: 'Elite Rated', pointsAwarded: 200, status: 'active' },
-  { id: 'ach-10', name: 'Diamond Driver', reward: 'Diamond Crown', pointsAwarded: 500, status: 'active' },
-  { id: 'ach-11', name: 'Airport Specialist', reward: 'Airport Expert', pointsAwarded: 125, status: 'active' },
-  { id: 'ach-12', name: 'Top Rated Driver', reward: 'Top Rated Badge', pointsAwarded: 175, status: 'active' },
-  { id: 'ach-13', name: 'Black Elite Driver', reward: 'Black Elite Badge', pointsAwarded: 250, status: 'active' },
+  { id: 'ach-1', name: '100 Trips Completed', reward: 'Bronze Badge', pointsAwarded: 50, criteria: 'Complete 100 trips', icon: 'route', status: 'active' },
+  { id: 'ach-2', name: '500 Trips Completed', reward: 'Silver Badge', pointsAwarded: 150, criteria: 'Complete 500 trips', icon: 'route', status: 'active' },
+  { id: 'ach-3', name: '1000 Trips Completed', reward: 'Gold Badge', pointsAwarded: 300, criteria: 'Complete 1000 trips', icon: 'route', status: 'active' },
+  { id: 'ach-4', name: '5000 Trips Completed', reward: 'Platinum Badge', pointsAwarded: 750, criteria: 'Complete 5000 trips', icon: 'route', status: 'active' },
+  { id: 'ach-5', name: 'Top Rated Driver', reward: 'Top Rated Badge', pointsAwarded: 175, criteria: 'Maintain 4.95+ rating for 30 days', icon: 'star', status: 'active' },
+  { id: 'ach-6', name: 'Elite Driver', reward: 'Elite Badge', pointsAwarded: 200, criteria: 'Reach Elite tier', icon: 'award', status: 'active' },
+  { id: 'ach-7', name: 'Diamond Driver', reward: 'Diamond Crown', pointsAwarded: 500, criteria: 'Reach Diamond tier', icon: 'crown', status: 'active' },
+  { id: 'ach-8', name: '5-Star Streak', reward: 'Five Star Pro', pointsAwarded: 100, criteria: 'Receive 50 consecutive 5-star ratings', icon: 'star', status: 'active' },
+  { id: 'ach-9', name: 'Safe Driver', reward: 'Safety Shield', pointsAwarded: 125, criteria: 'Zero safety incidents for 90 days', icon: 'shield', status: 'active' },
+  { id: 'ach-10', name: 'Airport Specialist', reward: 'Airport Expert', pointsAwarded: 125, criteria: 'Complete 100 airport trips', icon: 'plane', status: 'active' },
+  { id: 'ach-11', name: 'Peak Hour Champion', reward: 'Peak Badge', pointsAwarded: 90, criteria: 'Complete 30 peak hour trips in a week', icon: 'zap', status: 'active' },
+  { id: 'ach-12', name: 'Weekend Warrior', reward: 'Weekend Badge', pointsAwarded: 80, criteria: 'Complete 20 weekend trips', icon: 'calendar', status: 'active' },
+  { id: 'ach-13', name: 'Black Elite Driver', reward: 'Black Elite Badge', pointsAwarded: 250, criteria: 'Complete 50 Black rides with 4.9+ rating', icon: 'car', status: 'active' },
 ]
 
 export let mockProgressionRules: ProgressionRule[] = mockDriverLevels.map((level) => ({
@@ -366,6 +436,183 @@ export let mockProgressionRules: ProgressionRule[] = mockDriverLevels.map((level
   requiredAcceptanceRate: level.requiredAcceptanceRate,
   requiredCompletionRate: level.requiredCompletionRate,
 }))
+
+export let mockIncentivePrograms: IncentiveProgram[] = [
+  {
+    id: 'inc-1',
+    title: 'Peak Hour Bonus',
+    description: 'Complete 20 trips during peak hours',
+    rewardType: 'fixed_cash',
+    rewardValue: 50,
+    tripTarget: 20,
+    startDate: '2026-06-01T00:00:00Z',
+    endDate: '2026-06-30T23:59:59Z',
+    status: 'active',
+    eligibleTiers: ['journey', 'pro_go', 'elite', 'platinum', 'diamond'],
+  },
+  {
+    id: 'inc-2',
+    title: 'Weekend Challenge',
+    description: 'Complete 50 trips on weekends',
+    rewardType: 'fixed_cash',
+    rewardValue: 150,
+    tripTarget: 50,
+    startDate: '2026-06-07T00:00:00Z',
+    endDate: '2026-06-28T23:59:59Z',
+    status: 'active',
+    eligibleTiers: ['pro_go', 'elite', 'platinum', 'diamond'],
+  },
+  {
+    id: 'inc-3',
+    title: 'Airport Bonus',
+    description: 'Complete 10 airport trips',
+    rewardType: 'fixed_cash',
+    rewardValue: 30,
+    tripTarget: 10,
+    startDate: '2026-06-01T00:00:00Z',
+    endDate: '2026-06-30T23:59:59Z',
+    status: 'active',
+    eligibleTiers: ['journey', 'pro_go', 'elite', 'platinum', 'diamond'],
+  },
+  {
+    id: 'inc-4',
+    title: 'Diamond Retention Boost',
+    description: 'Maintain Diamond tier for 30 consecutive days',
+    rewardType: 'multiplier',
+    rewardValue: 1.25,
+    tripTarget: 0,
+    startDate: '2026-06-01T00:00:00Z',
+    endDate: '2026-12-31T23:59:59Z',
+    status: 'active',
+    eligibleTiers: ['diamond'],
+  },
+]
+
+export let mockBonusCampaigns: BonusCampaign[] = [
+  {
+    id: 'bc-1',
+    name: 'Weekend Bonus',
+    campaignType: 'demand_based',
+    targetTiers: ['journey', 'pro_go', 'elite', 'platinum', 'diamond'],
+    targetCities: ['San Francisco', 'Oakland'],
+    tripTarget: 20,
+    rewardPoints: 100,
+    budget: 25000,
+    spent: 8420,
+    startDate: '2026-06-07T00:00:00Z',
+    endDate: '2026-06-08T23:59:59Z',
+    status: 'active',
+    enabled: true,
+    description: 'Complete 20 rides on weekend — earn 100 points.',
+  },
+  {
+    id: 'bc-2',
+    name: 'Airport Challenge',
+    campaignType: 'city_based',
+    targetTier: 'pro_go',
+    targetTiers: ['pro_go', 'elite', 'platinum', 'diamond'],
+    targetCity: 'San Francisco',
+    targetCities: ['San Francisco'],
+    tripTarget: 10,
+    rewardPoints: 75,
+    budget: 15000,
+    spent: 4200,
+    startDate: '2026-06-01T00:00:00Z',
+    endDate: '2026-06-30T23:59:59Z',
+    status: 'active',
+    enabled: true,
+    description: 'Complete 10 airport rides — earn 75 points.',
+  },
+  {
+    id: 'bc-3',
+    name: 'Peak Hour Challenge',
+    campaignType: 'demand_based',
+    targetTiers: ['elite', 'platinum', 'diamond'],
+    targetCities: ['San Francisco', 'San Jose', 'Oakland'],
+    tripTarget: 15,
+    rewardPoints: 50,
+    budget: 8000,
+    spent: 1200,
+    startDate: '2026-06-01T00:00:00Z',
+    endDate: '2026-06-30T23:59:59Z',
+    status: 'active',
+    enabled: true,
+    description: 'Complete 15 peak-hour rides — earn 50 points.',
+  },
+  {
+    id: 'bc-4',
+    name: 'Diamond Tier Exclusive',
+    campaignType: 'tier_based',
+    targetTier: 'diamond',
+    targetTiers: ['diamond'],
+    targetCities: [],
+    targetDrivers: 74,
+    tripTarget: 0,
+    rewardPoints: 200,
+    budget: 12000,
+    spent: 6800,
+    startDate: '2026-06-01T00:00:00Z',
+    endDate: '2026-06-30T23:59:59Z',
+    status: 'active',
+    enabled: true,
+    description: 'Monthly retention bonus for Diamond tier drivers.',
+  },
+]
+
+export let mockDemotionRules: DemotionRule[] = [
+  { id: 'dr-1', name: 'Rating Drop Below Threshold', metric: 'rating', threshold: 4.5, operator: 'below', enabled: true, description: 'Demote when driver rating falls below tier minimum.' },
+  { id: 'dr-2', name: 'Low Acceptance Rate', metric: 'acceptance', threshold: 80, operator: 'below', enabled: true, description: 'Demote when acceptance rate drops below configured threshold.' },
+  { id: 'dr-3', name: 'Compliance Violation', metric: 'compliance', threshold: 85, operator: 'below', enabled: true, description: 'Demote on compliance score violations.' },
+  { id: 'dr-4', name: 'Fraud Incident', metric: 'fraud', threshold: 90, operator: 'below', enabled: true, description: 'Demote when fraud score drops after incident review.' },
+  { id: 'dr-5', name: 'Safety Incident', metric: 'safety', threshold: 80, operator: 'below', enabled: false, description: 'Demote after verified safety incidents.' },
+]
+
+export let mockPromotionEngineSettings: PromotionEngineSettings = {
+  autoPromotionEnabled: true,
+  autoDemotionEnabled: true,
+  evaluationIntervalHours: 24,
+  notifyPush: true,
+  notifyInApp: true,
+  notifyEmail: true,
+  promotionTemplate: 'Congratulations! You have been promoted from {previousTier} to {newTier}.',
+  demotionTemplate: 'Your tier has changed from {previousTier} to {newTier}. Review requirements to regain status.',
+}
+
+export let mockDriverTierHistory: DriverTierHistory[] = [
+  {
+    id: 'th-1',
+    driverId: 'DR-1000',
+    driverName: 'Marcus Johnson',
+    previousTierId: 'lvl-elite',
+    previousTierLabel: 'Elite',
+    newTierId: 'lvl-platinum',
+    newTierLabel: 'Platinum',
+    reason: 'auto_promotion',
+    createdAt: '2026-05-12T08:00:00Z',
+  },
+  {
+    id: 'th-2',
+    driverId: 'DR-1004',
+    driverName: 'Carlos Ruiz',
+    previousTierId: 'lvl-pro',
+    previousTierLabel: 'Pro',
+    newTierId: 'lvl-journey',
+    newTierLabel: 'Journey',
+    reason: 'auto_demotion',
+    createdAt: '2026-06-02T14:30:00Z',
+  },
+  {
+    id: 'th-3',
+    driverId: 'DR-1003',
+    driverName: 'Lisa Martinez',
+    previousTierId: 'lvl-platinum',
+    previousTierLabel: 'Platinum',
+    newTierId: 'lvl-diamond',
+    newTierLabel: 'Diamond',
+    reason: 'auto_promotion',
+    createdAt: '2025-06-01T10:00:00Z',
+  },
+]
 
 export let mockNotificationTemplates: RewardNotificationTemplate[] = [
   {
@@ -415,29 +662,31 @@ export function computeDriverRewardsOverview(): DriverRewardsOverview {
   }).length
 
   return {
+    totalDrivers: mockDriverLevels.reduce((sum, l) => sum + l.driverCount, 0),
     totalDriversEnrolled: mockDriverPerformance.length + 184,
     totalActiveDrivers: active.length + 178,
     totalPointsIssued: mockDriverPerformance.reduce((sum, d) => sum + d.currentPoints, 0) + 84200,
     totalBonusesPaid: 42800,
     driversNearPromotion: nearPromotion,
-    driversAtRiskOfDemotion: mockDriverPerformance.filter((d) => d.status === 'at_risk').length,
+    driversAtRiskOfDemotion: mockDriverPerformance.filter((d) => d.tierStatus === 'at_risk').length,
     averageDriverRating: mockDriverPerformance.reduce((sum, d) => sum + d.driverRating, 0) / mockDriverPerformance.length,
     averageWeeklyEarnings: mockDriverPerformance.reduce((sum, d) => sum + d.weeklyEarnings, 0) / mockDriverPerformance.length,
-    journeyDrivers: mockDriverPerformance.filter((d) => d.currentLevel === 'journey').length + 42,
-    proGoDrivers: mockDriverPerformance.filter((d) => d.currentLevel === 'pro_go').length + 58,
-    eliteDrivers: mockDriverPerformance.filter((d) => d.currentLevel === 'elite').length + 38,
-    platinumDrivers: mockDriverPerformance.filter((d) => d.currentLevel === 'platinum').length + 22,
-    diamondDrivers: mockDriverPerformance.filter((d) => d.currentLevel === 'diamond').length + 8,
+    journeyDrivers: mockDriverLevels.find((l) => l.name === 'journey')?.driverCount ?? 0,
+    proDrivers: mockDriverLevels.find((l) => l.name === 'pro_go')?.driverCount ?? 0,
+    proGoDrivers: mockDriverLevels.find((l) => l.name === 'pro_go')?.driverCount ?? 0,
+    eliteDrivers: mockDriverLevels.find((l) => l.name === 'elite')?.driverCount ?? 0,
+    platinumDrivers: mockDriverLevels.find((l) => l.name === 'platinum')?.driverCount ?? 0,
+    diamondDrivers: mockDriverLevels.find((l) => l.name === 'diamond')?.driverCount ?? 0,
   }
 }
 
 export const mockOverviewCharts: DriverRewardsOverviewCharts = {
   levelDistribution: [
-    { label: 'Journey', value: 50 },
-    { label: 'Pro Go', value: 64 },
-    { label: 'Elite', value: 40 },
-    { label: 'Platinum', value: 24 },
-    { label: 'Diamond', value: 9 },
+    { label: 'Journey', value: 842 },
+    { label: 'Pro Go', value: 628 },
+    { label: 'Elite', value: 412 },
+    { label: 'Platinum', value: 186 },
+    { label: 'Diamond', value: 74 },
   ],
   monthlyPointsIssued: [
     { label: 'Jan', value: 12400 },
@@ -660,6 +909,37 @@ export const mockLevelAnalytics: LevelAnalyticsData = {
   driversNearDemotion: 7,
   averagePointsPerDriver: 1420,
   averageDriverRating: 4.87,
+  promotionRatePercent: 8.2,
+  demotionRatePercent: 1.1,
+  retentionRatePercent: 93,
+  averageRevenuePerTier: [
+    { label: 'Journey', value: 820 },
+    { label: 'Pro', value: 980 },
+    { label: 'Elite', value: 1180 },
+    { label: 'Platinum', value: 1480 },
+    { label: 'Diamond', value: 1920 },
+  ],
+  acceptanceRateByTier: [
+    { label: 'Journey', value: 86 },
+    { label: 'Pro', value: 89 },
+    { label: 'Elite', value: 92 },
+    { label: 'Platinum', value: 94 },
+    { label: 'Diamond', value: 96 },
+  ],
+  destinationFilterUsage: [
+    { label: 'Journey', value: 1240 },
+    { label: 'Pro', value: 2180 },
+    { label: 'Elite', value: 3420 },
+    { label: 'Platinum', value: 4680 },
+    { label: 'Diamond', value: 5920 },
+  ],
+  bonusUsage: [
+    { label: 'Peak Hour', value: 420 },
+    { label: 'Weekend', value: 280 },
+    { label: 'Airport', value: 190 },
+    { label: 'Event', value: 120 },
+    { label: 'Tier', value: 340 },
+  ],
   levelDistribution: mockOverviewCharts.levelDistribution,
   promotionRate: [
     { label: 'Jan', value: 18 },
@@ -714,4 +994,91 @@ export const mockLevelAnalytics: LevelAnalyticsData = {
     { label: 'Jennifer Park', value: 488 },
     { label: 'David Kim', value: 478 },
   ],
+  leaderboardSafety: [
+    { label: 'Lisa Martinez', value: 98 },
+    { label: 'Elena Rodriguez', value: 96 },
+    { label: 'Marcus Johnson', value: 92 },
+    { label: 'Jennifer Park', value: 91 },
+    { label: 'David Kim', value: 88 },
+  ],
+}
+
+export function computePointsRulesOverview(): PointsRulesOverview {
+  const today = new Date().toISOString().slice(0, 10)
+  const todayHistory = mockDriverPointsHistory.filter((h) => h.createdAt.startsWith(today))
+  return {
+    totalActiveRules:
+      mockPointsRules.filter((r) => r.status === 'active').length +
+      mockPerformanceRules.filter((r) => r.status === 'active').length +
+      mockPenaltyRules.filter((r) => r.status === 'active').length,
+    pointsAwardedToday: todayHistory.filter((h) => h.points > 0).reduce((s, h) => s + h.points, 0) || 1842,
+    pointsDeductedToday: Math.abs(todayHistory.filter((h) => h.points < 0).reduce((s, h) => s + h.points, 0)) || 120,
+    activeBonusCampaigns: mockBonusCampaigns.filter((c) => c.enabled && c.status === 'active').length,
+  }
+}
+
+export function computeRulesEngineAnalytics(): RulesEngineAnalytics {
+  return {
+    mostTriggeredRules: [
+      { label: 'Standard Ride Completion', value: 8420 },
+      { label: '5-Star Rating', value: 3180 },
+      { label: 'Airport Ride', value: 1240 },
+      { label: 'Black Ride Completion', value: 980 },
+      { label: 'Peak Hour Ride', value: 760 },
+    ],
+    mostEarnedRewards: [
+      { label: 'Ride Completion', value: 12400 },
+      { label: 'Performance Bonuses', value: 4200 },
+      { label: 'Bonus Campaigns', value: 2800 },
+      { label: 'Rating Rewards', value: 2100 },
+    ],
+    mostUsedBonusCampaigns: [
+      { label: 'Weekend Bonus', value: 420 },
+      { label: 'Airport Challenge', value: 280 },
+      { label: 'Peak Hour Challenge', value: 190 },
+      { label: 'Diamond Tier Exclusive', value: 74 },
+    ],
+    topDriversByPoints: mockDriverRewardsWallets
+      .sort((a, b) => b.currentPoints - a.currentPoints)
+      .slice(0, 5)
+      .map((w) => ({ label: w.driverName, value: w.currentPoints })),
+    pointsByRideCategory: [
+      { label: 'Standard', value: 4200 },
+      { label: 'Comfort', value: 2800 },
+      { label: 'Black', value: 1900 },
+      { label: 'Black SUV', value: 1200 },
+      { label: 'Airport', value: 2400 },
+    ],
+    pointsByTier: [
+      { label: 'Journey', value: 8420 },
+      { label: 'Pro', value: 12400 },
+      { label: 'Elite', value: 18600 },
+      { label: 'Platinum', value: 9200 },
+      { label: 'Diamond', value: 4800 },
+    ],
+    promotionRatePercent: mockLevelAnalytics.promotionRatePercent,
+    demotionRatePercent: mockLevelAnalytics.demotionRatePercent,
+  }
+}
+
+export function buildDriverRewardsPublicConfig(): DriverRewardsPublicConfig {
+  return {
+    rideRewards: mockPointsRules
+      .filter((r) => r.status === 'active' && r.points > 0 && r.category !== 'penalty')
+      .map((r) => ({ ruleName: r.ruleName, points: r.points, category: r.category })),
+    performanceRewards: mockPerformanceRules
+      .filter((r) => r.status === 'active')
+      .map((r) => ({ metricLabel: r.metricLabel, thresholdLabel: r.thresholdLabel, points: r.points })),
+    bonusOpportunities: mockBonusCampaigns
+      .filter((c) => c.enabled && c.status === 'active')
+      .map((c) => ({
+        name: c.name,
+        description: c.description,
+        rewardPoints: c.rewardPoints,
+        tripTarget: c.tripTarget,
+      })),
+    penaltyRules: mockPenaltyRules
+      .filter((r) => r.status === 'active')
+      .map((r) => ({ ruleName: r.ruleName, points: r.points })),
+  }
 }

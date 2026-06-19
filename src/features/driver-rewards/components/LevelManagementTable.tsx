@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Table } from 'antd'
+import { Button, Table } from 'antd'
 import {
   AdminActionHost,
   createActionsColumn,
@@ -8,6 +8,7 @@ import {
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
+  useCreateDriverLevelMutation,
   useDuplicateDriverLevelMutation,
   useGetDriverLevelsQuery,
   useUpdateDriverLevelMutation,
@@ -17,6 +18,8 @@ import {
   buildLevelDetailFields,
   getTierActionItems,
   openRewardsDrawer,
+  summarizeTierBenefits,
+  summarizeTierRequirements,
 } from '@/features/driver-rewards/driverRewardsHelpers'
 import { TierFormDrawer } from '@/features/driver-rewards/components/TierFormDrawer'
 import { useDriverRewardsPermissions } from '@/features/driver-rewards/hooks/useDriverRewardsPermissions'
@@ -26,7 +29,9 @@ export function TierManagementTable() {
   const { canManage } = useDriverRewardsPermissions()
   const { data = [], isLoading } = useGetDriverLevelsQuery()
   const [editRecord, setEditRecord] = useState<DriverLevel | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
   const [updateLevel, { isLoading: updating }] = useUpdateDriverLevelMutation()
+  const [createLevel, { isLoading: creating }] = useCreateDriverLevelMutation()
   const [duplicateLevel] = useDuplicateDriverLevelMutation()
 
   const handleAction = (key: string, record: DriverLevel) => {
@@ -54,17 +59,23 @@ export function TierManagementTable() {
 
   return (
     <>
+      {canManage && (
+        <div className="mb-4 flex justify-end">
+          <Button type="primary" onClick={() => setCreateOpen(true)}>Create Tier</Button>
+        </div>
+      )}
+
       <Table
         loading={isLoading}
         rowKey="id"
-        dataSource={data}
+        dataSource={[...data].sort((a, b) => a.sortOrder - b.sortOrder)}
         scroll={{ x: 1400 }}
         {...createTableRowProps<DriverLevel>((record) =>
           openRewardsDrawer('Driver Tier', buildLevelDetailFields(record), adminActions),
         )}
         columns={[
           {
-            title: 'Tier Name',
+            title: 'Tier',
             dataIndex: 'label',
             render: (label: string, record: DriverLevel) => (
               <span className="inline-flex items-center gap-2">
@@ -78,12 +89,18 @@ export function TierManagementTable() {
               </span>
             ),
           },
-          { title: 'Required Points', dataIndex: 'requiredPoints' },
-          { title: 'Required Rating', dataIndex: 'requiredRating' },
-          { title: 'Required Trips', dataIndex: 'requiredTrips' },
-          { title: 'Required Online Hours', dataIndex: 'requiredOnlineHours' },
-          { title: 'Acceptance Rate', dataIndex: 'requiredAcceptanceRate', render: (v: number) => `${v}%` },
-          { title: 'Completion Rate', dataIndex: 'requiredCompletionRate', render: (v: number) => `${v}%` },
+          { title: 'Level', dataIndex: 'level', width: 80 },
+          { title: 'Driver Count', dataIndex: 'driverCount' },
+          {
+            title: 'Requirements',
+            render: (_: unknown, record: DriverLevel) => summarizeTierRequirements(record),
+            ellipsis: true,
+          },
+          {
+            title: 'Benefits',
+            render: (_: unknown, record: DriverLevel) => summarizeTierBenefits(record),
+            ellipsis: true,
+          },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
           ...(canManage
             ? [
@@ -95,6 +112,28 @@ export function TierManagementTable() {
             : []),
         ]}
       />
+
+      {createOpen && (
+        <TierFormDrawer
+          open
+          title="Create Tier"
+          confirmLoading={creating}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={async (values) => {
+            await createLevel({
+              ...values,
+              slug: values.name.replace(/_/g, '-'),
+              level: data.length + 1,
+              sortOrder: data.length + 1,
+              icon: 'award',
+              requirements: values.requirements,
+              benefits: values.benefits,
+            }).unwrap()
+            adminActions.notify('Tier created')
+            setCreateOpen(false)
+          }}
+        />
+      )}
 
       {editRecord && (
         <TierFormDrawer

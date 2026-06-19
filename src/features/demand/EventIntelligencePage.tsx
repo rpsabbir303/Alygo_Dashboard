@@ -1,1 +1,1 @@
-export { EventIntelligencePage as default } from './DemandTrendsPage'
+export { default } from '@/features/demand-intelligence/DemandIntelligenceCenterPage'

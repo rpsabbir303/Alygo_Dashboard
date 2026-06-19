@@ -1,1 +1,1 @@
-export { PayoutsPage as default } from './RevenuePage'
+export { default } from '@/features/finance/FinanceDashboardPage'

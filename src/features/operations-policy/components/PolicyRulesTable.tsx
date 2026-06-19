@@ -19,9 +19,10 @@ import { buildPolicyFields, getPolicyActionItems } from '@/features/operations-p
 
 interface PolicyRulesTableProps {
   category: OperationsPolicyCategory
+  readOnly?: boolean
 }
 
-export function PolicyRulesTable({ category }: PolicyRulesTableProps) {
+export function PolicyRulesTable({ category, readOnly = false }: PolicyRulesTableProps) {
   const adminActions = useAdminActions()
   const { data = [], isLoading } = useGetOperationsPoliciesQuery(category)
   const [editRecord, setEditRecord] = useState<OperationsPolicyRule | null>(null)
@@ -69,11 +70,13 @@ export function PolicyRulesTable({ category }: PolicyRulesTableProps) {
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>
-          Add Policy
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className="mb-4 flex justify-end">
+          <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>
+            Add Policy
+          </Button>
+        </div>
+      )}
       <Table
         loading={isLoading}
         rowKey="id"
@@ -92,44 +95,50 @@ export function PolicyRulesTable({ category }: PolicyRulesTableProps) {
             dataIndex: 'lastUpdated',
             render: (d: string) => new Date(d).toLocaleDateString(),
           },
-          createActionsColumn<OperationsPolicyRule>(
-            () => getPolicyActionItems(),
-            (key, record) => { if (key === 'edit') setEditRecord(record) },
-          ),
+          ...(readOnly
+            ? []
+            : [
+                createActionsColumn<OperationsPolicyRule>(
+                  () => getPolicyActionItems(),
+                  (key, record) => { if (key === 'edit') setEditRecord(record) },
+                ),
+              ]),
         ]}
       />
 
-      <Modal
-        title={`Add ${CATEGORY_LABELS[category]}`}
-        open={createOpen}
-        confirmLoading={creating}
-        onCancel={() => setCreateOpen(false)}
-        onOk={() => {
-          document.getElementById(`policy-create-${category}`)?.dispatchEvent(
-            new Event('submit', { cancelable: true, bubbles: true }),
-          )
-        }}
-        destroyOnClose
-      >
-        <PolicyForm
-          id={`policy-create-${category}`}
-          onFinish={async (values) => {
-            await createPolicy({
-              category,
-              name: values.name!,
-              description: values.description!,
-              value: values.value!,
-              numericValue: values.numericValue,
-              unit: values.unit,
-              status: values.status ?? 'active',
-            }).unwrap()
-            adminActions.notify('Policy created')
-            setCreateOpen(false)
+      {!readOnly && (
+        <Modal
+          title={`Add ${CATEGORY_LABELS[category]}`}
+          open={createOpen}
+          confirmLoading={creating}
+          onCancel={() => setCreateOpen(false)}
+          onOk={() => {
+            document.getElementById(`policy-create-${category}`)?.dispatchEvent(
+              new Event('submit', { cancelable: true, bubbles: true }),
+            )
           }}
-        />
-      </Modal>
+          destroyOnClose
+        >
+          <PolicyForm
+            id={`policy-create-${category}`}
+            onFinish={async (values) => {
+              await createPolicy({
+                category,
+                name: values.name!,
+                description: values.description!,
+                value: values.value!,
+                numericValue: values.numericValue,
+                unit: values.unit,
+                status: values.status ?? 'active',
+              }).unwrap()
+              adminActions.notify('Policy created')
+              setCreateOpen(false)
+            }}
+          />
+        </Modal>
+      )}
 
-      {editRecord && (
+      {!readOnly && editRecord && (
         <Modal
           title={`Edit Policy — ${editRecord.name}`}
           open

@@ -1,28 +1,28 @@
 import { Tabs } from 'antd'
 import { PageShell } from '@/components/common/PageShell'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { CentralTierLimitsTable } from '@/features/destination-filters/components/CentralTierLimitsTable'
 import { DestinationFilterAnalytics } from '@/features/destination-filters/components/DestinationFilterAnalytics'
 import { DestinationFilterOverviewCards } from '@/features/destination-filters/components/DestinationFilterOverviewCards'
-import { TierFilterSettingsTable } from '@/features/destination-filters/components/TierFilterSettingsTable'
 import { useDestinationFilterRealtime } from '@/features/destination-filters/hooks/useDestinationFilterRealtime'
 
 export default function DestinationFilterManagementPage() {
-  useDocumentTitle('Destination Filter Management')
+  useDocumentTitle('Destination Filter Usage & Analytics')
   useDestinationFilterRealtime()
 
   return (
     <PageShell
-      title="Destination Filter Management"
-      description="Configure tier-based destination filter limits, expiration rules, and monitor filter usage analytics."
+      title="Destination Filter Usage & Analytics"
+      description="Monitor filter adoption, utilization, acceptance rates, and usage trends. Tier filter limits are read from Tier Management."
     >
       <DestinationFilterOverviewCards />
 
       <div className="glass-card mt-6 p-4">
         <Tabs
-          defaultActiveKey="settings"
+          defaultActiveKey="analytics"
           items={[
-            { key: 'settings', label: 'Tier Settings', children: <TierFilterSettingsTable /> },
             { key: 'analytics', label: 'Analytics', children: <DestinationFilterAnalytics /> },
+            { key: 'tier-limits', label: 'Tier Limits (Read-Only)', children: <CentralTierLimitsTable /> },
           ]}
         />
       </div>

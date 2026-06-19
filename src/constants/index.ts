@@ -39,6 +39,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'pricing.manage',
     'reservations.view',
     'reservations.manage',
+    'reservations.create_manual',
     'finance.view',
     'finance.manage',
     'analytics.view',
@@ -58,6 +59,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     'passengers.manage',
     'reservations.view',
     'reservations.manage',
+    'reservations.create_manual',
     'analytics.view',
   ],
   compliance_manager: [

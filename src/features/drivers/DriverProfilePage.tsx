@@ -1,19 +1,32 @@
 import { Button, Descriptions, Tabs, Table, Tag } from 'antd'
 import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
 import { AdminActionHost } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { DriverVerificationDrawer } from '@/features/drivers/components/DriverVerificationDrawer'
+import { IdentityVerificationBadge } from '@/features/drivers/components/IdentityVerificationBadge'
+import { PhotoCompareView } from '@/features/drivers/components/PhotoCompareView'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useGetDriverByIdQuery } from '@/services/api'
-import { formatCurrency, formatDate } from '@/utils/format'
+import {
+  useGetDriverVerificationQuery,
+  useGetVerificationHistoryQuery,
+  VERIFICATION_SOURCE_LABELS,
+} from '@/services/driverVerificationApi'
+import { DriverTierRewardsTab } from '@/features/driver-rewards/components/DriverTierRewardsTab'
+import { formatCurrency, formatDate, formatDateTime } from '@/utils/format'
 
 export default function DriverProfilePage() {
   const { id = '' } = useParams()
   const adminActions = useAdminActions()
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const { data: driver, isLoading } = useGetDriverByIdQuery(id)
+  const { data: verification } = useGetDriverVerificationQuery(id, { skip: !id })
+  const { data: history = [] } = useGetVerificationHistoryQuery(id, { skip: !id })
   useDocumentTitle(driver ? `${driver.name} - Driver Profile` : 'Driver Profile')
 
   if (isLoading) return null
@@ -78,14 +91,75 @@ export default function DriverProfilePage() {
                   <Descriptions column={1}>
                     <Descriptions.Item label="Compliance"><StatusBadge status={driver.complianceStatus} /></Descriptions.Item>
                     <Descriptions.Item label="Background Check"><StatusBadge status={driver.backgroundCheckStatus} /></Descriptions.Item>
+                    <Descriptions.Item label="Identity Verification">
+                      <IdentityVerificationBadge status={driver.identityVerificationStatus} />
+                    </Descriptions.Item>
                   </Descriptions>
                 ),
+              },
+              {
+                key: 'identity',
+                label: 'Identity Verification',
+                children: verification ? (
+                  <div className="space-y-6">
+                    <Descriptions column={2} size="small" bordered>
+                      <Descriptions.Item label="Status">
+                        <IdentityVerificationBadge status={verification.status} />
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Verification Source">
+                        {VERIFICATION_SOURCE_LABELS[verification.verificationSource]}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Verification Date">
+                        {verification.verifiedAt ? formatDateTime(verification.verifiedAt) : '—'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Last Verification Date">
+                        {verification.lastVerifiedAt ? formatDateTime(verification.lastVerifiedAt) : '—'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Verification Notes" span={2}>
+                        {verification.verificationNotes ?? '—'}
+                      </Descriptions.Item>
+                    </Descriptions>
+                    <PhotoCompareView
+                      profilePhoto={verification.profilePhoto}
+                      liveSelfiePhoto={verification.liveSelfiePhoto}
+                      driverName={driver.name}
+                    />
+                    <Table
+                      size="small"
+                      pagination={{ pageSize: 5 }}
+                      rowKey="id"
+                      dataSource={history}
+                      columns={[
+                        { title: 'Date', dataIndex: 'date', render: (d: string) => formatDateTime(d) },
+                        { title: 'Trigger Source', dataIndex: 'triggerSource' },
+                        {
+                          title: 'Status',
+                          dataIndex: 'status',
+                          render: (s: typeof verification.status) => <IdentityVerificationBadge status={s} />,
+                        },
+                        { title: 'Reviewed By', dataIndex: 'reviewedBy' },
+                        { title: 'Notes', dataIndex: 'notes', ellipsis: true },
+                      ]}
+                    />
+                    <Button type="primary" onClick={() => setDrawerOpen(true)}>
+                      Open Full Verification Review
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-alygo-text-muted">No verification record found.</p>
+                ),
+              },
+              {
+                key: 'tier-rewards',
+                label: 'Tier & Rewards',
+                children: <DriverTierRewardsTab driverId={driver.id} driverName={driver.name} />,
               },
             ]}
           />
         </div>
       </div>
       <Link to="/drivers"><Button icon={<ArrowLeft className="h-4 w-4" />}>Back to Drivers</Button></Link>
+      <DriverVerificationDrawer open={drawerOpen} driver={driver} onClose={() => setDrawerOpen(false)} />
       <AdminActionHost actions={adminActions} />
     </PageShell>
   )

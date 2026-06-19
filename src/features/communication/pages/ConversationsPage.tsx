@@ -1,23 +1,14 @@
-import { Tabs } from 'antd'
 import { CommunicationLayout } from '@/features/communication/CommunicationLayout'
-import { CaseManagementTable } from '@/features/communication/components/CaseManagementTable'
-import { CommunicationHistoryTable } from '@/features/communication/components/CommunicationHistoryTable'
-import { ConversationInbox } from '@/features/communication/components/ConversationInbox'
+import { ConversationWorkspace } from '@/features/communication/components/ConversationWorkspace'
 
 export default function ConversationsPage() {
   return (
     <CommunicationLayout
+      compact
       title="Conversations"
-      description="Inbox-style conversation management for all driver, passenger, trip, safety, and escalation communications."
+      description="Real-time support workspace for driver, passenger, trip, safety, and escalation communications."
     >
-      <Tabs
-        defaultActiveKey="inbox"
-        items={[
-          { key: 'inbox', label: 'Inbox', children: <ConversationInbox /> },
-          { key: 'cases', label: 'Case Management', children: <CaseManagementTable /> },
-          { key: 'history', label: 'Communication History', children: <CommunicationHistoryTable /> },
-        ]}
-      />
+      <ConversationWorkspace />
     </CommunicationLayout>
   )
 }

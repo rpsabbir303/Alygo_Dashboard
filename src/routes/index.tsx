@@ -17,18 +17,16 @@ const DriverWaitlistPage = lazy(() => import('@/features/driver-capacity/DriverC
 const PassengersPage = lazy(() => import('@/features/passengers/PassengersPage'))
 const PassengerProfilePage = lazy(() => import('@/features/passengers/PassengerProfilePage'))
 const LiveTripsPage = lazy(() => import('@/features/operations/LiveTripsPage'))
-const ActiveDriversPage = lazy(() => import('@/features/operations/ActiveDriversPage'))
-const ActivePassengersPage = lazy(() => import('@/features/operations/ActivePassengersPage'))
 const RideMonitoringPage = lazy(() => import('@/features/operations/RideMonitoringPage'))
 const CancellationManagementPage = lazy(() => import('@/features/cancellations/CancellationManagementPage'))
 const DriverRewardsPage = lazy(() => import('@/features/driver-rewards/DriverRewardsPage'))
+const TierManagementPage = lazy(() => import('@/features/driver-rewards/TierManagementPage'))
 const LostFoundManagementPage = lazy(() => import('@/features/lost-found/LostFoundManagementPage'))
 const TripCompletionReviewPage = lazy(() => import('@/features/trip-completion-review/TripCompletionReviewPage'))
 const DrivingHoursManagementPage = lazy(() => import('@/features/driving-hours/DrivingHoursManagementPage'))
 const DestinationFilterManagementPage = lazy(() => import('@/features/destination-filters/DestinationFilterManagementPage'))
 const OperationsPolicyCenterPage = lazy(() => import('@/features/operations-policy/OperationsPolicyCenterPage'))
-const StateActivationPage = lazy(() => import('@/features/state-activation/StateActivationPage'))
-const AirportQueuePage = lazy(() => import('@/features/airport-queue/AirportQueuePage'))
+const LocationDashboardPage = lazy(() => import('@/features/locations/LocationDashboardPage'))
 const SafetyIncidentPage = lazy(() => import('@/features/safety-incidents/SafetyIncidentPage'))
 const BackgroundCheckFeePage = lazy(() => import('@/features/background-check-fees/BackgroundCheckFeePage'))
 const ConversationsPage = lazy(() => import('@/features/communication/pages/ConversationsPage'))
@@ -38,7 +36,6 @@ const PassengerSupportPage = lazy(() => import('@/features/communication/pages/P
 const SafetyCommunicationsPage = lazy(() => import('@/features/communication/pages/SafetyCommunicationsPage'))
 const BroadcastCenterPage = lazy(() => import('@/features/communication/pages/BroadcastCenterPage'))
 const MessageTemplatesPage = lazy(() => import('@/features/communication/pages/MessageTemplatesPage'))
-const InternalNotesPage = lazy(() => import('@/features/communication/pages/InternalNotesPage'))
 const CommunicationAnalyticsPage = lazy(() => import('@/features/communication/pages/CommunicationAnalyticsPage'))
 const ComplianceCenterPage = lazy(() => import('@/features/compliance/ComplianceCenterPage'))
 const BackgroundChecksPage = lazy(() => import('@/features/compliance/BackgroundChecksPage'))
@@ -49,33 +46,15 @@ const VehicleCategoriesPage = lazy(() => import('@/features/eligibility/VehicleC
 const CategoryAssignmentsPage = lazy(() => import('@/features/eligibility/CategoryAssignmentsPage'))
 const PremiumVehiclesPage = lazy(() => import('@/features/eligibility/PremiumVehiclesPage'))
 const CategoryDetailPage = lazy(() => import('@/features/categories/CategoryDetailPage'))
-const DemandTrendsPage = lazy(() => import('@/features/demand/DemandTrendsPage'))
-const DemandForecastingPage = lazy(() => import('@/features/demand/DemandForecastingPage'))
-const HeatMapsPage = lazy(() => import('@/features/demand/HeatMapsPage'))
-const EarningsForecastsPage = lazy(() => import('@/features/demand/EarningsForecastsPage'))
-const EventIntelligencePage = lazy(() => import('@/features/demand/EventIntelligencePage'))
-const SurgeZonesPage = lazy(() => import('@/features/pricing/SurgeZonesPage'))
-const PricingRulesPage = lazy(() => import('@/features/pricing/PricingRulesPage'))
-const SurgeHistoryPage = lazy(() => import('@/features/pricing/SurgeHistoryPage'))
-const ScheduledRidesPage = lazy(() => import('@/features/reservations/ScheduledRidesPage'))
-const AirportReservationsPage = lazy(() => import('@/features/reservations/AirportReservationsPage'))
-const EventReservationsPage = lazy(() => import('@/features/reservations/EventReservationsPage'))
-const StatesPage = lazy(() => import('@/features/locations/StatesPage'))
-const CitiesPage = lazy(() => import('@/features/locations/CitiesPage'))
-const AirportsPage = lazy(() => import('@/features/locations/AirportsPage'))
-const ZonesPage = lazy(() => import('@/features/locations/ZonesPage'))
-const RevenuePage = lazy(() => import('@/features/finance/RevenuePage'))
-const PayoutsPage = lazy(() => import('@/features/finance/PayoutsPage'))
-const WalletsPage = lazy(() => import('@/features/finance/WalletsPage'))
-const TransactionsPage = lazy(() => import('@/features/finance/TransactionsPage'))
-const DriverAnalyticsPage = lazy(() => import('@/features/analytics/DriverAnalyticsPage'))
-const PassengerAnalyticsPage = lazy(() => import('@/features/analytics/PassengerAnalyticsPage'))
-const RevenueAnalyticsPage = lazy(() => import('@/features/analytics/RevenueAnalyticsPage'))
-const DemandAnalyticsPage = lazy(() => import('@/features/analytics/DemandAnalyticsPage'))
-const ComplianceAnalyticsPage = lazy(() => import('@/features/analytics/ComplianceAnalyticsPage'))
+const DemandIntelligenceCenterPage = lazy(() => import('@/features/demand-intelligence/DemandIntelligenceCenterPage'))
+const DynamicPricingCenterPage = lazy(() => import('@/features/pricing/DynamicPricingCenterPage'))
+const ReservationCenterPage = lazy(() => import('@/features/reservations/ReservationCenterPage'))
+const FinanceDashboardPage = lazy(() => import('@/features/finance/FinanceDashboardPage'))
+const ReportsAnalyticsPage = lazy(() => import('@/features/analytics/ReportsAnalyticsPage'))
 const PlatformSettingsPage = lazy(() => import('@/features/settings/PlatformSettingsPage'))
 const NotificationsSettingsPage = lazy(() => import('@/features/settings/NotificationsSettingsPage'))
 const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
+const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
 const AdminRolesPage = lazy(() => import('@/features/settings/AdminRolesPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
@@ -108,8 +87,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: withSuspense(<DashboardPage />) },
       { path: 'operations/live-trips', element: withSuspense(<LiveTripsPage />) },
-      { path: 'operations/active-drivers', element: withSuspense(<ActiveDriversPage />) },
-      { path: 'operations/active-passengers', element: withSuspense(<ActivePassengersPage />) },
+      { path: 'operations/active-drivers', element: <Navigate to="/drivers?tab=active" replace /> },
+      { path: 'operations/active-passengers', element: <Navigate to="/passengers?tab=active" replace /> },
       { path: 'operations/ride-monitoring', element: withSuspense(<RideMonitoringPage />) },
       { path: 'operations/cancellation-management', element: withSuspense(<CancellationManagementPage />) },
       { path: 'operations/lost-found', element: withSuspense(<LostFoundManagementPage />) },
@@ -125,12 +104,14 @@ export const router = createBrowserRouter([
       { path: 'communication/safety', element: withSuspense(<SafetyCommunicationsPage />) },
       { path: 'communication/broadcast', element: withSuspense(<BroadcastCenterPage />) },
       { path: 'communication/templates', element: withSuspense(<MessageTemplatesPage />) },
-      { path: 'communication/internal-notes', element: withSuspense(<InternalNotesPage />) },
+      { path: 'communication/internal-notes', element: <Navigate to="/communication/conversations" replace /> },
       { path: 'communication/analytics', element: withSuspense(<CommunicationAnalyticsPage />) },
       { path: 'drivers', element: withSuspense(<DriversPage />) },
       { path: 'drivers/rewards', element: withSuspense(<DriverRewardsPage />) },
-      { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },
+      { path: 'drivers/tiers', element: withSuspense(<TierManagementPage />) },
+      { path: 'drivers/rewards/tier-management', element: <Navigate to="/drivers/tiers" replace /> },
       { path: 'drivers/waitlist', element: withSuspense(<DriverWaitlistPage />) },
+      { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },
       { path: 'passengers', element: withSuspense(<PassengersPage />) },
       { path: 'passengers/:id', element: withSuspense(<PassengerProfilePage />) },
       { path: 'compliance', element: withSuspense(<ComplianceCenterPage />) },
@@ -143,35 +124,67 @@ export const router = createBrowserRouter([
       { path: 'eligibility/assignments', element: withSuspense(<CategoryAssignmentsPage />) },
       { path: 'eligibility/premium-vehicles', element: withSuspense(<PremiumVehiclesPage />) },
       { path: 'categories/:category', element: withSuspense(<CategoryDetailPage />) },
-      { path: 'demand/trends', element: withSuspense(<DemandTrendsPage />) },
-      { path: 'demand/forecasting', element: withSuspense(<DemandForecastingPage />) },
-      { path: 'demand/heat-maps', element: withSuspense(<HeatMapsPage />) },
-      { path: 'demand/earnings-forecasts', element: withSuspense(<EarningsForecastsPage />) },
-      { path: 'demand/event-intelligence', element: withSuspense(<EventIntelligencePage />) },
-      { path: 'pricing/surge-zones', element: withSuspense(<SurgeZonesPage />) },
-      { path: 'pricing/rules', element: withSuspense(<PricingRulesPage />) },
-      { path: 'pricing/surge-history', element: withSuspense(<SurgeHistoryPage />) },
-      { path: 'reservations/scheduled', element: withSuspense(<ScheduledRidesPage />) },
-      { path: 'reservations/airport', element: withSuspense(<AirportReservationsPage />) },
-      { path: 'reservations/events', element: withSuspense(<EventReservationsPage />) },
-      { path: 'locations/states', element: withSuspense(<StatesPage />) },
-      { path: 'locations/state-activation', element: withSuspense(<StateActivationPage />) },
-      { path: 'locations/cities', element: withSuspense(<CitiesPage />) },
-      { path: 'locations/airports', element: withSuspense(<AirportsPage />) },
-      { path: 'locations/airport-queue', element: withSuspense(<AirportQueuePage />) },
-      { path: 'locations/zones', element: withSuspense(<ZonesPage />) },
-      { path: 'finance/revenue', element: withSuspense(<RevenuePage />) },
-      { path: 'finance/payouts', element: withSuspense(<PayoutsPage />) },
-      { path: 'finance/wallets', element: withSuspense(<WalletsPage />) },
-      { path: 'finance/transactions', element: withSuspense(<TransactionsPage />) },
-      { path: 'analytics/drivers', element: withSuspense(<DriverAnalyticsPage />) },
-      { path: 'analytics/passengers', element: withSuspense(<PassengerAnalyticsPage />) },
-      { path: 'analytics/revenue', element: withSuspense(<RevenueAnalyticsPage />) },
-      { path: 'analytics/demand', element: withSuspense(<DemandAnalyticsPage />) },
-      { path: 'analytics/compliance', element: withSuspense(<ComplianceAnalyticsPage />) },
+      { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },
+      { path: 'demand/trends', element: <Navigate to="/demand-intelligence" replace /> },
+      { path: 'demand/forecasting', element: <Navigate to="/demand-intelligence" replace /> },
+      { path: 'demand/heat-maps', element: <Navigate to="/demand-intelligence" replace /> },
+      { path: 'demand/earnings-forecasts', element: <Navigate to="/demand-intelligence" replace /> },
+      { path: 'demand/event-intelligence', element: <Navigate to="/demand-intelligence" replace /> },
+      {
+        path: 'pricing',
+        children: [
+          { index: true, element: withSuspense(<DynamicPricingCenterPage />) },
+          { path: 'rules', element: <Navigate to="/pricing?tab=rules" replace /> },
+          { path: 'surge-zones', element: <Navigate to="/pricing?tab=zones" replace /> },
+          { path: 'surge-history', element: <Navigate to="/pricing?tab=analytics" replace /> },
+        ],
+      },
+      {
+        path: 'reservations',
+        children: [
+          { index: true, element: withSuspense(<ReservationCenterPage />) },
+          { path: 'scheduled', element: <Navigate to="/reservations?type=scheduled" replace /> },
+          { path: 'airport', element: <Navigate to="/reservations?type=airport" replace /> },
+          { path: 'events', element: <Navigate to="/reservations?type=event" replace /> },
+        ],
+      },
+      {
+        path: 'locations',
+        children: [
+          { index: true, element: withSuspense(<LocationDashboardPage />) },
+          { path: 'states', element: <Navigate to="/locations?tab=states" replace /> },
+          { path: 'cities', element: <Navigate to="/locations?tab=cities" replace /> },
+          { path: 'zones', element: <Navigate to="/locations?tab=zones" replace /> },
+          { path: 'airports', element: <Navigate to="/locations?tab=airports" replace /> },
+          { path: 'state-activation', element: <Navigate to="/locations?tab=states" replace /> },
+          { path: 'airport-queue', element: <Navigate to="/locations?tab=airports" replace /> },
+        ],
+      },
+      {
+        path: 'finance',
+        children: [
+          { index: true, element: withSuspense(<FinanceDashboardPage />) },
+          { path: 'revenue', element: <Navigate to="/finance?tab=revenue" replace /> },
+          { path: 'payouts', element: <Navigate to="/finance?tab=payouts" replace /> },
+          { path: 'wallets', element: <Navigate to="/finance?tab=wallets" replace /> },
+          { path: 'transactions', element: <Navigate to="/finance?tab=transactions" replace /> },
+        ],
+      },
+      {
+        path: 'analytics',
+        children: [
+          { index: true, element: withSuspense(<ReportsAnalyticsPage />) },
+          { path: 'drivers', element: <Navigate to="/analytics?tab=drivers" replace /> },
+          { path: 'passengers', element: <Navigate to="/analytics?tab=passengers" replace /> },
+          { path: 'revenue', element: <Navigate to="/analytics?tab=revenue" replace /> },
+          { path: 'demand', element: <Navigate to="/analytics?tab=demand" replace /> },
+          { path: 'compliance', element: <Navigate to="/analytics?tab=compliance" replace /> },
+        ],
+      },
       { path: 'settings/platform', element: withSuspense(<PlatformSettingsPage />) },
       { path: 'settings/notifications', element: withSuspense(<NotificationsSettingsPage />) },
       { path: 'settings/integrations', element: withSuspense(<IntegrationsPage />) },
+      { path: 'settings/reservations', element: withSuspense(<ReservationConfigurationPage />) },
       { path: 'settings/admin-roles', element: withSuspense(<AdminRolesPage />) },
       { path: '*', element: withSuspense(<NotFoundPage />) },
     ],

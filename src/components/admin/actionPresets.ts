@@ -5,12 +5,15 @@ import {
   Download,
   Eye,
   FileText,
+  GitCompare,
+  History,
   MapPin,
   MessageSquare,
   Pencil,
   Plus,
   RefreshCw,
   RotateCcw,
+  ScanFace,
   Shield,
   Trash2,
   UserPlus,
@@ -18,6 +21,7 @@ import {
 } from 'lucide-react'
 import type { ActionMenuItem, DetailField } from '@/components/admin/types'
 import type { ComplianceDocument, Driver, EligibilityRule, Passenger, Reservation, SurgeZone, Trip } from '@/types'
+import type { DriverVerificationFocus } from '@/features/drivers/driverVerificationHelpers'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { formatCurrency, formatDateTime } from '@/utils/format'
 import type { useAdminActions } from '@/hooks/useAdminActions'
@@ -25,6 +29,12 @@ import { store } from '@/store'
 import { openTripCommunicationDrawer } from '@/store/slices/communicationSlice'
 
 type AdminActions = ReturnType<typeof useAdminActions>
+
+export type DriverActionHandlers = {
+  onOpenVerificationDrawer?: (driver: Driver, focus?: DriverVerificationFocus) => void
+  onApproveVerification?: (driver: Driver) => void
+  onRejectVerification?: (driver: Driver) => void
+}
 
 export function openTripDetails(record: Trip, actions: AdminActions) {
   actions.openDrawer(`Trip ${record.id}`, [
@@ -136,12 +146,23 @@ export function getDriverManagementActionItems(): ActionMenuItem[] {
   return [
     ...getActiveDriverActionItems(),
     { key: 'message', label: 'Open Communication', icon: MessageSquare, group: 1 },
+    { key: 'view-verification-history', label: 'View Verification History', icon: History, group: 4 },
+    { key: 'request-re-verification', label: 'Request Re-Verification', icon: RefreshCw, group: 4 },
+    { key: 'review-live-selfie', label: 'Review Live Selfie', icon: ScanFace, group: 4 },
+    { key: 'compare-photos', label: 'Compare Profile Photo vs Live Selfie', icon: GitCompare, group: 4 },
+    { key: 'approve-verification', label: 'Approve Verification', icon: CheckCircle, group: 4 },
+    { key: 'reject-verification', label: 'Reject Verification', icon: XCircle, danger: true, group: 4 },
     { key: 'approve', label: 'Approve Driver', icon: CheckCircle, group: 3 },
     { key: 'reject', label: 'Reject Driver', icon: XCircle, danger: true, group: 3 },
   ]
 }
 
-export function handleDriverAction(key: string, record: Driver, actions: AdminActions) {
+export function handleDriverAction(
+  key: string,
+  record: Driver,
+  actions: AdminActions,
+  handlers?: DriverActionHandlers,
+) {
   const label = record.name
   switch (key) {
     case 'edit':
@@ -196,6 +217,43 @@ export function handleDriverAction(key: string, record: Driver, actions: AdminAc
         { label: 'Background Check', value: record.backgroundCheckStatus },
         { label: 'Earnings', value: formatCurrency(record.earnings) },
       ])
+      break
+    case 'view-verification-history':
+      handlers?.onOpenVerificationDrawer?.(record, 'history')
+      break
+    case 'request-re-verification':
+      handlers?.onOpenVerificationDrawer?.(record, 'security')
+      break
+    case 'review-live-selfie':
+      handlers?.onOpenVerificationDrawer?.(record, 'selfie')
+      break
+    case 'compare-photos':
+      handlers?.onOpenVerificationDrawer?.(record, 'compare')
+      break
+    case 'approve-verification':
+      if (handlers?.onApproveVerification) {
+        handlers.onApproveVerification(record)
+      } else {
+        actions.openConfirm({
+          title: 'Approve Verification',
+          description: `Approve identity verification for ${label}?`,
+          confirmLabel: 'Approve',
+          onConfirm: async () => actions.notify('Verification approved', label),
+        })
+      }
+      break
+    case 'reject-verification':
+      if (handlers?.onRejectVerification) {
+        handlers.onRejectVerification(record)
+      } else {
+        actions.openConfirm({
+          title: 'Reject Verification',
+          description: `Reject identity verification for ${label}?`,
+          confirmLabel: 'Reject',
+          danger: true,
+          onConfirm: async () => actions.notify('Verification rejected', label),
+        })
+      }
       break
     default:
       break

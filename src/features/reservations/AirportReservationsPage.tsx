@@ -1,1 +1,1 @@
-export { AirportReservationsPage as default } from './ScheduledRidesPage'
+export { default } from '@/features/reservations/ReservationCenterPage'

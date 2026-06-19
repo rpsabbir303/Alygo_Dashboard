@@ -12,6 +12,7 @@ import type {
   SurgeZone,
   Trip,
 } from '@/types'
+import { getVerificationForDriver } from '@/services/mock/driverVerificationData'
 
 const cities = ['San Francisco', 'Los Angeles', 'New York', 'Chicago', 'Miami', 'Seattle', 'Austin']
 const states = ['CA', 'NY', 'IL', 'FL', 'WA', 'TX']
@@ -127,24 +128,46 @@ export const mockActivities: ActivityItem[] = [
   },
 ]
 
-export const mockDrivers: Driver[] = Array.from({ length: 50 }, (_, i) => ({
-  id: `DR-${1000 + i}`,
-  name: ['Marcus Johnson', 'Sarah Chen', 'David Kim', 'Emily Rodriguez', 'James Wilson'][i % 5] + ` ${i + 1}`,
-  email: `driver${i + 1}@example.com`,
-  phone: `+1 (555) ${String(100 + i).padStart(3, '0')}-${String(1000 + i).slice(-4)}`,
-  rating: Number((4.2 + (i % 8) * 0.1).toFixed(1)),
-  completedTrips: 50 + i * 23,
-  vehicle: ['Toyota Camry', 'Honda Accord', 'Tesla Model 3', 'Chevrolet Suburban', 'Mercedes E-Class'][i % 5],
-  vehicleYear: 2018 + (i % 6),
-  categories: (['standard', 'comfort', 'xl', 'black'] as const).slice(0, (i % 4) + 1),
-  complianceStatus: (['approved', 'pending', 'expiring_soon', 'expired'] as const)[i % 4],
-  backgroundCheckStatus: (['approved', 'pending', 'rejected'] as const)[i % 3],
-  status: (['active', 'pending', 'suspended', 'deactivated'] as const)[i % 4],
-  city: cities[i % cities.length],
-  state: states[i % states.length],
-  joinedAt: new Date(Date.now() - i * 86400000 * 7).toISOString(),
-  earnings: 1200 + i * 85,
-}))
+const identityStatuses = [
+  'verified',
+  'pending_re_verification',
+  'verification_required',
+  'under_review',
+  'failed_verification',
+] as const
+
+export const mockDrivers: Driver[] = Array.from({ length: 50 }, (_, i) => {
+  const tiers = ['journey', 'pro_go', 'elite', 'platinum', 'diamond'] as const
+  return {
+    id: `DR-${1000 + i}`,
+    name: ['Marcus Johnson', 'Sarah Chen', 'David Kim', 'Emily Rodriguez', 'James Wilson'][i % 5] + ` ${i + 1}`,
+    email: `driver${i + 1}@example.com`,
+    phone: `+1 (555) ${String(100 + i).padStart(3, '0')}-${String(1000 + i).slice(-4)}`,
+    rating: Number((4.2 + (i % 8) * 0.1).toFixed(1)),
+    completedTrips: 50 + i * 23,
+    vehicle: ['Toyota Camry', 'Honda Accord', 'Tesla Model 3', 'Chevrolet Suburban', 'Mercedes E-Class'][i % 5],
+    vehicleYear: 2018 + (i % 6),
+    categories: (['standard', 'comfort', 'xl', 'black'] as const).slice(0, (i % 4) + 1),
+    complianceStatus: (['approved', 'pending', 'expiring_soon', 'expired'] as const)[i % 4],
+    backgroundCheckStatus: (['approved', 'pending', 'rejected'] as const)[i % 3],
+    identityVerificationStatus: identityStatuses[i % identityStatuses.length],
+    status: (['active', 'pending', 'suspended', 'deactivated'] as const)[i % 4],
+    city: cities[i % cities.length],
+    state: states[i % states.length],
+    joinedAt: new Date(Date.now() - i * 86400000 * 7).toISOString(),
+    earnings: 1200 + i * 85,
+    currentTier: tiers[i % tiers.length],
+    tierProgress: 35 + ((i * 13) % 65),
+    tierStatus: i % 11 === 0 ? 'at_risk' : 'good_standing',
+    acceptanceRate: 82 + (i % 14),
+    safetyScore: 80 + (i % 18),
+  }
+})
+
+mockDrivers.forEach((d) => {
+  const v = getVerificationForDriver(d.id)
+  if (v) d.identityVerificationStatus = v.status
+})
 
 export const mockPassengers: Passenger[] = Array.from({ length: 40 }, (_, i) => ({
   id: `PS-${2000 + i}`,
@@ -228,17 +251,40 @@ export const mockSurgeZones: SurgeZone[] = [
   { id: 'SZ-4', name: 'South Beach', city: 'Miami', multiplier: 1.5, demand: 620, supply: 310, active: false },
 ]
 
-export const mockReservations: Reservation[] = Array.from({ length: 20 }, (_, i) => ({
-  id: `RS-${4000 + i}`,
-  passengerName: mockPassengers[i].name,
-  type: (['scheduled', 'airport', 'event', 'business'] as const)[i % 4],
-  pickup: i % 2 === 0 ? 'SFO Terminal 2' : `${100 + i} Main St`,
-  dropoff: i % 2 === 0 ? 'Downtown SF' : 'Convention Center',
-  scheduledAt: new Date(Date.now() + i * 3600000).toISOString(),
-  category: (['standard', 'comfort', 'black', 'xl'] as const)[i % 4],
-  status: (['pending', 'assigned', 'completed'] as const)[i % 3],
-  driverName: i % 3 !== 0 ? mockDrivers[i].name : undefined,
-}))
+const reservationTypes = ['scheduled', 'airport', 'event'] as const
+const reservationStatuses = ['pending', 'assigned', 'in_progress', 'completed', 'cancelled'] as const
+const airports = [
+  { code: 'SFO', name: 'San Francisco Intl' },
+  { code: 'LAX', name: 'Los Angeles Intl' },
+  { code: 'JFK', name: 'JFK Intl' },
+]
+
+export const mockReservations: Reservation[] = Array.from({ length: 24 }, (_, i) => {
+  const type = reservationTypes[i % 3]
+  const city = cities[i % cities.length]
+  const status = reservationStatuses[i % reservationStatuses.length]
+  const airport = airports[i % airports.length]
+
+  return {
+    id: `RS-${4000 + i}`,
+    passengerName: mockPassengers[i % mockPassengers.length].name,
+    type,
+    pickup: type === 'airport' ? `${airport.code} Terminal ${(i % 3) + 1}` : `${100 + i} Main St, ${city}`,
+    dropoff: type === 'event' ? 'Convention Center' : type === 'airport' ? `Downtown ${city.split(' ')[0]}` : `${200 + i} Oak Ave, ${city}`,
+    scheduledAt: new Date(Date.now() + i * 3600000).toISOString(),
+    createdAt: new Date(Date.now() - i * 86400000).toISOString(),
+    category: (['standard', 'comfort', 'black', 'xl'] as const)[i % 4],
+    status,
+    driverName: status === 'pending' ? undefined : mockDrivers[i % mockDrivers.length].name,
+    city,
+    airportCode: type === 'airport' ? airport.code : undefined,
+    flightNumber: type === 'airport' ? `AA${1200 + i}` : undefined,
+    terminal: type === 'airport' ? `Terminal ${(i % 3) + 1}` : undefined,
+    eventName: type === 'event' ? ['Tech Summit', 'Music Festival', 'Sports Championship'][i % 3] : undefined,
+    venue: type === 'event' ? ['Moscone Center', 'Staples Center', 'Madison Square Garden'][i % 3] : undefined,
+    eventTime: type === 'event' ? new Date(Date.now() + i * 7200000).toISOString() : undefined,
+  }
+})
 
 export const mockNotifications: NotificationItem[] = [
   {
@@ -288,6 +334,7 @@ export const mockAdminUser: AuthUser = {
     'pricing.manage',
     'reservations.view',
     'reservations.manage',
+    'reservations.create_manual',
     'finance.view',
     'finance.manage',
     'analytics.view',

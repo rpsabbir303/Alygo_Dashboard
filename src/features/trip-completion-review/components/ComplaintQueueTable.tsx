@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Form, Input, InputNumber, Modal, Table, Tag } from 'antd'
 import {
   AdminActionHost,
@@ -23,9 +23,18 @@ import {
 import { ComplaintReviewDrawer } from '@/features/trip-completion-review/components/ComplaintReviewDrawer'
 import { formatCurrency } from '@/utils/format'
 
-export function ComplaintQueueTable() {
+interface ComplaintQueueTableProps {
+  filter?: (complaint: TripCompletionComplaint) => boolean
+  description?: string
+}
+
+export function ComplaintQueueTable({ filter, description }: ComplaintQueueTableProps = {}) {
   const adminActions = useAdminActions()
   const { data = [], isLoading } = useGetTripComplaintsQuery()
+  const filteredData = useMemo(
+    () => (filter ? data.filter(filter) : data),
+    [data, filter],
+  )
   const [selected, setSelected] = useState<TripCompletionComplaint | null>(null)
   const [partialRecord, setPartialRecord] = useState<TripCompletionComplaint | null>(null)
   const [adjustRecord, setAdjustRecord] = useState<TripCompletionComplaint | null>(null)
@@ -83,10 +92,13 @@ export function ComplaintQueueTable() {
 
   return (
     <>
+      {description && (
+        <p className="mb-4 text-sm text-alygo-text-muted">{description}</p>
+      )}
       <Table
         loading={isLoading}
         rowKey="id"
-        dataSource={data}
+        dataSource={filteredData}
         scroll={{ x: 1400 }}
         {...createTableRowProps<TripCompletionComplaint>(openDetails)}
         columns={[

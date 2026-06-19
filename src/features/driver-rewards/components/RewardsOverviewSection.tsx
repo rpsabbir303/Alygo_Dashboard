@@ -31,7 +31,7 @@ const kpiConfig = [
 
 const levelConfig = [
   { key: 'journeyDrivers', label: 'Journey Drivers', icon: Users },
-  { key: 'proGoDrivers', label: 'Pro Go Drivers', icon: Award },
+  { key: 'proDrivers', label: 'Pro Drivers', icon: Award },
   { key: 'eliteDrivers', label: 'Elite Drivers', icon: Trophy },
   { key: 'platinumDrivers', label: 'Platinum Drivers', icon: Gem },
   { key: 'diamondDrivers', label: 'Diamond Drivers', icon: Crown },

@@ -5,10 +5,14 @@ import type {
   TierFilterSettings,
 } from '@/types/destinationFilter'
 import {
+  applyTierFilterSettingsToLevel,
+  deriveTierFilterSettingsFromLevels,
+} from '@/features/driver-rewards/utils/tierConfigHelpers'
+import {
   computeDestinationFilterOverview,
   mockDestinationFilterAnalytics,
-  mockTierFilterSettings,
 } from '@/services/mock/destinationFilterData'
+import { mockDriverLevels } from '@/services/mock/driverRewardsData'
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -25,16 +29,18 @@ export const destinationFilterApi = createApi({
       providesTags: ['DestinationFilterOverview'],
     }),
     getTierFilterSettings: builder.query<TierFilterSettings[], void>({
-      queryFn: async () => ({ data: [...mockTierFilterSettings] }),
+      queryFn: async () => ({
+        data: deriveTierFilterSettingsFromLevels(mockDriverLevels),
+      }),
       providesTags: ['TierFilterSettings'],
     }),
     updateTierFilterSettings: builder.mutation<TierFilterSettings, Partial<TierFilterSettings> & { id: string }>({
       queryFn: async ({ id, ...updates }) => {
         await delay()
-        const index = mockTierFilterSettings.findIndex((s) => s.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Settings not found' } }
-        mockTierFilterSettings[index] = { ...mockTierFilterSettings[index], ...updates }
-        return { data: mockTierFilterSettings[index] }
+        const levelIndex = mockDriverLevels.findIndex((l) => `df-${l.id}` === id)
+        if (levelIndex === -1) return { error: { status: 404, data: 'Tier not found' } }
+        mockDriverLevels[levelIndex] = applyTierFilterSettingsToLevel(mockDriverLevels[levelIndex], updates)
+        return { data: deriveTierFilterSettingsFromLevels(mockDriverLevels).find((s) => s.id === id)! }
       },
       invalidatesTags: ['TierFilterSettings', 'DestinationFilterOverview'],
     }),

@@ -1,1 +1,1 @@
-export { SurgeHistoryPage as default } from './SurgeZonesPage'
+export { default } from '@/features/pricing/DynamicPricingCenterPage'

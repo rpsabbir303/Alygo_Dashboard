@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Drawer, Menu } from 'antd'
+import type { MenuProps } from 'antd'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { BrandLogo } from '@/components/shared/BrandLogo'
@@ -14,9 +15,52 @@ function filterNavByPermissions(items: typeof NAVIGATION, hasPermission: ReturnT
     .filter((item) => !item.permission || hasPermission(item.permission))
     .map((item) => ({
       ...item,
-      children: item.children?.filter((child) => !child.permission || hasPermission(child.permission)),
+      children: item.children
+        ?.filter((child) => !child.permission || hasPermission(child.permission))
+        .map((child) => ({
+          ...child,
+          children: child.children?.filter((nested) => !nested.permission || hasPermission(nested.permission)),
+        })),
     }))
-    .filter((item) => !item.children || item.children.length > 0)
+    .filter((item) => item.path || !item.children || item.children.length > 0)
+}
+
+function buildMenuItems(items: ReturnType<typeof filterNavByPermissions>): MenuProps['items'] {
+  return items.map((item) => ({
+    key: item.key,
+    icon: item.icon ? <item.icon className="h-4 w-4" /> : undefined,
+    label: item.path ? <Link to={item.path}>{item.label}</Link> : item.label,
+    children: item.children?.map((child) => {
+      if (child.children?.length) {
+        return {
+          key: child.key,
+          label: child.label,
+          children: child.children.map((nested) => ({
+            key: nested.key,
+            label: <Link to={nested.path!}>{nested.label}</Link>,
+          })),
+        }
+      }
+      return {
+        key: child.key,
+        label: <Link to={child.path!}>{child.label}</Link>,
+      }
+    }),
+  }))
+}
+
+function flattenNav(items: ReturnType<typeof filterNavByPermissions>) {
+  const flat: Array<{ key: string; path?: string }> = []
+  for (const item of items) {
+    if (item.path) flat.push({ key: item.key, path: item.path })
+    item.children?.forEach((child) => {
+      if (child.path) flat.push({ key: child.key, path: child.path })
+      child.children?.forEach((nested) => {
+        if (nested.path) flat.push({ key: nested.key, path: nested.path })
+      })
+    })
+  }
+  return flat
 }
 
 export function Sidebar() {
@@ -25,27 +69,25 @@ export function Sidebar() {
   const collapsed = useAppSelector((state) => state.ui.sidebarCollapsed)
   const mobileOpen = useAppSelector((state) => state.ui.mobileSidebarOpen)
   const { hasPermission } = usePermissions()
-  const [openKeys, setOpenKeys] = useState<string[]>(['operations'])
+  const [openKeys, setOpenKeys] = useState<string[]>(['operations', 'users', 'driver-rewards'])
 
   const navItems = useMemo(() => filterNavByPermissions(NAVIGATION, hasPermission), [hasPermission])
-
-  const menuItems = navItems.map((item) => ({
-    key: item.key,
-    icon: item.icon ? <item.icon className="h-4 w-4" /> : undefined,
-    label: item.path ? <Link to={item.path}>{item.label}</Link> : item.label,
-    children: item.children?.map((child) => ({
-      key: child.key,
-      label: <Link to={child.path!}>{child.label}</Link>,
-    })),
-  }))
+  const menuItems = useMemo(() => buildMenuItems(navItems), [navItems])
 
   const selectedKeys = useMemo(() => {
-    const flat = navItems.flatMap((item) =>
-      item.children ? item.children.map((c) => ({ key: c.key, path: c.path })) : [{ key: item.key, path: item.path }],
-    )
-    const match = flat.find((item) => item.path === location.pathname)
-    return match ? [match.key] : ['dashboard']
-  }, [location.pathname, navItems])
+    const flat = flattenNav(navItems)
+    const pathname = location.pathname
+    const search = location.search
+
+    const exact = flat.find((item) => item.path === `${pathname}${search}`)
+    if (exact) return [exact.key]
+
+    const pathMatch = flat.find((item) => item.path?.startsWith(pathname) && item.path.includes('?tab='))
+    if (pathMatch) return [pathMatch.key]
+
+    const fallback = flat.find((item) => item.path === pathname)
+    return fallback ? [fallback.key] : ['dashboard']
+  }, [location.pathname, location.search, navItems])
 
   const sidebarContent = (
     <div className="flex h-full flex-col">

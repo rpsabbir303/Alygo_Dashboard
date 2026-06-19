@@ -139,6 +139,20 @@ export const communicationApi = createApi({
       },
       invalidatesTags: ['Conversations'],
     }),
+    updateConversation: builder.mutation<Conversation, Partial<Conversation> & { id: string }>({
+      queryFn: async ({ id, ...updates }) => {
+        await delay()
+        const index = mockConversations.findIndex((c) => c.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Conversation not found' } }
+        mockConversations[index] = {
+          ...mockConversations[index],
+          ...updates,
+          lastActivity: new Date().toISOString(),
+        }
+        return { data: mockConversations[index] }
+      },
+      invalidatesTags: ['Conversations', 'CommunicationOverview'],
+    }),
     getMessageTemplates: builder.query<MessageTemplate[], void>({
       queryFn: async () => ({ data: [...mockMessageTemplates] }),
       providesTags: ['Templates'],
@@ -269,6 +283,7 @@ export const {
   useSendMessageMutation,
   useUpdateConversationStatusMutation,
   useAssignConversationMutation,
+  useUpdateConversationMutation,
   useGetMessageTemplatesQuery,
   useCreateMessageTemplateMutation,
   useUpdateMessageTemplateMutation,

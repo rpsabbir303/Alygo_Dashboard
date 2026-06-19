@@ -20,6 +20,7 @@ import type {
   Promotion,
 } from '@/types/driverRewards'
 import { LEVEL_LABELS } from '@/services/driverRewardsApi'
+import { formatReservationAccess } from '@/features/driver-rewards/utils/tierConfigHelpers'
 import { formatCurrency } from '@/utils/format'
 
 type AdminActions = ReturnType<typeof useAdminActions>
@@ -47,6 +48,7 @@ export const getLevelActionItems = getTierActionItems
 export function getPointsRuleActionItems(record: PointsRule): ActionMenuItem[] {
   const items: ActionMenuItem[] = [
     { key: 'edit', label: 'Edit', icon: Pencil, group: 1 },
+    { key: 'duplicate', label: 'Duplicate', icon: Copy, group: 1 },
     { key: 'delete', label: 'Delete', icon: Trash2, danger: true, group: 2 },
   ]
   if (record.status === 'active') {
@@ -106,20 +108,38 @@ export function getAchievementActionItems(): ActionMenuItem[] {
 }
 
 export function buildLevelDetailFields(record: DriverLevel): DetailField[] {
+  const b = record.benefits
   return [
     { label: 'Tier Name', value: record.label },
-    { label: 'Description', value: record.description },
     { label: 'Required Points', value: record.requiredPoints },
-    { label: 'Required Rating', value: record.requiredRating },
-    { label: 'Required Trips', value: record.requiredTrips },
-    { label: 'Required Online Hours', value: record.requiredOnlineHours },
-    { label: 'Acceptance Rate', value: `${record.requiredAcceptanceRate}%` },
-    { label: 'Completion Rate', value: `${record.requiredCompletionRate}%` },
-    { label: 'Tier Color', value: record.tierColor },
-    { label: 'Tier Badge', value: record.tierBadge },
-    { label: 'Benefits Count', value: record.benefitsCount },
+    { label: 'Tier Level', value: record.level },
+    { label: 'Description', value: record.description },
+    { label: 'Destination Filters', value: b.destinationFilters },
+    { label: 'Reservation Access', value: formatReservationAccess(b.reservationAccess) },
+    { label: 'Bonus Multiplier', value: `${b.bonusMultiplier}x` },
+    { label: 'Peak Hour Multiplier', value: `${b.peakHourMultiplier}x` },
+    { label: 'Dispatch Priority', value: b.dispatchPriorityLevel },
+    { label: 'Min Acceptance Rate', value: `${b.minimumAcceptanceRate}%` },
+    { label: 'Min Completion Rate', value: `${b.minimumCompletionRate}%` },
+    { label: 'Min Driver Rating', value: b.minimumDriverRating },
+    { label: 'Driver Count', value: record.driverCount },
     { label: 'Status', value: record.status === 'active' ? 'Active' : 'Inactive' },
   ]
+}
+
+export function summarizeTierRequirements(record: DriverLevel) {
+  const r = record.requirements
+  return `${r.completedTrips}+ trips · ${r.driverRating}+ rating · ${r.acceptanceRate}% acceptance`
+}
+
+export function summarizeTierBenefits(record: DriverLevel) {
+  const b = record.benefits
+  const parts = [
+    `${b.destinationFilters} filters`,
+    formatReservationAccess(b.reservationAccess),
+    b.bonusMultiplier > 1 ? `${b.bonusMultiplier}x bonus` : null,
+  ].filter(Boolean)
+  return parts.join(' · ')
 }
 
 export function buildPromotionDetailFields(record: Promotion): DetailField[] {

@@ -1,3 +1,5 @@
+import type { IdentityVerificationStatus } from '@/types/driverVerification'
+
 export type AdminRole =
   | 'super_admin'
   | 'operations_manager'
@@ -21,6 +23,7 @@ export type Permission =
   | 'pricing.manage'
   | 'reservations.view'
   | 'reservations.manage'
+  | 'reservations.create_manual'
   | 'finance.view'
   | 'finance.manage'
   | 'analytics.view'
@@ -45,6 +48,8 @@ export interface AuthState {
 }
 
 export type DriverStatus = 'active' | 'pending' | 'suspended' | 'deactivated' | 'rejected'
+
+export type { IdentityVerificationStatus }
 export type ComplianceStatus = 'approved' | 'pending' | 'expiring_soon' | 'expired' | 'rejected'
 export type RideCategory =
   | 'standard'
@@ -54,6 +59,8 @@ export type RideCategory =
   | 'priority'
   | 'black'
   | 'black_suv'
+
+export type TierStandingStatus = 'good_standing' | 'at_risk' | 'under_review' | 'suspended'
 
 export interface Driver {
   id: string
@@ -67,11 +74,17 @@ export interface Driver {
   categories: RideCategory[]
   complianceStatus: ComplianceStatus
   backgroundCheckStatus: ComplianceStatus
+  identityVerificationStatus: IdentityVerificationStatus
   status: DriverStatus
   city: string
   state: string
   joinedAt: string
   earnings: number
+  currentTier?: string
+  tierProgress?: number
+  tierStatus?: TierStandingStatus
+  acceptanceRate?: number
+  safetyScore?: number
 }
 
 export interface Passenger {
@@ -171,9 +184,17 @@ export interface Reservation {
   pickup: string
   dropoff: string
   scheduledAt: string
+  createdAt: string
   category: RideCategory
-  status: 'pending' | 'assigned' | 'completed' | 'cancelled'
+  status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled'
   driverName?: string
+  city?: string
+  airportCode?: string
+  flightNumber?: string
+  terminal?: string
+  eventName?: string
+  venue?: string
+  eventTime?: string
 }
 
 export interface NotificationItem {

@@ -20,6 +20,9 @@ interface ChatPanelProps {
   onSend: (content: string) => void
   onInsertTemplate?: (content: string) => void
   sending?: boolean
+  embedded?: boolean
+  className?: string
+  quickReplies?: string[]
 }
 
 function MessageIcon({ type }: { type: ChatMessage['type'] }) {
@@ -43,6 +46,9 @@ export function ChatPanel({
   isTyping,
   onSend,
   sending,
+  embedded = false,
+  className = '',
+  quickReplies = [],
 }: ChatPanelProps) {
   const { data: messages = [], isLoading } = useGetMessagesQuery(conversationId)
   const [draft, setDraft] = useState('')
@@ -60,26 +66,38 @@ export function ChatPanel({
     setDraft('')
   }
 
+  const insertQuickReply = (text: string) => {
+    setDraft((prev) => (prev ? `${prev} ${text}` : text))
+  }
+
   return (
-    <div className="flex h-[560px] flex-col rounded-xl border border-white/5 bg-white/[0.02]">
-      <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-white">{userName}</span>
-            <Badge status={isOnline ? 'success' : 'default'} text={isOnline ? 'Online' : 'Offline'} />
+    <div className={`flex min-h-0 flex-1 flex-col rounded-xl border border-white/5 bg-white/[0.02] ${className}`}>
+      {!embedded && (
+        <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-white">{userName}</span>
+              <Badge status={isOnline ? 'success' : 'default'} text={isOnline ? 'Online' : 'Offline'} />
+            </div>
+            {isTyping && <p className="text-xs text-indigo-400">Typing...</p>}
           </div>
-          {isTyping && <p className="text-xs text-indigo-400">Typing...</p>}
+          <Input
+            prefix={<Search className="h-3.5 w-3.5 text-alygo-text-muted" />}
+            placeholder="Search messages"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-[180px]"
+            size="small"
+            allowClear
+          />
         </div>
-        <Input
-          prefix={<Search className="h-3.5 w-3.5 text-alygo-text-muted" />}
-          placeholder="Search messages"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-[180px]"
-          size="small"
-          allowClear
-        />
-      </div>
+      )}
+
+      {embedded && isTyping && (
+        <div className="border-b border-white/5 px-4 py-1.5 text-xs text-indigo-400">
+          {userName} is typing...
+        </div>
+      )}
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {isLoading ? (
@@ -93,7 +111,7 @@ export function ChatPanel({
             if (isSystem) {
               return (
                 <div key={msg.id} className="text-center">
-                  <Tag className="text-xs">{msg.content}</Tag>
+                  <Tag className="border-indigo-500/20 bg-indigo-500/10 text-xs text-indigo-200">{msg.content}</Tag>
                   <p className="mt-1 text-[10px] text-alygo-text-muted">{new Date(msg.timestamp).toLocaleTimeString()}</p>
                 </div>
               )
@@ -101,7 +119,7 @@ export function ChatPanel({
             return (
               <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
                     isAdmin ? 'bg-indigo-600/30 border border-indigo-500/20' : 'bg-white/5 border border-white/5'
                   }`}
                 >
@@ -110,7 +128,11 @@ export function ChatPanel({
                     {msg.type !== 'text' && <MessageIcon type={msg.type} />}
                     <div>
                       <p className="text-sm text-white">{msg.content}</p>
-                      {msg.gpsLabel && <p className="mt-1 text-xs text-alygo-text-muted">{msg.gpsLabel}</p>}
+                      {msg.gpsLabel && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-emerald-300">
+                          <MapPin className="h-3 w-3" /> {msg.gpsLabel}
+                        </p>
+                      )}
                       {msg.attachmentName && (
                         <p className="mt-1 flex items-center gap-1 text-xs text-indigo-300">
                           <FileText className="h-3 w-3" /> {msg.attachmentName}
@@ -130,7 +152,21 @@ export function ChatPanel({
         )}
       </div>
 
-      <div className="border-t border-white/5 p-3">
+      <div className="sticky bottom-0 border-t border-white/5 bg-[#0d0f14]/95 p-3 backdrop-blur">
+        {quickReplies.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {quickReplies.map((reply) => (
+              <button
+                key={reply}
+                type="button"
+                onClick={() => insertQuickReply(reply)}
+                className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-alygo-text-muted hover:border-indigo-500/30 hover:bg-indigo-500/10 hover:text-indigo-200"
+              >
+                {reply.length > 42 ? `${reply.slice(0, 42)}…` : reply}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="mb-2 flex gap-2">
           <Tooltip title="Attach image"><button type="button" className="rounded-lg p-2 text-alygo-text-muted hover:bg-white/5"><Image className="h-4 w-4" /></button></Tooltip>
           <Tooltip title="Attach document"><button type="button" className="rounded-lg p-2 text-alygo-text-muted hover:bg-white/5"><FileText className="h-4 w-4" /></button></Tooltip>
@@ -142,7 +178,7 @@ export function ChatPanel({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Type a message..."
-            autoSize={{ minRows: 1, maxRows: 3 }}
+            autoSize={{ minRows: 1, maxRows: 4 }}
             onPressEnter={(e) => {
               if (!e.shiftKey) {
                 e.preventDefault()
@@ -154,7 +190,7 @@ export function ChatPanel({
             type="button"
             disabled={sending || !draft.trim()}
             onClick={handleSend}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
           >
             Send
           </button>

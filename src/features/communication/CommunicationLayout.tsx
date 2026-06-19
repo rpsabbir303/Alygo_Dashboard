@@ -8,16 +8,17 @@ interface CommunicationLayoutProps {
   title: string
   description: string
   children: ReactNode
+  compact?: boolean
 }
 
-export function CommunicationLayout({ title, description, children }: CommunicationLayoutProps) {
+export function CommunicationLayout({ title, description, children, compact = false }: CommunicationLayoutProps) {
   useDocumentTitle(title)
   useCommunicationRealtime()
 
   return (
     <PageShell title={title} description={description}>
-      <CommunicationOverviewCards />
-      <div className="glass-card mt-6 p-4">{children}</div>
+      {!compact && <CommunicationOverviewCards />}
+      <div className={compact ? 'mt-2' : 'glass-card mt-6 p-4'}>{children}</div>
     </PageShell>
   )
 }

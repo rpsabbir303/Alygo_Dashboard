@@ -1,1 +1,1 @@
-export { AirportsPage as default } from './StatesPage'
+export { default } from '@/features/locations/LocationDashboardPage'

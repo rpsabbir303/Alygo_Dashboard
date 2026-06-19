@@ -43,6 +43,12 @@ function AchievementForm({
       <Form.Item name="pointsAwarded" label="Points Awarded" rules={[{ required: true }]}>
         <InputNumber min={0} className="w-full" />
       </Form.Item>
+      <Form.Item name="criteria" label="Unlock Criteria" rules={[{ required: true }]}>
+        <Input placeholder="e.g. Complete 100 trips" />
+      </Form.Item>
+      <Form.Item name="icon" label="Icon" initialValue="award">
+        <Input placeholder="e.g. star, crown, shield" />
+      </Form.Item>
       <Form.Item name="status" label="Status" rules={[{ required: true }]}>
         <Select options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
       </Form.Item>
@@ -87,6 +93,7 @@ export function AchievementManagement() {
         scroll={{ x: 800 }}
         columns={[
           { title: 'Achievement', dataIndex: 'name' },
+          { title: 'Criteria', dataIndex: 'criteria', ellipsis: true },
           { title: 'Reward', dataIndex: 'reward' },
           { title: 'Points Awarded', dataIndex: 'pointsAwarded' },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },

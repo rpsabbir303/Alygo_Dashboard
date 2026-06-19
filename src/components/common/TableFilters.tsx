@@ -8,6 +8,7 @@ interface TableFiltersProps {
   statusOptions?: { label: string; value: string }[]
   status?: string
   onStatusChange?: (value: string) => void
+  variant?: 'standalone' | 'inline'
 }
 
 export function TableFilters({
@@ -17,9 +18,10 @@ export function TableFilters({
   statusOptions,
   status,
   onStatusChange,
+  variant = 'standalone',
 }: TableFiltersProps) {
-  return (
-    <div className="glass-card mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+  const content = (
+    <>
       <Input
         prefix={<Search className="h-4 w-4 text-alygo-text-muted" />}
         placeholder={searchPlaceholder}
@@ -37,6 +39,16 @@ export function TableFilters({
           className="!min-w-[180px]"
         />
       )}
+    </>
+  )
+
+  if (variant === 'inline') {
+    return <div className="flex flex-col gap-3 sm:flex-row sm:items-center">{content}</div>
+  }
+
+  return (
+    <div className="glass-card mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+      {content}
     </div>
   )
 }

@@ -11,12 +11,15 @@ import { useAdminActions } from '@/hooks/useAdminActions'
 import {
   useCreatePointsRuleMutation,
   useDeletePointsRuleMutation,
+  useDuplicatePointsRuleMutation,
   useGetPointsRulesQuery,
   useUpdatePointsRuleMutation,
+  POINTS_RULE_CATEGORY_LABELS,
 } from '@/services/driverRewardsApi'
-import type { PointsRule, PointsRuleType } from '@/types/driverRewards'
+import type { PointsRule, PointsRuleCategory, PointsRuleType } from '@/types/driverRewards'
 import { getPointsRuleActionItems } from '@/features/driver-rewards/driverRewardsHelpers'
 import { useDriverRewardsPermissions } from '@/features/driver-rewards/hooks/useDriverRewardsPermissions'
+import { formatDateTime } from '@/utils/format'
 
 export function PointsRulesTable() {
   const adminActions = useAdminActions()
@@ -29,12 +32,16 @@ export function PointsRulesTable() {
   const [createRule, { isLoading: creating }] = useCreatePointsRuleMutation()
   const [updateRule, { isLoading: updating }] = useUpdatePointsRuleMutation()
   const [deleteRule, { isLoading: deleting }] = useDeletePointsRuleMutation()
+  const [duplicateRule] = useDuplicatePointsRuleMutation()
 
   const handleAction = (key: string, record: PointsRule) => {
     if (!canManage) return
     switch (key) {
       case 'edit':
         setEditRecord(record)
+        break
+      case 'duplicate':
+        duplicateRule(record.id).unwrap().then(() => adminActions.notify('Rule duplicated'))
         break
       case 'enable':
         updateRule({ id: record.id, status: 'active' }).unwrap()
@@ -63,18 +70,24 @@ export function PointsRulesTable() {
       id={id}
       layout="vertical"
       className="mt-4"
-      initialValues={{ status: 'active', type: 'earn', ...initialValues }}
+      initialValues={{ status: 'active', type: 'earn', category: 'ride_completion', ...initialValues }}
       onFinish={(values) => {
         const type: PointsRuleType = values.points > 0 ? 'earn' : values.points < 0 ? 'deduct' : 'neutral'
         onFinish({
           ...values,
           action: values.ruleName,
           type,
+          lastUpdated: new Date().toISOString(),
         })
       }}
     >
       <Form.Item name="ruleName" label="Rule Name" rules={[{ required: true }]}>
         <Input />
+      </Form.Item>
+      <Form.Item name="category" label="Category" rules={[{ required: true }]}>
+        <Select
+          options={Object.entries(POINTS_RULE_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))}
+        />
       </Form.Item>
       <Form.Item name="actionType" label="Action Type" rules={[{ required: true }]}>
         <Input placeholder="e.g. trip_complete" />
@@ -105,7 +118,11 @@ export function PointsRulesTable() {
         scroll={{ x: 900 }}
         columns={[
           { title: 'Rule Name', dataIndex: 'ruleName' },
-          { title: 'Action Type', dataIndex: 'actionType' },
+          {
+            title: 'Category',
+            dataIndex: 'category',
+            render: (c: PointsRuleCategory) => POINTS_RULE_CATEGORY_LABELS[c] ?? c,
+          },
           {
             title: 'Points',
             dataIndex: 'points',
@@ -116,6 +133,7 @@ export function PointsRulesTable() {
             ),
           },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
+          { title: 'Last Updated', dataIndex: 'lastUpdated', render: (d: string) => formatDateTime(d) },
           ...(canManage
             ? [
                 createActionsColumn<PointsRule>(

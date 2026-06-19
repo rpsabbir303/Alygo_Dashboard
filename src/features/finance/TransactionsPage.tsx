@@ -1,1 +1,1 @@
-export { TransactionsPage as default } from './RevenuePage'
+export { default } from '@/features/finance/FinanceDashboardPage'
