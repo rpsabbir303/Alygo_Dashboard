@@ -11,6 +11,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { closeTripCommunicationDrawer, setCommDrawerTab } from '@/store/slices/communicationSlice'
 import { formatCurrency } from '@/utils/format'
+import { buildCommunicationInboxPath } from '@/features/communication/communicationNavigation'
 import { ChatPanel } from '@/features/communication/components/ChatPanel'
 
 export function TripCommunicationDrawer() {
@@ -92,7 +93,7 @@ export function TripCommunicationDrawer() {
         <button type="button" onClick={() => adminActions.notify('Support case created', activeTrip.id)} className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/5">
           Create Support Case
         </button>
-        <button type="button" onClick={() => { dispatch(closeTripCommunicationDrawer()); navigate('/communication?tab=safety') }} className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-sm text-red-300 hover:bg-red-500/10">
+        <button type="button" onClick={() => { dispatch(closeTripCommunicationDrawer()); navigate(buildCommunicationInboxPath('safety')) }} className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-sm text-red-300 hover:bg-red-500/10">
           <Shield className="h-4 w-4" /> Open Safety Review
         </button>
       </div>
@@ -116,7 +117,7 @@ export function TripCommunicationDrawer() {
             ) : (
               <div className="flex h-[400px] flex-col items-center justify-center gap-3 text-alygo-text-muted">
                 <p>No active conversation for this trip.</p>
-                <button type="button" onClick={() => navigate('/communication?tab=safety')} className="text-indigo-400 hover:underline">
+                <button type="button" onClick={() => navigate(buildCommunicationInboxPath('safety'))} className="text-indigo-400 hover:underline">
                   Open Communication Center
                 </button>
               </div>
@@ -152,7 +153,7 @@ export function TripCommunicationDrawer() {
                   <p className="font-medium text-red-300">No active SOS on this trip</p>
                   <p className="mt-1 text-sm text-alygo-text-muted">Monitor driver and passenger communications for safety concerns.</p>
                 </div>
-                <button type="button" onClick={() => { dispatch(closeTripCommunicationDrawer()); navigate('/communication?tab=safety') }} className="rounded-lg bg-red-600/20 px-4 py-2 text-sm text-red-300 border border-red-500/30 hover:bg-red-600/30">
+                <button type="button" onClick={() => { dispatch(closeTripCommunicationDrawer()); navigate(buildCommunicationInboxPath('safety')) }} className="rounded-lg bg-red-600/20 px-4 py-2 text-sm text-red-300 border border-red-500/30 hover:bg-red-600/30">
                   Open Safety Communications
                 </button>
               </div>

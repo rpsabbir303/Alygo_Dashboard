@@ -1,6 +1,6 @@
 import { Button, Table, Tag } from 'antd'
 import { Download, RefreshCw } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import {
   BarTrendChart,
@@ -15,7 +15,6 @@ import {
   createTableRowProps,
   getTripActionItems,
   handleTripAction,
-  openTripDetails,
 } from '@/components/admin'
 import { PageShell } from '@/components/common/PageShell'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -38,6 +37,7 @@ import type { Trip } from '@/types'
 
 export default function DashboardPage() {
   useDocumentTitle('Executive Dashboard')
+  const navigate = useNavigate()
   const adminActions = useAdminActions()
   const liveKpis = useAppSelector((state) => state.auth.liveKpis)
   const { data: kpis = [], isFetching, refetch } = useGetDashboardKpisQuery()
@@ -110,9 +110,17 @@ export default function DashboardPage() {
           pagination={false}
           dataSource={liveTrips.slice(0, 5)}
           rowKey="id"
-          {...createTableRowProps<Trip>((record) => openTripDetails(record, adminActions))}
+          {...createTableRowProps<Trip>((record) => navigate(`/operations/live-trips/${record.id}`))}
           columns={[
-            { title: 'Trip', dataIndex: 'id', render: (id: string) => <Link to="/operations/live-trips" onClick={(e) => e.stopPropagation()}>{id}</Link> },
+            {
+              title: 'Trip',
+              dataIndex: 'id',
+              render: (id: string) => (
+                <Link to={`/operations/live-trips/${id}`} onClick={(e) => e.stopPropagation()}>
+                  {id}
+                </Link>
+              ),
+            },
             { title: 'Driver', dataIndex: 'driverName' },
             { title: 'City', dataIndex: 'city' },
             { title: 'Category', dataIndex: 'category', render: (c: string) => <Tag>{c}</Tag> },
@@ -120,7 +128,7 @@ export default function DashboardPage() {
             { title: 'Fare', dataIndex: 'fare', render: (f: number) => formatCurrency(f) },
             createActionsColumn<Trip>(
               () => getTripActionItems(),
-              (key, record) => handleTripAction(key, record, adminActions),
+              (key, record) => handleTripAction(key, record, adminActions, { onNavigate: navigate }),
             ),
           ]}
         />

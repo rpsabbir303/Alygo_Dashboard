@@ -85,6 +85,19 @@ export function Sidebar() {
     const pathMatch = flat.find((item) => item.path?.startsWith(pathname) && item.path.includes('?tab='))
     if (pathMatch) return [pathMatch.key]
 
+    const prefixMatches = flat.filter((item) => {
+      if (!item.path) return false
+      const basePath = item.path.split('?')[0]
+      if (basePath === '/') return pathname === '/'
+      return pathname === basePath || pathname.startsWith(`${basePath}/`)
+    })
+    if (prefixMatches.length > 0) {
+      const best = prefixMatches.reduce((longest, item) =>
+        (item.path?.length ?? 0) > (longest.path?.length ?? 0) ? item : longest,
+      )
+      return [best.key]
+    }
+
     const fallback = flat.find((item) => item.path === pathname)
     return fallback ? [fallback.key] : ['dashboard']
   }, [location.pathname, location.search, navItems])

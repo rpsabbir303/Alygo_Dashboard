@@ -76,3 +76,9 @@ export function resolveLegacyInboxType(tab: string | null): string {
   if (!tab) return ''
   return LEGACY_INBOX_TYPE_MAP[tab] ?? ''
 }
+
+export function buildCommunicationInboxPath(type?: string) {
+  const params = new URLSearchParams({ tab: 'inbox' })
+  if (type) params.set('type', type)
+  return `/communication?${params.toString()}`
+}

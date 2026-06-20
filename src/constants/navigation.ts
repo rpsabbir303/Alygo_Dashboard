@@ -46,7 +46,6 @@ export const NAVIGATION: NavItem[] = [
     permission: 'operations.view',
     children: [
       { key: 'live-trips', label: 'Live Trips', path: '/operations/live-trips' },
-      { key: 'ride-monitoring', label: 'Ride Monitoring', path: '/operations/ride-monitoring' },
       { key: 'cancellation-management', label: 'Cancellation Management', path: '/operations/cancellation-management' },
       { key: 'lost-found', label: 'Lost & Found', path: '/operations/lost-found' },
       { key: 'trip-completion-review', label: 'Trip Completion Review', path: '/operations/trip-completion-review' },
@@ -161,7 +160,7 @@ export const NAVIGATION: NavItem[] = [
 export const QUICK_LINKS = [
   { label: 'Airport Queue', path: '/locations?tab=airports', icon: Plane },
   { label: 'Surge Monitor', path: '/pricing?tab=zones', icon: AlertTriangle },
-  { label: 'Live Map', path: '/operations/ride-monitoring', icon: Map },
+  { label: 'Live Trips', path: '/operations/live-trips', icon: Map },
   { label: 'Stripe Payouts', path: '/finance?tab=payouts', icon: CreditCard },
   { label: 'Compliance Alerts', path: '/compliance', icon: Building2 },
 ]

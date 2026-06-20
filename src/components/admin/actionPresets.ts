@@ -22,6 +22,7 @@ import {
 import type { ActionMenuItem, DetailField } from '@/components/admin/types'
 import type { ComplianceDocument, Driver, EligibilityRule, Passenger, Reservation, SurgeZone, Trip } from '@/types'
 import type { DriverVerificationFocus } from '@/features/drivers/driverVerificationHelpers'
+import { buildCommunicationInboxPath } from '@/features/communication/communicationNavigation'
 import { RIDE_CATEGORY_LABELS } from '@/constants'
 import { formatCurrency, formatDateTime } from '@/utils/format'
 import type { useAdminActions } from '@/hooks/useAdminActions'
@@ -55,8 +56,7 @@ export function openTripDetails(record: Trip, actions: AdminActions) {
 
 export function getTripActionItems(): ActionMenuItem[] {
   return [
-    { key: 'view-details', label: 'View Trip Details', icon: Eye, group: 1 },
-    { key: 'track', label: 'Live Tracking', icon: MapPin, group: 1 },
+    { key: 'view-details', label: 'View Details', icon: Eye, group: 1 },
     { key: 'communication-center', label: 'Communication Center', icon: MessageSquare, group: 1 },
     { key: 'trip-timeline', label: 'Trip Timeline', icon: Clock, group: 1 },
     { key: 'safety-review', label: 'Safety Review', icon: Shield, group: 2 },
@@ -73,19 +73,11 @@ export function handleTripAction(
   const name = record.id
   switch (key) {
     case 'view-details':
-      openTripDetails(record, actions)
-      break
-    case 'track':
-      actions.openDrawer('Live Tracking', [
-        { label: 'Trip', value: record.id },
-        { label: 'Driver', value: record.driverName },
-        { label: 'Passenger', value: record.passengerName },
-        { label: 'Current Location', value: record.city },
-        { label: 'Pickup', value: record.pickup },
-        { label: 'Dropoff', value: record.dropoff },
-        { label: 'ETA', value: '8 min' },
-        { label: 'Status', value: record.status },
-      ])
+      if (options?.onNavigate) {
+        options.onNavigate(`/operations/live-trips/${record.id}`)
+      } else {
+        openTripDetails(record, actions)
+      }
       break
     case 'communication-center':
       store.dispatch(openTripCommunicationDrawer({ trip: record, tab: 'both' }))
@@ -95,7 +87,7 @@ export function handleTripAction(
       break
     case 'safety-review':
       if (options?.onNavigate) {
-        options.onNavigate('/communication?tab=safety')
+        options.onNavigate(buildCommunicationInboxPath('safety'))
       } else {
         store.dispatch(openTripCommunicationDrawer({ trip: record, tab: 'safety' }))
       }
@@ -205,7 +197,7 @@ export function handleDriverAction(
       })
       break
     case 'message':
-      globalThis.location.assign('/communication?tab=drivers')
+      globalThis.location.assign(buildCommunicationInboxPath('driver'))
       break
     case 'documents':
     case 'compliance':
@@ -324,7 +316,7 @@ export function handlePassengerAction(key: string, record: Passenger, actions: A
       ])
       break
     case 'message':
-      globalThis.location.assign('/communication?tab=passengers')
+      globalThis.location.assign(buildCommunicationInboxPath('passenger'))
       break
     default:
       break

@@ -10,6 +10,7 @@ import {
   useGetSafetyCommunicationsQuery,
 } from '@/services/communicationApi'
 import type { SafetyCommunication } from '@/types/communication'
+import { buildCommunicationInboxPath } from '@/features/communication/communicationNavigation'
 import {
   getSafetyRecordActionItems,
   priorityColor,
@@ -27,7 +28,7 @@ export function SafetyCommunicationsTable() {
     switch (key) {
       case 'contact-driver':
       case 'contact-passenger':
-        navigate('/communication/conversations')
+        navigate(buildCommunicationInboxPath('safety'))
         adminActions.notify(`Opening chat for ${record.userName}`)
         break
       case 'escalate':

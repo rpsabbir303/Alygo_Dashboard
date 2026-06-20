@@ -4,6 +4,7 @@ import { LazyPageFallback } from '@/components/common/PageLoader'
 import { GuestRoute } from '@/features/auth/components/GuestRoute'
 import { AuthLayout, DashboardLayout } from '@/layouts'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
+import { LegacyRouteFallback } from '@/routes/LegacyRouteFallback'
 
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
@@ -16,7 +17,7 @@ const DriverProfilePage = lazy(() => import('@/features/drivers/DriverProfilePag
 const PassengersPage = lazy(() => import('@/features/passengers/PassengersPage'))
 const PassengerProfilePage = lazy(() => import('@/features/passengers/PassengerProfilePage'))
 const LiveTripsPage = lazy(() => import('@/features/operations/LiveTripsPage'))
-const RideMonitoringPage = lazy(() => import('@/features/operations/RideMonitoringPage'))
+const TripDetailPage = lazy(() => import('@/features/operations/TripDetailPage'))
 const CancellationManagementPage = lazy(() => import('@/features/cancellations/CancellationManagementPage'))
 const DriverRewardsPage = lazy(() => import('@/features/driver-rewards/DriverRewardsPage'))
 const LegacyDriverRewardsRedirect = lazy(() =>
@@ -52,7 +53,6 @@ const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage
 const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
 const SafetyConfigurationPage = lazy(() => import('@/features/settings/SafetyConfigurationPage'))
 const AdminRolesPage = lazy(() => import('@/features/settings/AdminRolesPage'))
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 function withSuspense(element: React.ReactNode) {
   return <Suspense fallback={<LazyPageFallback />}>{element}</Suspense>
@@ -83,16 +83,22 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: withSuspense(<DashboardPage />) },
       { path: 'operations/live-trips', element: withSuspense(<LiveTripsPage />) },
+      { path: 'operations/live-trips/:id', element: withSuspense(<TripDetailPage />) },
       { path: 'operations/active-drivers', element: <Navigate to="/drivers?tab=active" replace /> },
       { path: 'operations/active-passengers', element: <Navigate to="/passengers?tab=active" replace /> },
-      { path: 'operations/ride-monitoring', element: withSuspense(<RideMonitoringPage />) },
+      { path: 'operations/ride-monitoring', element: <Navigate to="/operations/live-trips" replace /> },
       { path: 'operations/cancellation-management', element: withSuspense(<CancellationManagementPage />) },
       { path: 'operations/lost-found', element: withSuspense(<LostFoundManagementPage />) },
       { path: 'operations/trip-completion-review', element: withSuspense(<TripCompletionReviewPage />) },
       { path: 'operations/driving-hours', element: withSuspense(<DrivingHoursManagementPage />) },
       { path: 'operations/destination-filters', element: <Navigate to="/drivers/tiers?tab=configuration" replace /> },
+      { path: 'operations/destination-filter-analytics', element: <Navigate to="/drivers/tiers?tab=overview" replace /> },
+      { path: 'operations/driver-capacity', element: <Navigate to="/drivers" replace /> },
+      { path: 'operations/driver-capacity-management', element: <Navigate to="/drivers" replace /> },
       { path: 'operations/policy-center', element: withSuspense(<OperationsPolicyCenterPage />) },
       { path: 'operations/safety-incidents', element: withSuspense(<SafetyIncidentPage />) },
+      { path: 'operations/safety-incidents/settings', element: <Navigate to="/settings/safety" replace /> },
+      { path: 'operations/safety-incidents/categories', element: <Navigate to="/settings/safety" replace /> },
       { path: 'communication', element: withSuspense(<CommunicationCenterPage />) },
       { path: 'communication/conversations', element: withSuspense(<LegacyCommunicationRedirect />) },
       { path: 'communication/active-trip-chats', element: withSuspense(<LegacyCommunicationRedirect />) },
@@ -110,6 +116,9 @@ export const router = createBrowserRouter([
       { path: 'drivers/tiers/:id', element: withSuspense(<TierDetailPage />) },
       { path: 'drivers/rewards/tier-management', element: <Navigate to="/drivers/tiers" replace /> },
       { path: 'drivers/waitlist', element: <Navigate to="/drivers" replace /> },
+      { path: 'drivers/capacity', element: <Navigate to="/drivers" replace /> },
+      { path: 'drivers/driver-capacity', element: <Navigate to="/drivers" replace /> },
+      { path: 'driver-capacity', element: <Navigate to="/drivers" replace /> },
       { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },
       { path: 'passengers', element: withSuspense(<PassengersPage />) },
       { path: 'passengers/:id', element: withSuspense(<PassengerProfilePage />) },
@@ -126,6 +135,8 @@ export const router = createBrowserRouter([
       { path: 'ride-categories', element: withSuspense(<RideCategoriesPage />) },
       { path: 'categories/:category', element: <Navigate to="/ride-categories" replace /> },
       { path: 'demand-intelligence', element: withSuspense(<DemandIntelligenceCenterPage />) },
+      { path: 'demand', element: <Navigate to="/demand-intelligence" replace /> },
+      { path: 'demand/:section', element: <Navigate to="/demand-intelligence" replace /> },
       {
         path: 'pricing',
         children: [
@@ -183,7 +194,7 @@ export const router = createBrowserRouter([
       { path: 'settings/integrations', element: withSuspense(<IntegrationsPage />) },
       { path: 'settings/reservations', element: withSuspense(<ReservationConfigurationPage />) },
       { path: 'settings/admin-roles', element: withSuspense(<AdminRolesPage />) },
-      { path: '*', element: withSuspense(<NotFoundPage />) },
+      { path: '*', element: withSuspense(<LegacyRouteFallback />) },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

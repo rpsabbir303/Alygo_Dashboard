@@ -36,7 +36,7 @@ export function SafetyDashboardSummary() {
           <p className="text-sm text-alygo-text-muted">Active safety cases requiring attention</p>
         </div>
         <Link
-          to="/operations/safety-incidents?tab=cases"
+          to="/operations/safety-incidents"
           className="text-sm text-indigo-400 hover:text-indigo-300"
         >
           Manage Cases →
@@ -66,7 +66,7 @@ export function SafetyDashboardSummary() {
             title: 'Case ID',
             dataIndex: 'caseId',
             render: (id: string) => (
-              <Link to="/operations/safety-incidents?tab=cases" onClick={(e) => e.stopPropagation()}>
+              <Link to="/operations/safety-incidents" onClick={(e) => e.stopPropagation()}>
                 {id}
               </Link>
             ),

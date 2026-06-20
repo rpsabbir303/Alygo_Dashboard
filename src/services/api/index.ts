@@ -15,6 +15,8 @@ import type {
   SurgeZone,
   Trip,
 } from '@/types'
+import { buildTripDetail } from '@/services/mock/tripDetailData'
+import type { TripDetail } from '@/types/tripOperations'
 import {
   mockActivities,
   mockCategoryUsage,
@@ -143,6 +145,13 @@ export const api = createApi({
       },
       providesTags: ['Trips'],
     }),
+    getTripById: builder.query<TripDetail | undefined, string>({
+      queryFn: async (id) => {
+        await delay()
+        return { data: buildTripDetail(id) }
+      },
+      providesTags: ['Trips'],
+    }),
     getComplianceDocuments: builder.query<ComplianceDocument[], void>({
       queryFn: async () => ({ data: mockComplianceDocs }),
       providesTags: ['Compliance'],
@@ -230,6 +239,7 @@ export const {
   useGetPassengersQuery,
   useGetPassengerByIdQuery,
   useGetTripsQuery,
+  useGetTripByIdQuery,
   useGetComplianceDocumentsQuery,
   useGetEligibilityRulesQuery,
   useGetSurgeZonesQuery,
