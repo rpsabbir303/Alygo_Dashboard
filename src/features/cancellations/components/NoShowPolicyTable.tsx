@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Form, InputNumber, Modal, Table, Tag } from 'antd'
+import { Form, InputNumber, Modal, Select, Table, Tag } from 'antd'
 import {
   AdminActionHost,
   createActionsColumn,
@@ -11,60 +11,92 @@ import {
   useGetNoShowPoliciesQuery,
   useUpdateNoShowPolicyMutation,
 } from '@/services/cancellationApi'
-import { RIDE_CATEGORY_LABELS } from '@/constants'
+import { useGetRideCategoriesQuery } from '@/services/rideCategoryApi'
 import type { NoShowPolicy } from '@/types/cancellation'
-import type { RideCategory } from '@/types'
 import { formatCurrency } from '@/utils/format'
 import {
   buildNoShowDetailFields,
   getNoShowActionItems,
+  getRideCategoryLabel,
   openPolicyDrawer,
+  POLICY_STATUS_OPTIONS,
 } from '@/features/cancellations/cancellationHelpers'
+
+interface NoShowPolicyFormValues {
+  waitTimeMinutes: number
+  noShowFee: number
+  driverCompensation: number
+  status: 'active' | 'inactive'
+}
 
 export function NoShowPolicyTable() {
   const adminActions = useAdminActions()
-  const { data = [], isLoading } = useGetNoShowPoliciesQuery()
+  const { data: policies = [], isLoading } = useGetNoShowPoliciesQuery()
+  const { data: categoryResponse, isLoading: loadingCategories } = useGetRideCategoriesQuery({
+    page: 1,
+    pageSize: 100,
+  })
+  const rideCategories = categoryResponse?.data ?? []
+
   const [editRecord, setEditRecord] = useState<NoShowPolicy | null>(null)
   const [updatePolicy, { isLoading: updating }] = useUpdateNoShowPolicyMutation()
 
   const handleAction = (key: string, record: NoShowPolicy) => {
     switch (key) {
       case 'view':
-        openPolicyDrawer('No Show Policy', buildNoShowDetailFields(record), adminActions)
+        openPolicyDrawer(
+          'No Show Policy',
+          buildNoShowDetailFields(record, rideCategories),
+          adminActions,
+        )
         break
       case 'edit':
         setEditRecord(record)
         break
       case 'activate':
         updatePolicy({ id: record.id, status: 'active' }).unwrap()
-          .then(() => adminActions.notify('No show policy activated'))
+          .then(() => adminActions.notify('No-show policy activated'))
         break
       case 'deactivate':
         updatePolicy({ id: record.id, status: 'inactive' }).unwrap()
-          .then(() => adminActions.notify('No show policy deactivated'))
+          .then(() => adminActions.notify('No-show policy deactivated'))
         break
     }
   }
 
   return (
     <>
+      <p className="mb-4 text-sm text-alygo-text-muted">
+        No-show rules are configured per ride category. Create or update rules in Ride Categories.
+      </p>
+
       <Table
-        loading={isLoading}
+        loading={isLoading || loadingCategories}
         rowKey="id"
-        dataSource={data}
+        dataSource={policies}
         scroll={{ x: 1000 }}
         {...createTableRowProps<NoShowPolicy>((record) =>
-          openPolicyDrawer('No Show Policy', buildNoShowDetailFields(record), adminActions),
+          openPolicyDrawer(
+            'No Show Policy',
+            buildNoShowDetailFields(record, rideCategories),
+            adminActions,
+          ),
         )}
         columns={[
           {
             title: 'Ride Category',
             dataIndex: 'rideCategory',
-            render: (c: RideCategory) => <Tag>{RIDE_CATEGORY_LABELS[c]}</Tag>,
+            render: (slug: string) => (
+              <Tag>{getRideCategoryLabel(slug, rideCategories)}</Tag>
+            ),
           },
           { title: 'Wait Time', dataIndex: 'waitTimeMinutes', render: (m: number) => `${m} minutes` },
           { title: 'No Show Fee', dataIndex: 'noShowFee', render: (f: number) => formatCurrency(f) },
-          { title: 'Driver Compensation', dataIndex: 'driverCompensation', render: (f: number) => formatCurrency(f) },
+          {
+            title: 'Driver Compensation',
+            dataIndex: 'driverCompensation',
+            render: (f: number) => formatCurrency(f),
+          },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
           createActionsColumn<NoShowPolicy>(
             (record) => getNoShowActionItems(record),
@@ -75,13 +107,14 @@ export function NoShowPolicyTable() {
 
       {editRecord && (
         <Modal
-          title={`Edit No Show Policy — ${RIDE_CATEGORY_LABELS[editRecord.rideCategory]}`}
+          title={`Edit Policy — ${getRideCategoryLabel(editRecord.rideCategory, rideCategories)}`}
           open
           confirmLoading={updating}
           onCancel={() => setEditRecord(null)}
           onOk={() => {
-            const form = document.getElementById('noshow-edit-form') as HTMLFormElement | null
-            form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+            document.getElementById('noshow-edit-form')?.dispatchEvent(
+              new Event('submit', { cancelable: true, bubbles: true }),
+            )
           }}
           destroyOnClose
         >
@@ -93,10 +126,17 @@ export function NoShowPolicyTable() {
               waitTimeMinutes: editRecord.waitTimeMinutes,
               noShowFee: editRecord.noShowFee,
               driverCompensation: editRecord.driverCompensation,
+              status: editRecord.status,
             }}
-            onFinish={async (values) => {
-              await updatePolicy({ id: editRecord.id, ...values }).unwrap()
-              adminActions.notify('No show policy updated')
+            onFinish={async (values: NoShowPolicyFormValues) => {
+              await updatePolicy({
+                id: editRecord.id,
+                waitTimeMinutes: values.waitTimeMinutes,
+                noShowFee: values.noShowFee,
+                driverCompensation: values.driverCompensation,
+                status: values.status,
+              }).unwrap()
+              adminActions.notify('No-show policy updated')
               setEditRecord(null)
             }}
           >
@@ -108,6 +148,9 @@ export function NoShowPolicyTable() {
             </Form.Item>
             <Form.Item name="driverCompensation" label="Driver Compensation" rules={[{ required: true }]}>
               <InputNumber min={0} prefix="$" className="w-full" />
+            </Form.Item>
+            <Form.Item name="status" label="Status" rules={[{ required: true }]}>
+              <Select options={[...POLICY_STATUS_OPTIONS]} />
             </Form.Item>
             <button type="submit" className="hidden" />
           </Form>

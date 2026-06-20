@@ -27,7 +27,6 @@ export const mockKpis: KpiMetric[] = [
   { key: 'revenueMonth', label: 'Revenue This Month', value: 8420000, change: 11.2, format: 'currency', icon: 'trending-up' },
   { key: 'approvalQueue', label: 'Driver Approval Queue', value: 47, change: -3.1, format: 'number', icon: 'clipboard-check' },
   { key: 'complianceAlerts', label: 'Compliance Alerts', value: 23, change: 15.0, format: 'number', icon: 'shield-alert' },
-  { key: 'waitlistCount', label: 'Waitlist Count', value: 1842, change: 2.4, format: 'number', icon: 'list-ordered' },
   { key: 'airportQueue', label: 'Airport Queue Count', value: 89, change: 5.6, format: 'number', icon: 'plane' },
   { key: 'scheduledRides', label: 'Scheduled Rides', value: 156, change: 9.1, format: 'number', icon: 'calendar' },
 ]

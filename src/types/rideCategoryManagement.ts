@@ -1,5 +1,15 @@
 export type RideCategoryStatus = 'enabled' | 'disabled'
 
+export type CancellationPolicyStatus = 'active' | 'inactive'
+
+export interface RideCategoryCancellationRules {
+  cancellationFee: number
+  noShowFee: number
+  waitTimeMinutes: number
+  driverCompensation: number
+  status: CancellationPolicyStatus
+}
+
 export interface RideCategoryDefinition {
   id: string
   name: string
@@ -9,6 +19,7 @@ export interface RideCategoryDefinition {
   minDriverRating: number
   vehicleRequirements: string
   status: RideCategoryStatus
+  cancellationRules: RideCategoryCancellationRules
   createdAt: string
 }
 
@@ -19,6 +30,7 @@ export interface RideCategoryFormValues {
   minDriverRating: number
   vehicleRequirements: string
   status: RideCategoryStatus
+  cancellationRules: RideCategoryCancellationRules
 }
 
 export interface RideCategoryListParams {

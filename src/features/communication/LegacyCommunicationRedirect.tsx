@@ -1,22 +1,30 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { resolveCommunicationTab } from '@/features/communication/communicationNavigation'
+import {
+  resolveCommunicationTab,
+  resolveLegacyInboxType,
+} from '@/features/communication/communicationNavigation'
 
 const LEGACY_PATH_TAB: Record<string, string> = {
-  '/communication/conversations': 'all-messages',
-  '/communication/active-trip-chats': 'all-messages',
-  '/communication/driver-support': 'drivers',
-  '/communication/passenger-support': 'passengers',
+  '/communication/conversations': 'inbox',
+  '/communication/active-trip-chats': 'inbox',
+  '/communication/driver-support': 'driver-support',
+  '/communication/passenger-support': 'passenger-support',
   '/communication/safety': 'safety',
   '/communication/broadcast': 'broadcasts',
-  '/communication/templates': 'templates',
-  '/communication/analytics': 'all-messages',
-  '/communication/internal-notes': 'all-messages',
+  '/communication/templates': 'inbox',
+  '/communication/analytics': 'inbox',
+  '/communication/internal-notes': 'inbox',
 }
 
 export function LegacyCommunicationRedirect() {
   const location = useLocation()
-  const tab = resolveCommunicationTab(
-    LEGACY_PATH_TAB[location.pathname] ?? new URLSearchParams(location.search).get('tab'),
-  )
-  return <Navigate to={`/communication?tab=${tab}`} replace />
+  const legacyTab =
+    LEGACY_PATH_TAB[location.pathname] ?? new URLSearchParams(location.search).get('tab')
+  const tab = resolveCommunicationTab(legacyTab)
+  const typeFilter = resolveLegacyInboxType(legacyTab)
+  const params = new URLSearchParams({ tab })
+  if (tab === 'inbox' && typeFilter) {
+    params.set('type', typeFilter)
+  }
+  return <Navigate to={`/communication?${params.toString()}`} replace />
 }

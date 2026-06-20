@@ -385,28 +385,48 @@ function ticketToInbox(ticket: SupportTicket): CommunicationInboxItem {
   }
 }
 
-function broadcastToInbox(broadcast: BroadcastRecord): CommunicationInboxItem {
-  const audience = BROADCAST_TARGET_LABELS[broadcast.target] ?? broadcast.target
-  return {
-    id: broadcast.id,
-    ticketId: `BC-${broadcast.id.replace('bc-', '').toUpperCase()}`,
-    userOrGroup: broadcast.targetValue ? `${audience} — ${broadcast.targetValue}` : audience,
-    communicationType: 'broadcast',
-    subject: broadcast.title,
-    priority: 'medium',
-    lastActivity: broadcast.sentAt,
-    status: broadcast.status,
-    unreadCount: 0,
-  }
-}
 
 export function buildCommunicationInbox(): CommunicationInboxItem[] {
   const conversationUsers = new Set(mockConversations.map((c) => c.userName))
   const ticketItems = mockSupportTickets
     .filter((ticket) => !conversationUsers.has(ticket.userName) || ticket.ticketType === 'safety')
     .map(ticketToInbox)
-  const broadcastItems = mockBroadcasts.slice(0, 2).map(broadcastToInbox)
-  return [...mockConversations.map(conversationToInbox), ...ticketItems, ...broadcastItems].sort(
+  const systemItems: CommunicationInboxItem[] = [
+    {
+      id: 'sys-1',
+      ticketId: 'SYS-1001',
+      userOrGroup: 'Platform Operations',
+      communicationType: 'system',
+      subject: 'Scheduled maintenance window — driver app v4.2',
+      priority: 'medium',
+      lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      status: 'open',
+      unreadCount: 0,
+    },
+    {
+      id: 'sys-2',
+      ticketId: 'SYS-1002',
+      userOrGroup: 'Compliance',
+      communicationType: 'system',
+      subject: 'Background check policy update effective April 1',
+      priority: 'high',
+      lastActivity: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+      status: 'in_progress',
+      unreadCount: 1,
+    },
+    {
+      id: 'sys-3',
+      ticketId: 'SYS-1003',
+      userOrGroup: 'Payments',
+      communicationType: 'system',
+      subject: 'Payout processor reconciliation completed',
+      priority: 'low',
+      lastActivity: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'resolved',
+      unreadCount: 0,
+    },
+  ]
+  return [...mockConversations.map(conversationToInbox), ...ticketItems, ...systemItems].sort(
     (a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime(),
   )
 }
@@ -431,11 +451,19 @@ export function paginateCommunicationInbox(
   const pageSize = params.pageSize ?? 10
   const search = (params.search ?? '').trim().toLowerCase()
   const communicationType = (params.communicationType ?? '').trim()
+  const status = (params.status ?? '').trim()
+  const priority = (params.priority ?? '').trim()
 
   let filtered = buildCommunicationInbox()
 
   if (communicationType) {
     filtered = filtered.filter((item) => item.communicationType === communicationType)
+  }
+  if (status) {
+    filtered = filtered.filter((item) => matchesInboxStatusFilter(item.status, status))
+  }
+  if (priority) {
+    filtered = filtered.filter((item) => item.priority === priority)
   }
   if (search) {
     filtered = filtered.filter(
@@ -453,6 +481,13 @@ export function paginateCommunicationInbox(
     page,
     pageSize,
   }
+}
+
+function matchesInboxStatusFilter(itemStatus: string, filterStatus: string): boolean {
+  if (filterStatus === 'in_progress') {
+    return ['in_progress', 'waiting_user', 'investigating', 'escalated', 'assigned'].includes(itemStatus)
+  }
+  return itemStatus === filterStatus
 }
 
 export function paginateSupportTickets(
@@ -493,7 +528,7 @@ export const COMMUNICATION_TYPE_LABELS: Record<string, string> = {
   passenger: 'Passenger',
   support: 'Support',
   safety: 'Safety',
-  broadcast: 'Broadcast',
+  system: 'System',
 }
 
 export const TICKET_TYPE_LABELS: Record<string, string> = {

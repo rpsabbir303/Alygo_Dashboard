@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button, Table } from 'antd'
 import { Plus } from 'lucide-react'
 import {
@@ -17,52 +17,53 @@ import {
   useToggleCancellationReasonStatusMutation,
   useUpdateCancellationReasonMutation,
 } from '@/services/cancellationApi'
-import type { CancellationReason, CancellationReasonType } from '@/types/cancellation'
+import type { CancellationReasonRow } from '@/types/cancellation'
 import {
   buildReasonDetailFields,
   getReasonActionItems,
+  getReasonUserTypeLabel,
   openPolicyDrawer,
 } from '@/features/cancellations/cancellationHelpers'
 import { CreateReasonModal, EditReasonModal } from '@/features/cancellations/components/ReasonFormModal'
 
-interface CancellationReasonTableProps {
-  type: CancellationReasonType
-  typeLabel: string
-}
-
-export function CancellationReasonTable({ type, typeLabel }: CancellationReasonTableProps) {
+export function CancellationReasonTable() {
   const adminActions = useAdminActions()
-  const passengerQuery = useGetPassengerCancellationReasonsQuery(undefined, { skip: type !== 'passenger' })
-  const driverQuery = useGetDriverCancellationReasonsQuery(undefined, { skip: type !== 'driver' })
-  const { data = [], isLoading } = type === 'passenger' ? passengerQuery : driverQuery
+  const { data: passengerReasons = [], isLoading: loadingPassenger } = useGetPassengerCancellationReasonsQuery()
+  const { data: driverReasons = [], isLoading: loadingDriver } = useGetDriverCancellationReasonsQuery()
+
+  const rows = useMemo<CancellationReasonRow[]>(() => {
+    const combined = [
+      ...passengerReasons.map((reason) => ({ ...reason, userType: 'passenger' as const })),
+      ...driverReasons.map((reason) => ({ ...reason, userType: 'driver' as const })),
+    ]
+    return combined.sort(
+      (a, b) => a.userType.localeCompare(b.userType) || a.sortOrder - b.sortOrder,
+    )
+  }, [passengerReasons, driverReasons])
 
   const [createOpen, setCreateOpen] = useState(false)
-  const [editRecord, setEditRecord] = useState<CancellationReason | null>(null)
-  const [deleteRecord, setDeleteRecord] = useState<CancellationReason | null>(null)
+  const [editRecord, setEditRecord] = useState<CancellationReasonRow | null>(null)
+  const [deleteRecord, setDeleteRecord] = useState<CancellationReasonRow | null>(null)
 
   const [createReason, { isLoading: creating }] = useCreateCancellationReasonMutation()
   const [updateReason, { isLoading: updating }] = useUpdateCancellationReasonMutation()
   const [toggleStatus] = useToggleCancellationReasonStatusMutation()
   const [deleteReason, { isLoading: deleting }] = useDeleteCancellationReasonMutation()
 
-  const handleAction = (key: string, record: CancellationReason) => {
+  const handleAction = (key: string, record: CancellationReasonRow) => {
     switch (key) {
       case 'view':
-        openPolicyDrawer(
-          `${typeLabel} Cancellation Reason`,
-          buildReasonDetailFields(record, typeLabel),
-          adminActions,
-        )
+        openPolicyDrawer('Cancellation Reason', buildReasonDetailFields(record), adminActions)
         break
       case 'edit':
         setEditRecord(record)
         break
       case 'activate':
-        toggleStatus({ type, id: record.id, status: 'active' }).unwrap()
+        toggleStatus({ type: record.userType, id: record.id, status: 'active' }).unwrap()
           .then(() => adminActions.notify('Reason activated'))
         break
       case 'deactivate':
-        toggleStatus({ type, id: record.id, status: 'inactive' }).unwrap()
+        toggleStatus({ type: record.userType, id: record.id, status: 'inactive' }).unwrap()
           .then(() => adminActions.notify('Reason deactivated'))
         break
       case 'delete':
@@ -79,25 +80,23 @@ export function CancellationReasonTable({ type, typeLabel }: CancellationReasonT
         </Button>
       </div>
       <Table
-        loading={isLoading}
+        loading={loadingPassenger || loadingDriver}
         rowKey="id"
-        dataSource={data}
+        dataSource={rows}
         scroll={{ x: 900 }}
-        {...createTableRowProps<CancellationReason>((record) =>
-          openPolicyDrawer(
-            `${typeLabel} Cancellation Reason`,
-            buildReasonDetailFields(record, typeLabel),
-            adminActions,
-          ),
+        {...createTableRowProps<CancellationReasonRow>((record) =>
+          openPolicyDrawer('Cancellation Reason', buildReasonDetailFields(record), adminActions),
         )}
         columns={[
           { title: 'Reason Name', dataIndex: 'name' },
-          { title: 'Description', dataIndex: 'description', ellipsis: true },
+          {
+            title: 'User Type',
+            dataIndex: 'userType',
+            render: (userType: CancellationReasonRow['userType']) => getReasonUserTypeLabel(userType),
+          },
+          { title: 'Sort Order', dataIndex: 'sortOrder' },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
-          ...(type === 'passenger'
-            ? [{ title: 'Created Date', dataIndex: 'createdAt', render: (d: string) => new Date(d).toLocaleDateString() }]
-            : []),
-          createActionsColumn<CancellationReason>(
+          createActionsColumn<CancellationReasonRow>(
             (record) => getReasonActionItems(record),
             (key, record) => handleAction(key, record),
           ),
@@ -106,11 +105,15 @@ export function CancellationReasonTable({ type, typeLabel }: CancellationReasonT
 
       <CreateReasonModal
         open={createOpen}
-        typeLabel={typeLabel}
         confirmLoading={creating}
         onCancel={() => setCreateOpen(false)}
         onSubmit={async (values) => {
-          await createReason({ type, ...values }).unwrap()
+          await createReason({
+            type: values.userType,
+            name: values.name,
+            sortOrder: values.sortOrder,
+            status: values.active ? 'active' : 'inactive',
+          }).unwrap()
           adminActions.notify('Cancellation reason created')
           setCreateOpen(false)
         }}
@@ -119,12 +122,22 @@ export function CancellationReasonTable({ type, typeLabel }: CancellationReasonT
       {editRecord && (
         <EditReasonModal
           open={Boolean(editRecord)}
-          typeLabel={typeLabel}
-          initialValues={{ name: editRecord.name, description: editRecord.description }}
+          initialValues={{
+            name: editRecord.name,
+            userType: editRecord.userType,
+            sortOrder: editRecord.sortOrder,
+            active: editRecord.status === 'active',
+          }}
           confirmLoading={updating}
           onCancel={() => setEditRecord(null)}
           onSubmit={async (values) => {
-            await updateReason({ type, id: editRecord.id, ...values }).unwrap()
+            await updateReason({
+              type: editRecord.userType,
+              id: editRecord.id,
+              name: values.name,
+              sortOrder: values.sortOrder,
+              status: values.active ? 'active' : 'inactive',
+            }).unwrap()
             adminActions.notify('Cancellation reason updated')
             setEditRecord(null)
           }}
@@ -141,7 +154,7 @@ export function CancellationReasonTable({ type, typeLabel }: CancellationReasonT
         onCancel={() => setDeleteRecord(null)}
         onConfirm={async () => {
           if (!deleteRecord) return
-          await deleteReason({ type, id: deleteRecord.id }).unwrap()
+          await deleteReason({ type: deleteRecord.userType, id: deleteRecord.id }).unwrap()
           adminActions.notify('Cancellation reason deleted')
           setDeleteRecord(null)
         }}

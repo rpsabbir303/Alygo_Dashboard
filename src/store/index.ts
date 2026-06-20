@@ -7,10 +7,8 @@ import { lostFoundApi } from '@/services/lostFoundApi'
 import { driverRewardsApi } from '@/services/driverRewardsApi'
 import { tripCompletionReviewApi } from '@/services/tripCompletionReviewApi'
 import { drivingHoursApi } from '@/services/drivingHoursApi'
-import { destinationFilterApi } from '@/services/destinationFilterApi'
 import { operationsPolicyApi } from '@/services/operationsPolicyApi'
 import { stateActivationApi } from '@/services/stateActivationApi'
-import { driverCapacityApi } from '@/services/driverCapacityApi'
 import { airportQueueApi } from '@/services/airportQueueApi'
 import { safetyIncidentApi } from '@/services/safetyIncidentApi'
 import { backgroundCheckFeeApi } from '@/services/backgroundCheckFeeApi'
@@ -35,10 +33,8 @@ export const store = configureStore({
     [driverRewardsApi.reducerPath]: driverRewardsApi.reducer,
     [tripCompletionReviewApi.reducerPath]: tripCompletionReviewApi.reducer,
     [drivingHoursApi.reducerPath]: drivingHoursApi.reducer,
-    [destinationFilterApi.reducerPath]: destinationFilterApi.reducer,
     [operationsPolicyApi.reducerPath]: operationsPolicyApi.reducer,
     [stateActivationApi.reducerPath]: stateActivationApi.reducer,
-    [driverCapacityApi.reducerPath]: driverCapacityApi.reducer,
     [airportQueueApi.reducerPath]: airportQueueApi.reducer,
     [safetyIncidentApi.reducerPath]: safetyIncidentApi.reducer,
     [backgroundCheckFeeApi.reducerPath]: backgroundCheckFeeApi.reducer,
@@ -57,10 +53,8 @@ export const store = configureStore({
       driverRewardsApi.middleware,
       tripCompletionReviewApi.middleware,
       drivingHoursApi.middleware,
-      destinationFilterApi.middleware,
       operationsPolicyApi.middleware,
       stateActivationApi.middleware,
-      driverCapacityApi.middleware,
       airportQueueApi.middleware,
       safetyIncidentApi.middleware,
       backgroundCheckFeeApi.middleware,

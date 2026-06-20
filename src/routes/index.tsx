@@ -13,7 +13,6 @@ const PasswordUpdatedPage = lazy(() => import('@/features/auth/pages/PasswordUpd
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'))
 const DriversPage = lazy(() => import('@/features/drivers/DriversPage'))
 const DriverProfilePage = lazy(() => import('@/features/drivers/DriverProfilePage'))
-const DriverWaitlistPage = lazy(() => import('@/features/driver-capacity/DriverCapacityPage'))
 const PassengersPage = lazy(() => import('@/features/passengers/PassengersPage'))
 const PassengerProfilePage = lazy(() => import('@/features/passengers/PassengerProfilePage'))
 const LiveTripsPage = lazy(() => import('@/features/operations/LiveTripsPage'))
@@ -30,7 +29,6 @@ const TierDetailPage = lazy(() => import('@/features/driver-rewards/TierDetailPa
 const LostFoundManagementPage = lazy(() => import('@/features/lost-found/LostFoundManagementPage'))
 const TripCompletionReviewPage = lazy(() => import('@/features/trip-completion-review/TripCompletionReviewPage'))
 const DrivingHoursManagementPage = lazy(() => import('@/features/driving-hours/DrivingHoursManagementPage'))
-const DestinationFilterManagementPage = lazy(() => import('@/features/destination-filters/DestinationFilterManagementPage'))
 const OperationsPolicyCenterPage = lazy(() => import('@/features/operations-policy/OperationsPolicyCenterPage'))
 const LocationDashboardPage = lazy(() => import('@/features/locations/LocationDashboardPage'))
 const SafetyIncidentPage = lazy(() => import('@/features/safety-incidents/SafetyIncidentPage'))
@@ -92,7 +90,7 @@ export const router = createBrowserRouter([
       { path: 'operations/lost-found', element: withSuspense(<LostFoundManagementPage />) },
       { path: 'operations/trip-completion-review', element: withSuspense(<TripCompletionReviewPage />) },
       { path: 'operations/driving-hours', element: withSuspense(<DrivingHoursManagementPage />) },
-      { path: 'operations/destination-filters', element: withSuspense(<DestinationFilterManagementPage />) },
+      { path: 'operations/destination-filters', element: <Navigate to="/drivers/tiers?tab=configuration" replace /> },
       { path: 'operations/policy-center', element: withSuspense(<OperationsPolicyCenterPage />) },
       { path: 'operations/safety-incidents', element: withSuspense(<SafetyIncidentPage />) },
       { path: 'communication', element: withSuspense(<CommunicationCenterPage />) },
@@ -111,7 +109,7 @@ export const router = createBrowserRouter([
       { path: 'drivers/tiers', element: withSuspense(<TierManagementPage />) },
       { path: 'drivers/tiers/:id', element: withSuspense(<TierDetailPage />) },
       { path: 'drivers/rewards/tier-management', element: <Navigate to="/drivers/tiers" replace /> },
-      { path: 'drivers/waitlist', element: withSuspense(<DriverWaitlistPage />) },
+      { path: 'drivers/waitlist', element: <Navigate to="/drivers" replace /> },
       { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },
       { path: 'passengers', element: withSuspense(<PassengersPage />) },
       { path: 'passengers/:id', element: withSuspense(<PassengerProfilePage />) },

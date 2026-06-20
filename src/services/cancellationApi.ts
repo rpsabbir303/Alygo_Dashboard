@@ -8,7 +8,6 @@ import type {
   CancellationTrendPoint,
   CityCancellationPolicy,
   NoShowPolicy,
-  PassengerWarningMessage,
 } from '@/types/cancellation'
 import type { RideCategory } from '@/types'
 import {
@@ -16,16 +15,14 @@ import {
   mockCancellationAnalyticsSummary,
   mockCancellationByCategory,
   mockCancellationByCity,
-  mockCancellationFees,
   mockCancellationTrend,
   mockCityPolicies,
   mockDriverCancellationReasons,
-  mockNoShowPolicies,
   mockPassengerCancellationReasons,
   mockTopCancellationReasons,
-  mockWarningMessages,
-  touchReasonCreatedAt,
 } from '@/services/mock/cancellationData'
+import { mockRideCategories } from '@/services/mock/rideCategoryData'
+import type { RideCategoryDefinition } from '@/types/rideCategoryManagement'
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -33,10 +30,35 @@ function getReasonStore(type: CancellationReasonType) {
   return type === 'passenger' ? mockPassengerCancellationReasons : mockDriverCancellationReasons
 }
 
+function mapCategoryToCancellationFee(category: RideCategoryDefinition): CancellationFee {
+  return {
+    id: category.id,
+    rideCategory: category.slug,
+    fee: category.cancellationRules.cancellationFee,
+    driverCompensation: category.cancellationRules.driverCompensation,
+    status: category.cancellationRules.status,
+  }
+}
+
+function mapCategoryToNoShowPolicy(category: RideCategoryDefinition): NoShowPolicy {
+  return {
+    id: category.id,
+    rideCategory: category.slug,
+    waitTimeMinutes: category.cancellationRules.waitTimeMinutes,
+    noShowFee: category.cancellationRules.noShowFee,
+    driverCompensation: category.cancellationRules.driverCompensation,
+    status: category.cancellationRules.status,
+  }
+}
+
+function findCategoryIndex(id: string) {
+  return mockRideCategories.findIndex((category) => category.id === id)
+}
+
 export const cancellationApi = createApi({
   reducerPath: 'cancellationApi',
   baseQuery: fakeBaseQuery(),
-  tagTypes: ['CancellationReasons', 'CancellationFees', 'NoShowPolicies', 'CityPolicies', 'WarningMessages', 'CancellationAnalytics'],
+  tagTypes: ['CancellationReasons', 'CancellationFees', 'NoShowPolicies', 'CityPolicies', 'CancellationAnalytics'],
   endpoints: (builder) => ({
     getPassengerCancellationReasons: builder.query<CancellationReason[], void>({
       queryFn: async () => {
@@ -53,20 +75,22 @@ export const cancellationApi = createApi({
       providesTags: ['CancellationReasons'],
     }),
     getCancellationFees: builder.query<CancellationFee[], void>({
-      queryFn: async () => ({ data: [...mockCancellationFees] }),
+      queryFn: async () => {
+        await delay()
+        return { data: mockRideCategories.map(mapCategoryToCancellationFee) }
+      },
       providesTags: ['CancellationFees'],
     }),
     getNoShowPolicies: builder.query<NoShowPolicy[], void>({
-      queryFn: async () => ({ data: [...mockNoShowPolicies] }),
+      queryFn: async () => {
+        await delay()
+        return { data: mockRideCategories.map(mapCategoryToNoShowPolicy) }
+      },
       providesTags: ['NoShowPolicies'],
     }),
     getCityPolicies: builder.query<CityCancellationPolicy[], void>({
       queryFn: async () => ({ data: [...mockCityPolicies] }),
       providesTags: ['CityPolicies'],
-    }),
-    getWarningMessages: builder.query<PassengerWarningMessage[], void>({
-      queryFn: async () => ({ data: [...mockWarningMessages] }),
-      providesTags: ['WarningMessages'],
     }),
     getCancellationAnalytics: builder.query<{
       summary: CancellationAnalyticsSummary
@@ -88,17 +112,16 @@ export const cancellationApi = createApi({
     }),
     createCancellationReason: builder.mutation<
       CancellationReason,
-      { type: CancellationReasonType; name: string; description: string }
+      { type: CancellationReasonType; name: string; sortOrder: number; status?: 'active' | 'inactive' }
     >({
-      queryFn: async ({ type, name, description }) => {
+      queryFn: async ({ type, name, sortOrder, status = 'active' }) => {
         await delay()
         const store = getReasonStore(type)
         const reason: CancellationReason = {
           id: generateReasonId(type === 'passenger' ? 'pcr' : 'dcr'),
           name,
-          description,
-          status: 'active',
-          createdAt: touchReasonCreatedAt(),
+          sortOrder,
+          status,
         }
         store.unshift(reason)
         return { data: reason }
@@ -107,14 +130,20 @@ export const cancellationApi = createApi({
     }),
     updateCancellationReason: builder.mutation<
       CancellationReason,
-      { type: CancellationReasonType; id: string; name: string; description: string }
+      {
+        type: CancellationReasonType
+        id: string
+        name: string
+        sortOrder: number
+        status: 'active' | 'inactive'
+      }
     >({
-      queryFn: async ({ type, id, name, description }) => {
+      queryFn: async ({ type, id, name, sortOrder, status }) => {
         await delay()
         const store = getReasonStore(type)
         const index = store.findIndex((r) => r.id === id)
         if (index === -1) return { error: { status: 404, data: 'Reason not found' } }
-        store[index] = { ...store[index], name, description }
+        store[index] = { ...store[index], name, sortOrder, status }
         return { data: store[index] }
       },
       invalidatesTags: ['CancellationReasons'],
@@ -146,29 +175,66 @@ export const cancellationApi = createApi({
     }),
     updateCancellationFee: builder.mutation<
       CancellationFee,
-      Partial<CancellationFee> & { id: string }
+      Partial<Pick<CancellationFee, 'fee' | 'driverCompensation' | 'status'>> & { id: string }
     >({
-      queryFn: async ({ id, ...updates }) => {
+      queryFn: async ({ id, fee, driverCompensation, status }) => {
         await delay()
-        const index = mockCancellationFees.findIndex((f) => f.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Fee not found' } }
-        mockCancellationFees[index] = { ...mockCancellationFees[index], ...updates }
-        return { data: mockCancellationFees[index] }
+        const index = findCategoryIndex(id)
+        if (index === -1) return { error: { status: 404, data: 'Ride category not found' } }
+        mockRideCategories[index] = {
+          ...mockRideCategories[index],
+          cancellationRules: {
+            ...mockRideCategories[index].cancellationRules,
+            ...(fee !== undefined && { cancellationFee: fee }),
+            ...(driverCompensation !== undefined && { driverCompensation }),
+            ...(status !== undefined && { status }),
+          },
+        }
+        return { data: mapCategoryToCancellationFee(mockRideCategories[index]) }
       },
-      invalidatesTags: ['CancellationFees'],
+      invalidatesTags: ['CancellationFees', 'NoShowPolicies'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          const { rideCategoryApi } = await import('@/services/rideCategoryApi')
+          dispatch(rideCategoryApi.util.invalidateTags(['RideCategories']))
+        } catch {
+          // Ignore invalidation when update fails.
+        }
+      },
     }),
     updateNoShowPolicy: builder.mutation<
       NoShowPolicy,
-      Partial<NoShowPolicy> & { id: string }
+      Partial<Pick<NoShowPolicy, 'waitTimeMinutes' | 'noShowFee' | 'driverCompensation' | 'status'>> & {
+        id: string
+      }
     >({
-      queryFn: async ({ id, ...updates }) => {
+      queryFn: async ({ id, waitTimeMinutes, noShowFee, driverCompensation, status }) => {
         await delay()
-        const index = mockNoShowPolicies.findIndex((p) => p.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Policy not found' } }
-        mockNoShowPolicies[index] = { ...mockNoShowPolicies[index], ...updates }
-        return { data: mockNoShowPolicies[index] }
+        const index = findCategoryIndex(id)
+        if (index === -1) return { error: { status: 404, data: 'Ride category not found' } }
+        mockRideCategories[index] = {
+          ...mockRideCategories[index],
+          cancellationRules: {
+            ...mockRideCategories[index].cancellationRules,
+            ...(waitTimeMinutes !== undefined && { waitTimeMinutes }),
+            ...(noShowFee !== undefined && { noShowFee }),
+            ...(driverCompensation !== undefined && { driverCompensation }),
+            ...(status !== undefined && { status }),
+          },
+        }
+        return { data: mapCategoryToNoShowPolicy(mockRideCategories[index]) }
       },
-      invalidatesTags: ['NoShowPolicies'],
+      invalidatesTags: ['CancellationFees', 'NoShowPolicies'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          const { rideCategoryApi } = await import('@/services/rideCategoryApi')
+          dispatch(rideCategoryApi.util.invalidateTags(['RideCategories']))
+        } catch {
+          // Ignore invalidation when update fails.
+        }
+      },
     }),
     createCityPolicy: builder.mutation<
       CityCancellationPolicy,
@@ -205,19 +271,6 @@ export const cancellationApi = createApi({
       },
       invalidatesTags: ['CityPolicies'],
     }),
-    updateWarningMessage: builder.mutation<
-      PassengerWarningMessage,
-      Partial<PassengerWarningMessage> & { id: string }
-    >({
-      queryFn: async ({ id, ...updates }) => {
-        await delay()
-        const index = mockWarningMessages.findIndex((m) => m.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Message not found' } }
-        mockWarningMessages[index] = { ...mockWarningMessages[index], ...updates }
-        return { data: mockWarningMessages[index] }
-      },
-      invalidatesTags: ['WarningMessages'],
-    }),
   }),
 })
 
@@ -227,7 +280,6 @@ export const {
   useGetCancellationFeesQuery,
   useGetNoShowPoliciesQuery,
   useGetCityPoliciesQuery,
-  useGetWarningMessagesQuery,
   useGetCancellationAnalyticsQuery,
   useCreateCancellationReasonMutation,
   useUpdateCancellationReasonMutation,
@@ -238,7 +290,6 @@ export const {
   useCreateCityPolicyMutation,
   useUpdateCityPolicyMutation,
   useDeleteCityPolicyMutation,
-  useUpdateWarningMessageMutation,
 } = cancellationApi
 
 export const RIDE_CATEGORY_OPTIONS: { value: RideCategory; label: string }[] = [

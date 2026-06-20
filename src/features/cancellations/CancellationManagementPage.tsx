@@ -6,7 +6,6 @@ import { CancellationFeeTable } from '@/features/cancellations/components/Cancel
 import { CancellationReasonTable } from '@/features/cancellations/components/CancellationReasonTable'
 import { CityPolicyTable } from '@/features/cancellations/components/CityPolicyTable'
 import { NoShowPolicyTable } from '@/features/cancellations/components/NoShowPolicyTable'
-import { WarningMessageTable } from '@/features/cancellations/components/WarningMessageTable'
 
 export default function CancellationManagementPage() {
   useDocumentTitle('Cancellation Management')
@@ -14,21 +13,16 @@ export default function CancellationManagementPage() {
   return (
     <PageShell
       title="Cancellation Management"
-      description="Configure cancellation reasons, fees, no-show policies, location overrides, passenger warnings, and analytics."
+      description="Manage cancellation reasons, review ride category cancellation rules, location overrides, and analytics."
     >
       <div className="glass-card p-4">
         <Tabs
-          defaultActiveKey="passenger-reasons"
+          defaultActiveKey="reasons"
           items={[
             {
-              key: 'passenger-reasons',
-              label: 'Passenger Reasons',
-              children: <CancellationReasonTable type="passenger" typeLabel="Passenger" />,
-            },
-            {
-              key: 'driver-reasons',
-              label: 'Driver Reasons',
-              children: <CancellationReasonTable type="driver" typeLabel="Driver" />,
+              key: 'reasons',
+              label: 'Cancellation Reasons',
+              children: <CancellationReasonTable />,
             },
             {
               key: 'fees',
@@ -44,11 +38,6 @@ export default function CancellationManagementPage() {
               key: 'city-policies',
               label: 'City / State Policies',
               children: <CityPolicyTable />,
-            },
-            {
-              key: 'warnings',
-              label: 'Passenger Warnings',
-              children: <WarningMessageTable />,
             },
             {
               key: 'analytics',

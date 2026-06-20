@@ -29,17 +29,11 @@ export type SocketEvents = {
   'driving-hours:violation': void
   'driving-hours:driver-update': void
   'driving-hours:stats-update': void
-  'destination-filter:usage-update': void
-  'destination-filter:settings-update': void
-  'destination-filter:stats-update': void
   'operations-policy:update': void
   'operations-policy:stats-update': void
   'state-activation:settings-update': void
   'state-activation:status-change': void
   'state-activation:stats-update': void
-  'driver-capacity:waitlist-update': void
-  'driver-capacity:cap-update': void
-  'driver-capacity:stats-update': void
   'airport-queue:queue-update': void
   'airport-queue:driver-join': void
   'airport-queue:driver-dispatch': void

@@ -1,7 +1,11 @@
 import { Form, Input, InputNumber, Modal, Select } from 'antd'
 import { useEffect } from 'react'
 import type { RideCategoryDefinition, RideCategoryFormValues } from '@/types/rideCategoryManagement'
-import { RIDE_CATEGORY_STATUS_OPTIONS } from '@/features/ride-categories/rideCategoryHelpers'
+import { createDefaultCancellationRules } from '@/services/mock/rideCategoryData'
+import {
+  RIDE_CATEGORY_STATUS_OPTIONS,
+} from '@/features/ride-categories/rideCategoryHelpers'
+import { POLICY_STATUS_OPTIONS } from '@/features/cancellations/cancellationPolicyHelpers'
 
 interface RideCategoryFormModalProps {
   open: boolean
@@ -19,6 +23,7 @@ const defaultValues: RideCategoryFormValues = {
   minDriverRating: 4.5,
   vehicleRequirements: '',
   status: 'enabled',
+  cancellationRules: createDefaultCancellationRules(1),
 }
 
 export function RideCategoryFormModal({
@@ -41,6 +46,7 @@ export function RideCategoryFormModal({
         minDriverRating: initialValues.minDriverRating,
         vehicleRequirements: initialValues.vehicleRequirements,
         status: initialValues.status,
+        cancellationRules: initialValues.cancellationRules,
       })
     } else {
       form.setFieldsValue(defaultValues)
@@ -61,7 +67,7 @@ export function RideCategoryFormModal({
       okText={mode === 'create' ? 'Create Category' : 'Save Changes'}
       confirmLoading={loading}
       destroyOnClose
-      width={560}
+      width={640}
     >
       <Form form={form} layout="vertical" className="mt-4">
         <Form.Item
@@ -103,6 +109,51 @@ export function RideCategoryFormModal({
         </Form.Item>
         <Form.Item name="status" label="Status" rules={[{ required: true }]}>
           <Select options={RIDE_CATEGORY_STATUS_OPTIONS} />
+        </Form.Item>
+
+        <div className="mb-2 mt-4 border-t border-alygo-border pt-4">
+          <h4 className="text-sm font-semibold text-alygo-text">Cancellation &amp; No-Show Rules</h4>
+          <p className="mt-1 text-xs text-alygo-text-muted">
+            These rules apply whenever this ride category is cancelled or marked as a no-show.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 sm:gap-4">
+          <Form.Item
+            name={['cancellationRules', 'cancellationFee']}
+            label="Cancellation Fee"
+            rules={[{ required: true, message: 'Cancellation fee is required' }]}
+          >
+            <InputNumber min={0} prefix="$" className="!w-full" />
+          </Form.Item>
+          <Form.Item
+            name={['cancellationRules', 'noShowFee']}
+            label="No Show Fee"
+            rules={[{ required: true, message: 'No show fee is required' }]}
+          >
+            <InputNumber min={0} prefix="$" className="!w-full" />
+          </Form.Item>
+          <Form.Item
+            name={['cancellationRules', 'waitTimeMinutes']}
+            label="Wait Time (minutes)"
+            rules={[{ required: true, message: 'Wait time is required' }]}
+          >
+            <InputNumber min={1} max={30} className="!w-full" />
+          </Form.Item>
+          <Form.Item
+            name={['cancellationRules', 'driverCompensation']}
+            label="Driver Compensation"
+            rules={[{ required: true, message: 'Driver compensation is required' }]}
+          >
+            <InputNumber min={0} prefix="$" className="!w-full" />
+          </Form.Item>
+        </div>
+        <Form.Item
+          name={['cancellationRules', 'status']}
+          label="Policy Status"
+          rules={[{ required: true }]}
+        >
+          <Select options={[...POLICY_STATUS_OPTIONS]} />
         </Form.Item>
       </Form>
     </Modal>

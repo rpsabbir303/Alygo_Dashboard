@@ -1,15 +1,8 @@
-import { Eye, Pencil, Power, PowerOff, Send, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Send, Trash2 } from 'lucide-react'
 import type { ActionMenuItem } from '@/components/admin/types'
-import type { BroadcastRecord, MessageTemplate } from '@/types/communication'
-import { BROADCAST_TARGET_LABELS, CATEGORY_LABELS } from '@/services/communicationApi'
+import type { BroadcastRecord } from '@/types/communication'
+import { BROADCAST_TARGET_LABELS } from '@/services/communicationApi'
 import { priorityColor, priorityLabel, statusColor, statusLabel } from '@/features/communication/communicationHelpers'
-
-export const NOTIFICATION_TYPE_LABELS = CATEGORY_LABELS
-
-export const NOTIFICATION_TYPE_OPTIONS = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}))
 
 export const BROADCAST_AUDIENCE_OPTIONS = [
   { value: 'all_drivers', label: 'All Drivers' },
@@ -21,7 +14,7 @@ export const BROADCAST_AUDIENCE_OPTIONS = [
 
 export const TIER_OPTIONS = [
   { value: 'Journey', label: 'Journey' },
-  { value: 'Pro Go', label: 'Pro Go' },
+  { value: 'Pro', label: 'Pro' },
   { value: 'Elite', label: 'Elite' },
   { value: 'Platinum', label: 'Platinum' },
   { value: 'Diamond', label: 'Diamond' },
@@ -56,14 +49,13 @@ export function formatBroadcastAudience(record: BroadcastRecord) {
   return record.targetValue ? `${base} — ${record.targetValue}` : base
 }
 
-export function getNotificationTemplateActionItems(status: MessageTemplate['status']): ActionMenuItem[] {
-  const items: ActionMenuItem[] = [{ key: 'edit', label: 'Edit', icon: Pencil, group: 1 }]
-  if (status === 'active') {
-    items.push({ key: 'disable', label: 'Disable', icon: PowerOff, group: 2 })
-  } else {
-    items.push({ key: 'enable', label: 'Enable', icon: Power, group: 2 })
-  }
-  return items
+export function typeColor(type: string) {
+  if (type === 'safety') return 'error'
+  if (type === 'support') return 'processing'
+  if (type === 'driver') return 'blue'
+  if (type === 'passenger') return 'purple'
+  if (type === 'system') return 'default'
+  return 'default'
 }
 
 export { priorityColor, priorityLabel, statusColor, statusLabel }

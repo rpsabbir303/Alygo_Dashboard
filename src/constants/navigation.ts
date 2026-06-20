@@ -51,7 +51,6 @@ export const NAVIGATION: NavItem[] = [
       { key: 'lost-found', label: 'Lost & Found', path: '/operations/lost-found' },
       { key: 'trip-completion-review', label: 'Trip Completion Review', path: '/operations/trip-completion-review' },
       { key: 'driving-hours', label: 'Driving Hours', path: '/operations/driving-hours' },
-      { key: 'destination-filters', label: 'Destination Filter Usage & Analytics', path: '/operations/destination-filters' },
       { key: 'policy-center', label: 'Operations Policy Center', path: '/operations/policy-center' },
       { key: 'safety-incidents', label: 'Safety & Incident Management', path: '/operations/safety-incidents' },
     ],
@@ -73,7 +72,6 @@ export const NAVIGATION: NavItem[] = [
       { key: 'passengers', label: 'Passenger Management', path: '/passengers' },
       { key: 'driver-rewards', label: 'Driver Rewards Management', path: '/driver-rewards' },
       { key: 'tier-management', label: 'Tier Management', path: '/drivers/tiers' },
-      { key: 'waitlist', label: 'Driver Capacity Management', path: '/drivers/waitlist' },
     ],
   },
   {

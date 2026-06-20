@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Segmented, Table, Tag } from 'antd'
+import { Select, Table, Tag } from 'antd'
 import { createActionsColumn, createTableRowProps } from '@/components/admin'
 import { TableFilters } from '@/components/common/TableFilters'
 import { CommunicationConversationDrawer } from '@/features/communication/components/CommunicationConversationDrawer'
@@ -9,9 +9,13 @@ import {
   priorityLabel,
   statusColor,
   statusLabel,
+  typeColor,
 } from '@/features/communication/communicationCenterHelpers'
-import type { CommunicationTabKey } from '@/features/communication/communicationNavigation'
-import { INBOX_TAB_TYPE_MAP } from '@/features/communication/communicationNavigation'
+import {
+  INBOX_PRIORITY_FILTER_OPTIONS,
+  INBOX_STATUS_FILTER_OPTIONS,
+  INBOX_TYPE_FILTER_OPTIONS,
+} from '@/features/communication/communicationNavigation'
 import {
   COMMUNICATION_TYPE_LABELS,
   useGetCommunicationInboxQuery,
@@ -22,39 +26,31 @@ import { formatDateTime } from '@/utils/format'
 
 const PAGE_SIZE = 10
 
-const TYPE_FILTER_OPTIONS = [
-  { label: 'All', value: '' },
-  { label: 'Driver', value: 'driver' },
-  { label: 'Passenger', value: 'passenger' },
-  { label: 'Support', value: 'support' },
-  { label: 'Safety', value: 'safety' },
-  { label: 'Broadcast', value: 'broadcast' },
-]
-
 interface CommunicationInboxTabProps {
-  tabKey: CommunicationTabKey
+  initialType?: string
 }
 
-export function CommunicationInboxTab({ tabKey }: CommunicationInboxTabProps) {
-  const tabTypeFilter = INBOX_TAB_TYPE_MAP[tabKey] ?? ''
+export function CommunicationInboxTab({ initialType = '' }: CommunicationInboxTabProps) {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState(tabTypeFilter)
+  const [typeFilter, setTypeFilter] = useState(initialType)
+  const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
   const [selected, setSelected] = useState<CommunicationInboxItem | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
-    setTypeFilter(INBOX_TAB_TYPE_MAP[tabKey] ?? '')
+    setTypeFilter(initialType)
     setPage(1)
-  }, [tabKey])
-
-  const effectiveType = tabTypeFilter || typeFilter
+  }, [initialType])
 
   const { data, isLoading } = useGetCommunicationInboxQuery({
     page,
     pageSize: PAGE_SIZE,
     search,
-    communicationType: effectiveType,
+    communicationType: typeFilter,
+    status: statusFilter,
+    priority: priorityFilter,
   })
 
   const openDrawer = (record: CommunicationInboxItem) => {
@@ -62,29 +58,56 @@ export function CommunicationInboxTab({ tabKey }: CommunicationInboxTabProps) {
     setDrawerOpen(true)
   }
 
+  const resetPage = () => setPage(1)
+
   return (
     <>
-      <TableFilters
-        variant="inline"
-        search={search}
-        onSearchChange={(value) => {
-          setSearch(value)
-          setPage(1)
-        }}
-        searchPlaceholder="Search user, ticket ID, or subject..."
-      />
-      {!tabTypeFilter && (
-        <div className="mb-4 mt-3">
-          <Segmented
-            options={TYPE_FILTER_OPTIONS}
-            value={typeFilter}
+      <div className="mb-4 flex flex-col gap-3">
+        <TableFilters
+          variant="inline"
+          search={search}
+          onSearchChange={(value) => {
+            setSearch(value)
+            resetPage()
+          }}
+          searchPlaceholder="Search user, ticket ID, or subject..."
+        />
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <Select
+            value={typeFilter || undefined}
+            placeholder="Type: All"
+            allowClear
+            className="!min-w-[160px]"
+            options={[...INBOX_TYPE_FILTER_OPTIONS]}
             onChange={(value) => {
-              setTypeFilter(String(value))
-              setPage(1)
+              setTypeFilter(value ?? '')
+              resetPage()
+            }}
+          />
+          <Select
+            value={statusFilter || undefined}
+            placeholder="Status: All"
+            allowClear
+            className="!min-w-[160px]"
+            options={[...INBOX_STATUS_FILTER_OPTIONS]}
+            onChange={(value) => {
+              setStatusFilter(value ?? '')
+              resetPage()
+            }}
+          />
+          <Select
+            value={priorityFilter || undefined}
+            placeholder="Priority: All"
+            allowClear
+            className="!min-w-[160px]"
+            options={[...INBOX_PRIORITY_FILTER_OPTIONS]}
+            onChange={(value) => {
+              setPriorityFilter(value ?? '')
+              resetPage()
             }}
           />
         </div>
-      )}
+      </div>
       <Table
         loading={isLoading}
         rowKey="id"
@@ -114,21 +137,24 @@ export function CommunicationInboxTab({ tabKey }: CommunicationInboxTabProps) {
             ),
           },
           {
-            title: 'Communication Type',
+            title: 'Type',
             dataIndex: 'communicationType',
+            width: 120,
             render: (t: CommunicationInboxType) => (
-              <Tag>{COMMUNICATION_TYPE_LABELS[t] ?? t}</Tag>
+              <Tag color={typeColor(t)}>{COMMUNICATION_TYPE_LABELS[t] ?? t}</Tag>
             ),
           },
           { title: 'Subject', dataIndex: 'subject', ellipsis: true },
           {
             title: 'Priority',
             dataIndex: 'priority',
+            width: 110,
             render: (p: string) => <Tag color={priorityColor(p)}>{priorityLabel(p)}</Tag>,
           },
           {
             title: 'Last Activity',
             dataIndex: 'lastActivity',
+            width: 140,
             render: (d: string) => (
               <span title={formatDateTime(d)}>{formatRelativeActivity(d)}</span>
             ),
@@ -136,6 +162,7 @@ export function CommunicationInboxTab({ tabKey }: CommunicationInboxTabProps) {
           {
             title: 'Status',
             dataIndex: 'status',
+            width: 130,
             render: (s: string) => <Tag color={statusColor(s)}>{statusLabel(s)}</Tag>,
           },
           createActionsColumn<CommunicationInboxItem>(

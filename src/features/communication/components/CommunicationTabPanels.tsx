@@ -12,24 +12,18 @@ import {
   BROADCAST_AUDIENCE_OPTIONS,
   formatBroadcastAudience,
   getBroadcastActionItems,
-  getNotificationTemplateActionItems,
-  NOTIFICATION_TYPE_LABELS,
-  NOTIFICATION_TYPE_OPTIONS,
   TIER_OPTIONS,
 } from '@/features/communication/communicationCenterHelpers'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
   BROADCAST_TYPE_LABELS,
   useCreateBroadcastMutation,
-  useCreateMessageTemplateMutation,
   useDeleteBroadcastMutation,
   useGetBroadcastsQuery,
-  useGetMessageTemplatesQuery,
   useSendBroadcastNowMutation,
   useUpdateBroadcastMutation,
-  useUpdateMessageTemplateMutation,
 } from '@/services/communicationApi'
-import type { BroadcastRecord, MessageTemplate } from '@/types/communication'
+import type { BroadcastRecord } from '@/types/communication'
 import type { BroadcastTarget, BroadcastType } from '@/types/communication'
 import { formatDateTime } from '@/utils/format'
 
@@ -144,7 +138,7 @@ export function BroadcastsTab() {
           searchPlaceholder="Search broadcasts..."
         />
         <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={openCreate}>
-          Create Broadcast
+          Create Announcement
         </Button>
       </div>
       <Table
@@ -180,7 +174,7 @@ export function BroadcastsTab() {
         ]}
       />
       <Modal
-        title={editRecord ? 'Edit Broadcast' : 'Create Broadcast'}
+        title={editRecord ? 'Edit Announcement' : 'Create Announcement'}
         open={modalOpen}
         confirmLoading={creating || updating || sending}
         okText="Save"
@@ -245,145 +239,6 @@ export function BroadcastsTab() {
           setDeleteRecord(null)
         }}
       />
-      <AdminActionHost actions={adminActions} />
-    </>
-  )
-}
-
-export function TemplatesTab() {
-  const adminActions = useAdminActions()
-  const [search, setSearch] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editRecord, setEditRecord] = useState<MessageTemplate | null>(null)
-  const [form] = Form.useForm<{
-    name: string
-    category: MessageTemplate['category']
-    content: string
-    status: MessageTemplate['status']
-  }>()
-
-  const { data = [], isLoading } = useGetMessageTemplatesQuery()
-  const [createTemplate, { isLoading: creating }] = useCreateMessageTemplateMutation()
-  const [updateTemplate, { isLoading: updating }] = useUpdateMessageTemplateMutation()
-
-  const filtered = data.filter((item) => item.name.toLowerCase().includes(search.trim().toLowerCase()))
-
-  const openCreate = () => {
-    setEditRecord(null)
-    form.resetFields()
-    form.setFieldsValue({ status: 'active', category: 'trip_updates' })
-    setModalOpen(true)
-  }
-
-  const openEdit = (record: MessageTemplate) => {
-    setEditRecord(record)
-    form.setFieldsValue({
-      name: record.name,
-      category: record.category,
-      content: record.content,
-      status: record.status,
-    })
-    setModalOpen(true)
-  }
-
-  const handleAction = async (key: string, record: MessageTemplate) => {
-    switch (key) {
-      case 'edit':
-        openEdit(record)
-        break
-      case 'enable':
-        await updateTemplate({ id: record.id, status: 'active' }).unwrap()
-        adminActions.notify('Template enabled', record.name)
-        break
-      case 'disable':
-        await updateTemplate({ id: record.id, status: 'inactive' }).unwrap()
-        adminActions.notify('Template disabled', record.name)
-        break
-    }
-  }
-
-  const handleSave = async () => {
-    const values = await form.validateFields()
-    if (editRecord) {
-      await updateTemplate({ id: editRecord.id, ...values }).unwrap()
-      adminActions.notify('Template updated', values.name)
-    } else {
-      await createTemplate(values).unwrap()
-      adminActions.notify('Template created', values.name)
-    }
-    setModalOpen(false)
-  }
-
-  return (
-    <>
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <TableFilters
-          variant="inline"
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search templates..."
-        />
-        <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={openCreate}>
-          Create Template
-        </Button>
-      </div>
-      <Table
-        loading={isLoading || creating || updating}
-        rowKey="id"
-        dataSource={filtered}
-        scroll={{ x: 900 }}
-        pagination={{ pageSize: 10, showSizeChanger: false }}
-        columns={[
-          { title: 'Template Name', dataIndex: 'name' },
-          {
-            title: 'Notification Type',
-            dataIndex: 'category',
-            render: (c: string) => NOTIFICATION_TYPE_LABELS[c] ?? c,
-          },
-          { title: 'Message Content', dataIndex: 'content', ellipsis: true },
-          {
-            title: 'Status',
-            dataIndex: 'status',
-            render: (s: string) => (
-              <Tag color={s === 'active' ? 'success' : 'default'}>{s}</Tag>
-            ),
-          },
-          createActionsColumn<MessageTemplate>(
-            (record) => getNotificationTemplateActionItems(record.status),
-            (key, record) => void handleAction(key, record),
-          ),
-        ]}
-      />
-      <Modal
-        title={editRecord ? 'Edit Template' : 'Create Template'}
-        open={modalOpen}
-        confirmLoading={creating || updating}
-        okText="Save"
-        cancelText="Cancel"
-        onCancel={() => setModalOpen(false)}
-        onOk={handleSave}
-        destroyOnClose
-      >
-        <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item name="name" label="Template Name" rules={[{ required: true }]}>
-            <Input placeholder="e.g. Ride Accepted" />
-          </Form.Item>
-          <Form.Item name="category" label="Notification Type" rules={[{ required: true }]}>
-            <Select options={NOTIFICATION_TYPE_OPTIONS} />
-          </Form.Item>
-          <Form.Item name="content" label="Message Content" rules={[{ required: true }]}>
-            <Input.TextArea rows={4} />
-          </Form.Item>
-          <Form.Item name="status" label="Status" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'active', label: 'Active' },
-                { value: 'inactive', label: 'Inactive' },
-              ]}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
       <AdminActionHost actions={adminActions} />
     </>
   )

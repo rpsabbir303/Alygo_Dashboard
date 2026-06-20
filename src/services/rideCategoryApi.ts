@@ -1,5 +1,7 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
+import { cancellationApi } from '@/services/cancellationApi'
 import {
+  createDefaultCancellationRules,
   isRideCategoryInUse,
   mockRideCategories,
   toRideCategorySlug,
@@ -43,6 +45,10 @@ function filterCategories(params: RideCategoryListParams): RideCategoryListRespo
   }
 }
 
+function invalidateCancellationPolicyTags(dispatch: (action: unknown) => void) {
+  dispatch(cancellationApi.util.invalidateTags(['CancellationFees', 'NoShowPolicies']))
+}
+
 export const rideCategoryApi = createApi({
   reducerPath: 'rideCategoryApi',
   baseQuery: fakeBaseQuery(),
@@ -66,12 +72,21 @@ export const rideCategoryApi = createApi({
           id: `RC-${Date.now()}`,
           slug,
           ...values,
+          cancellationRules: values.cancellationRules ?? createDefaultCancellationRules(values.fareMultiplier),
           createdAt: new Date().toISOString(),
         }
         mockRideCategories.unshift(category)
         return { data: category }
       },
       invalidatesTags: ['RideCategories'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          invalidateCancellationPolicyTags(dispatch)
+        } catch {
+          // Ignore invalidation when create fails.
+        }
+      },
     }),
     updateRideCategory: builder.mutation<
       RideCategoryDefinition,
@@ -95,6 +110,14 @@ export const rideCategoryApi = createApi({
         return { data: mockRideCategories[index] }
       },
       invalidatesTags: ['RideCategories'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          invalidateCancellationPolicyTags(dispatch)
+        } catch {
+          // Ignore invalidation when update fails.
+        }
+      },
     }),
     deleteRideCategory: builder.mutation<void, string>({
       queryFn: async (id) => {
@@ -116,6 +139,14 @@ export const rideCategoryApi = createApi({
         return { data: undefined }
       },
       invalidatesTags: ['RideCategories'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          invalidateCancellationPolicyTags(dispatch)
+        } catch {
+          // Ignore invalidation when delete fails.
+        }
+      },
     }),
     toggleRideCategoryStatus: builder.mutation<RideCategoryDefinition, string>({
       queryFn: async (id) => {

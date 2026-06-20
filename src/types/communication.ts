@@ -94,7 +94,7 @@ export interface CommunicationInboxOverview {
   broadcastsSentToday: number
 }
 
-export type CommunicationInboxType = 'driver' | 'passenger' | 'support' | 'safety' | 'broadcast'
+export type CommunicationInboxType = 'driver' | 'passenger' | 'support' | 'safety' | 'system'
 
 export interface CommunicationInboxItem {
   id: string
@@ -117,6 +117,8 @@ export interface CommunicationInboxParams {
   pageSize?: number
   search?: string
   communicationType?: string
+  status?: string
+  priority?: string
 }
 
 export interface CommunicationOverview {

@@ -5,23 +5,25 @@ export type CancellationEntityStatus = 'active' | 'inactive'
 export interface CancellationReason {
   id: string
   name: string
-  description: string
+  sortOrder: number
   status: CancellationEntityStatus
-  createdAt: string
+}
+
+export interface CancellationReasonRow extends CancellationReason {
+  userType: CancellationReasonType
 }
 
 export interface CancellationFee {
   id: string
-  rideCategory: RideCategory
+  rideCategory: string
   fee: number
   driverCompensation: number
-  warningMessage: string
   status: CancellationEntityStatus
 }
 
 export interface NoShowPolicy {
   id: string
-  rideCategory: RideCategory
+  rideCategory: string
   waitTimeMinutes: number
   noShowFee: number
   driverCompensation: number
@@ -36,13 +38,6 @@ export interface CityCancellationPolicy {
   cancellationFee: number
   noShowFee: number
   waitTime: number
-  status: CancellationEntityStatus
-}
-
-export interface PassengerWarningMessage {
-  id: string
-  message: string
-  rideCategory: RideCategory
   status: CancellationEntityStatus
 }
 

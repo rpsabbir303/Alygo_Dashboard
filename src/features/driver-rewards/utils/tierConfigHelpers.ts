@@ -1,5 +1,4 @@
 import type { DispatchPriorityLevel, DriverLevel, TierBenefitRules, TierBenefitsConfig } from '@/types/driverRewards'
-import type { TierFilterSettings } from '@/types/destinationFilter'
 
 const RESERVATION_ACCESS_LABELS: Record<string, string> = {
   none: 'No Access',
@@ -231,22 +230,6 @@ export function syncBenefitFlags(benefits: Omit<TierBenefitsConfig, 'flags'> & {
   return { ...benefits, flags } as TierBenefitsConfig
 }
 
-export function driverLevelToTierFilterSettings(level: DriverLevel): TierFilterSettings {
-  const tierKey = level.name === 'pro' ? 'pro_go' : level.name
-  const rules = parseBenefitRules(level.benefits)
-  return {
-    id: `df-${level.id}`,
-    tier: tierKey as TierFilterSettings['tier'],
-    tierLabel: level.label,
-    numberOfFilters: rules.destinationFilter.unlimited ? 99 : rules.destinationFilter.filtersAllowed,
-    dailyLimit: rules.destinationFilter.unlimited ? 999 : rules.destinationFilter.dailyLimit,
-    weeklyLimit: rules.destinationFilter.unlimited ? 9999 : rules.destinationFilter.weeklyLimit,
-    expirationHours: level.benefits.filterExpirationHours,
-    expirationRule: level.benefits.filterCooldownRule,
-    status: level.status,
-  }
-}
-
 export function deriveActiveBenefitLabels(level: DriverLevel): string[] {
   const rules = parseBenefitRules(level.benefits)
   const labels: string[] = []
@@ -284,32 +267,6 @@ export function deriveLockedBenefitLabels(current: DriverLevel, next?: DriverLev
   if (!next) return []
   const currentLabels = new Set(deriveActiveBenefitLabels(current))
   return deriveActiveBenefitLabels(next).filter((label) => !currentLabels.has(label))
-}
-
-export function deriveTierFilterSettingsFromLevels(levels: DriverLevel[]): TierFilterSettings[] {
-  return levels
-    .filter((l) => l.status === 'active')
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(driverLevelToTierFilterSettings)
-}
-
-export function applyTierFilterSettingsToLevel(
-  level: DriverLevel,
-  settings: Partial<TierFilterSettings>,
-): DriverLevel {
-  const rules = parseBenefitRules(level.benefits)
-  return {
-    ...level,
-    benefits: applyBenefitRules(level.benefits, {
-      ...rules,
-      destinationFilter: {
-        ...rules.destinationFilter,
-        filtersAllowed: settings.numberOfFilters ?? rules.destinationFilter.filtersAllowed,
-        dailyLimit: settings.dailyLimit ?? rules.destinationFilter.dailyLimit,
-        weeklyLimit: settings.weeklyLimit ?? rules.destinationFilter.weeklyLimit,
-      },
-    }),
-  }
 }
 
 export function countActiveBenefitRules(rules: TierBenefitRules): number {
