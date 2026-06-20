@@ -7,14 +7,15 @@ import {
 } from '@/components/admin'
 import { useAdminActions } from '@/hooks/useAdminActions'
 import {
-  ASSIGN_OPTIONS,
+  STATUS_OPTIONS,
   useAddIncidentNoteMutation,
-  useAssignIncidentMutation,
   useCloseIncidentMutation,
   useGetIncidentsQuery,
+  useReopenIncidentMutation,
   useResolveIncidentMutation,
+  useUpdateIncidentStatusMutation,
 } from '@/services/safetyIncidentApi'
-import type { SafetyIncident } from '@/types/safetyIncident'
+import type { IncidentStatus, SafetyIncident } from '@/types/safetyIncident'
 import {
   getIncidentActionItems,
   priorityColor,
@@ -29,32 +30,37 @@ export function IncidentTable() {
   const adminActions = useAdminActions()
   const { data = [], isLoading } = useGetIncidentsQuery()
   const [selected, setSelected] = useState<SafetyIncident | null>(null)
-  const [assignRecord, setAssignRecord] = useState<SafetyIncident | null>(null)
+  const [noteRecord, setNoteRecord] = useState<SafetyIncident | null>(null)
+  const [statusRecord, setStatusRecord] = useState<SafetyIncident | null>(null)
   const [resolveRecord, setResolveRecord] = useState<SafetyIncident | null>(null)
   const [closeRecord, setCloseRecord] = useState<SafetyIncident | null>(null)
-  const [noteRecord, setNoteRecord] = useState<SafetyIncident | null>(null)
-  const [assignTo, setAssignTo] = useState('')
+  const [reopenRecord, setReopenRecord] = useState<SafetyIncident | null>(null)
+  const [internalNote, setInternalNote] = useState('')
+  const [newStatus, setNewStatus] = useState<IncidentStatus>('open')
+  const [statusNote, setStatusNote] = useState('')
   const [resolveNote, setResolveNote] = useState('')
   const [closeNote, setCloseNote] = useState('')
-  const [internalNote, setInternalNote] = useState('')
+  const [reopenNote, setReopenNote] = useState('')
 
-  const [assignIncident, { isLoading: assigning }] = useAssignIncidentMutation()
+  const [addIncidentNote, { isLoading: addingNote }] = useAddIncidentNoteMutation()
+  const [updateIncidentStatus, { isLoading: updatingStatus }] = useUpdateIncidentStatusMutation()
   const [resolveIncident, { isLoading: resolving }] = useResolveIncidentMutation()
   const [closeIncident, { isLoading: closing }] = useCloseIncidentMutation()
-  const [addIncidentNote, { isLoading: addingNote }] = useAddIncidentNoteMutation()
+  const [reopenIncident, { isLoading: reopening }] = useReopenIncidentMutation()
 
   const handleAction = (key: string, record: SafetyIncident) => {
     switch (key) {
       case 'view':
         setSelected(record)
         break
-      case 'assign':
-        setAssignRecord(record)
-        setAssignTo(record.assignedTo ?? ASSIGN_OPTIONS[0].value)
-        break
       case 'note':
         setNoteRecord(record)
         setInternalNote('')
+        break
+      case 'status':
+        setStatusRecord(record)
+        setNewStatus(record.status)
+        setStatusNote('')
         break
       case 'resolve':
         setResolveRecord(record)
@@ -63,6 +69,10 @@ export function IncidentTable() {
       case 'close':
         setCloseRecord(record)
         setCloseNote('')
+        break
+      case 'reopen':
+        setReopenRecord(record)
+        setReopenNote('')
         break
     }
   }
@@ -73,7 +83,7 @@ export function IncidentTable() {
         loading={isLoading}
         rowKey="id"
         dataSource={data}
-        scroll={{ x: 1300 }}
+        scroll={{ x: 1200 }}
         {...createTableRowProps<SafetyIncident>((record) => setSelected(record))}
         columns={[
           { title: 'Case ID', dataIndex: 'caseId', width: 140 },
@@ -83,7 +93,6 @@ export function IncidentTable() {
           { title: 'Priority', dataIndex: 'priority', render: (p: string) => <Tag color={priorityColor(p)}>{priorityLabel(p)}</Tag> },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <Tag color={statusColor(s)}>{statusLabel(s)}</Tag> },
           { title: 'Created Date', dataIndex: 'createdAt', render: (d: string) => new Date(d).toLocaleString() },
-          { title: 'Assigned To', dataIndex: 'assignedTo', render: (v: string | undefined) => v ?? '—' },
           createActionsColumn<SafetyIncident>(
             (record) => getIncidentActionItems(record),
             (key, record) => handleAction(key, record),
@@ -93,50 +102,66 @@ export function IncidentTable() {
 
       <IncidentDetailDrawer
         open={Boolean(selected)}
-        incident={selected}
+        incidentId={selected?.id ?? null}
         onClose={() => setSelected(null)}
       />
 
       <Modal
-        title={`Assign Case — ${assignRecord?.caseId}`}
-        open={Boolean(assignRecord)}
-        confirmLoading={assigning}
-        onCancel={() => setAssignRecord(null)}
-        onOk={async () => {
-          if (!assignRecord) return
-          await assignIncident({ id: assignRecord.id, assignedTo: assignTo }).unwrap()
-          adminActions.notify(`Case assigned to ${assignTo}`)
-          setAssignRecord(null)
-        }}
-        destroyOnClose
-      >
-        <Form layout="vertical" className="mt-4">
-          <Form.Item label="Assign To">
-            <Select value={assignTo} onChange={setAssignTo} options={ASSIGN_OPTIONS} />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title={`Add Internal Note — ${noteRecord?.caseId}`}
+        title={`Add Note — ${noteRecord?.caseId}`}
         open={Boolean(noteRecord)}
         confirmLoading={addingNote}
         onCancel={() => setNoteRecord(null)}
         onOk={async () => {
           if (!noteRecord || !internalNote.trim()) return
           await addIncidentNote({ id: noteRecord.id, content: internalNote.trim() }).unwrap()
-          adminActions.notify('Internal note added')
+          adminActions.notify('Note added')
           setNoteRecord(null)
         }}
         destroyOnClose
       >
         <Form layout="vertical" className="mt-4">
-          <Form.Item label="Note">
+          <Form.Item label="Internal Note">
             <Input.TextArea
               rows={3}
               value={internalNote}
               onChange={(e) => setInternalNote(e.target.value)}
-              placeholder="Add internal note for the safety team..."
+              placeholder="Add investigation note..."
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={`Change Status — ${statusRecord?.caseId}`}
+        open={Boolean(statusRecord)}
+        confirmLoading={updatingStatus}
+        onCancel={() => setStatusRecord(null)}
+        onOk={async () => {
+          if (!statusRecord) return
+          await updateIncidentStatus({
+            id: statusRecord.id,
+            status: newStatus,
+            note: statusNote || undefined,
+          }).unwrap()
+          adminActions.notify(`Case status updated to ${statusLabel(newStatus)}`)
+          setStatusRecord(null)
+        }}
+        destroyOnClose
+      >
+        <Form layout="vertical" className="mt-4">
+          <Form.Item label="Status">
+            <Select
+              value={newStatus}
+              onChange={setNewStatus}
+              options={STATUS_OPTIONS}
+            />
+          </Form.Item>
+          <Form.Item label="Note (optional)">
+            <Input.TextArea
+              rows={2}
+              value={statusNote}
+              onChange={(e) => setStatusNote(e.target.value)}
+              placeholder="Reason for status change..."
             />
           </Form.Item>
         </Form>
@@ -187,6 +212,31 @@ export function IncidentTable() {
               value={closeNote}
               onChange={(e) => setCloseNote(e.target.value)}
               placeholder="Add any final notes before closing..."
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={`Reopen Case — ${reopenRecord?.caseId}`}
+        open={Boolean(reopenRecord)}
+        confirmLoading={reopening}
+        onCancel={() => setReopenRecord(null)}
+        onOk={async () => {
+          if (!reopenRecord) return
+          await reopenIncident({ id: reopenRecord.id, note: reopenNote }).unwrap()
+          adminActions.notify(`Case ${reopenRecord.caseId} reopened`)
+          setReopenRecord(null)
+        }}
+        destroyOnClose
+      >
+        <Form layout="vertical" className="mt-4">
+          <Form.Item label="Reopen Notes (optional)">
+            <Input.TextArea
+              rows={3}
+              value={reopenNote}
+              onChange={(e) => setReopenNote(e.target.value)}
+              placeholder="Reason for reopening..."
             />
           </Form.Item>
         </Form>

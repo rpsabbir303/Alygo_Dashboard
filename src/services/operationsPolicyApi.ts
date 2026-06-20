@@ -12,8 +12,6 @@ import {
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const CATEGORY_LABELS: Record<OperationsPolicyCategory, string> = {
-  driving_hours: 'Driving Hour Policies',
-  destination_filter: 'Destination Filter Policies',
   fare_adjustment: 'Fare Adjustment Rules',
   refund: 'Refund Rules',
   driver_penalty: 'Driver Penalty Rules',
@@ -70,6 +68,16 @@ export const operationsPolicyApi = createApi({
       },
       invalidatesTags: ['OperationsPolicies', 'OperationsPolicyOverview'],
     }),
+    deleteOperationsPolicy: builder.mutation<void, string>({
+      queryFn: async (id) => {
+        await delay()
+        const index = mockOperationsPolicies.findIndex((p) => p.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Policy not found' } }
+        mockOperationsPolicies.splice(index, 1)
+        return { data: undefined }
+      },
+      invalidatesTags: ['OperationsPolicies', 'OperationsPolicyOverview'],
+    }),
   }),
 })
 
@@ -78,4 +86,5 @@ export const {
   useGetOperationsPoliciesQuery,
   useUpdateOperationsPolicyMutation,
   useCreateOperationsPolicyMutation,
+  useDeleteOperationsPolicyMutation,
 } = operationsPolicyApi

@@ -74,6 +74,41 @@ export interface TierBenefitFlags {
   earlyFeatureAccess: boolean
 }
 
+export type DispatchPriorityLevel = 'low' | 'medium' | 'high' | 'highest'
+
+export interface TierBenefitRules {
+  destinationFilter: {
+    enabled: boolean
+    filtersAllowed: number
+    dailyLimit: number
+    weeklyLimit: number
+    unlimited: boolean
+  }
+  priorityDispatch: {
+    enabled: boolean
+    priorityLevel: DispatchPriorityLevel
+  }
+  reservationAccess: {
+    enabled: boolean
+    advanceBookingHours: number
+  }
+  premiumRideAccess: {
+    enabled: boolean
+    allowedCategories: string[]
+  }
+  airportQueuePriority: {
+    enabled: boolean
+    queuePriorityLevel: number
+  }
+  bonusMultiplier: {
+    enabled: boolean
+    multiplierValue: number
+  }
+  vipSupport: {
+    enabled: boolean
+  }
+}
+
 export type ReservationAccessLevel = 'none' | 'standard' | 'priority' | 'exclusive'
 
 export type CustomerSupportLevel = 'standard' | 'priority' | 'vip'
@@ -111,6 +146,11 @@ export interface TierBenefitsConfig {
   campaignAccess: boolean
   specialEventBonuses: boolean
   seasonalIncentives: boolean
+  destinationFiltersUnlimited?: boolean
+  destinationFilterActive?: boolean
+  advanceBookingHours?: number
+  premiumRideCategories?: string[]
+  airportQueuePriorityLevel?: number
   /** Legacy dispatch/reward flags kept in sync for existing consumers. */
   flags: TierBenefitFlags
 }

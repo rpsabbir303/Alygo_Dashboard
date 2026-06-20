@@ -8,7 +8,7 @@ export type IncidentType =
   | 'lost_item'
   | 'safety_investigation'
 
-export type IncidentStatus = 'open' | 'assigned' | 'in_review' | 'resolved' | 'closed'
+export type IncidentStatus = 'open' | 'in_review' | 'resolved' | 'closed'
 
 export type IncidentPriority = 'critical' | 'high' | 'medium' | 'low'
 
@@ -38,6 +38,12 @@ export interface TripHistoryEntry {
   timestamp: string
 }
 
+export interface StatusHistoryEntry {
+  status: IncidentStatus
+  timestamp: string
+  note?: string
+}
+
 export interface SafetyIncident {
   id: string
   caseId: string
@@ -52,11 +58,11 @@ export interface SafetyIncident {
   status: IncidentStatus
   priority: IncidentPriority
   createdAt: string
-  assignedTo?: string
   description: string
   resolutionNotes?: string
   gpsTimeline: GpsTimelinePoint[]
   tripHistory: TripHistoryEntry[]
+  statusHistory: StatusHistoryEntry[]
   notes: IncidentNote[]
   attachments: IncidentAttachment[]
 }
@@ -93,12 +99,10 @@ export interface IncidentCategory {
 }
 
 export interface SafetySettings {
-  enableSosFeature: boolean
-  enableEmergencyHotline: boolean
-  enableCriticalAlertNotifications: boolean
-  autoAssignCases: boolean
-  enableSafetyCaseEmailAlerts: boolean
-  enablePushNotifications: boolean
+  sosEnabled: boolean
+  emergencyHotlineNumber: string
+  pushNotifications: boolean
+  emailNotifications: boolean
 }
 
 export interface IncidentCategoryFormValues {

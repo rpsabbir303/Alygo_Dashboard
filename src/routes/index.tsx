@@ -26,6 +26,7 @@ const LegacyDriverRewardsRedirect = lazy(() =>
   })),
 )
 const TierManagementPage = lazy(() => import('@/features/driver-rewards/TierManagementPage'))
+const TierDetailPage = lazy(() => import('@/features/driver-rewards/TierDetailPage'))
 const LostFoundManagementPage = lazy(() => import('@/features/lost-found/LostFoundManagementPage'))
 const TripCompletionReviewPage = lazy(() => import('@/features/trip-completion-review/TripCompletionReviewPage'))
 const DrivingHoursManagementPage = lazy(() => import('@/features/driving-hours/DrivingHoursManagementPage'))
@@ -51,6 +52,7 @@ const PlatformSettingsPage = lazy(() => import('@/features/settings/PlatformSett
 const NotificationsSettingsPage = lazy(() => import('@/features/settings/NotificationsSettingsPage'))
 const IntegrationsPage = lazy(() => import('@/features/settings/IntegrationsPage'))
 const ReservationConfigurationPage = lazy(() => import('@/features/settings/ReservationConfigurationPage'))
+const SafetyConfigurationPage = lazy(() => import('@/features/settings/SafetyConfigurationPage'))
 const AdminRolesPage = lazy(() => import('@/features/settings/AdminRolesPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
@@ -107,6 +109,7 @@ export const router = createBrowserRouter([
       { path: 'driver-rewards', element: withSuspense(<DriverRewardsPage />) },
       { path: 'drivers/rewards', element: withSuspense(<LegacyDriverRewardsRedirect />) },
       { path: 'drivers/tiers', element: withSuspense(<TierManagementPage />) },
+      { path: 'drivers/tiers/:id', element: withSuspense(<TierDetailPage />) },
       { path: 'drivers/rewards/tier-management', element: <Navigate to="/drivers/tiers" replace /> },
       { path: 'drivers/waitlist', element: withSuspense(<DriverWaitlistPage />) },
       { path: 'drivers/:id', element: withSuspense(<DriverProfilePage />) },
@@ -177,6 +180,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: 'settings/platform', element: withSuspense(<PlatformSettingsPage />) },
+      { path: 'settings/safety', element: withSuspense(<SafetyConfigurationPage />) },
       { path: 'settings/notifications', element: withSuspense(<NotificationsSettingsPage />) },
       { path: 'settings/integrations', element: withSuspense(<IntegrationsPage />) },
       { path: 'settings/reservations', element: withSuspense(<ReservationConfigurationPage />) },

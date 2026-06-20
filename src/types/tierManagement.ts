@@ -39,17 +39,21 @@ export const TIER_ICON_OPTIONS = [
   { value: 'trophy', label: 'Trophy' },
 ]
 
-export interface TierFormModalValues {
+import type { TierBenefitRules } from '@/types/driverRewards'
+
+export interface TierFormValues {
   label: string
-  requiredPoints: number
+  level: number
+  tierColor: string
+  status: 'active' | 'inactive'
   requiredTrips: number
   requiredRating: number
   requiredAcceptanceRate: number
   requiredCompletionRate: number
-  tierColor: string
-  tierIcon: string
-  tierBadge: string
-  status: 'active' | 'inactive'
-  benefitIds: string[]
+  requiredSafetyScore: number
+  benefitRules: TierBenefitRules
   notes?: string
 }
+
+/** @deprecated Use TierFormValues */
+export type TierFormModalValues = TierFormValues

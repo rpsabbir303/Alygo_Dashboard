@@ -37,7 +37,7 @@ import { createDefaultLevel, createPointsRule } from '@/features/driver-rewards/
 
 export let mockDriverLevels: DriverLevel[] = [
   createDefaultLevel('lvl-journey', 'journey', 'Journey', 'Entry tier for new drivers starting their Alygo career.', 1, 1, { completedTrips: 0, driverRating: 4.5, acceptanceRate: 80 }, undefined, 842, 0),
-  createDefaultLevel('lvl-pro-go', 'pro_go', 'Pro Go', 'Consistent performers with reliable service quality.', 2, 2, { completedTrips: 100, driverRating: 4.5, acceptanceRate: 85 }, undefined, 628, 1000),
+  createDefaultLevel('lvl-pro-go', 'pro_go', 'Pro', 'Consistent performers with reliable service quality.', 2, 2, { completedTrips: 100, driverRating: 4.5, acceptanceRate: 85 }, undefined, 628, 1000),
   createDefaultLevel('lvl-elite', 'elite', 'Elite', 'High-performing drivers with strong ratings and trip volume.', 3, 3, { completedTrips: 500, driverRating: 4.7, acceptanceRate: 90 }, undefined, 412, 5000),
   createDefaultLevel('lvl-platinum', 'platinum', 'Platinum', 'Top-tier drivers with premium service quality.', 4, 4, { completedTrips: 2000, driverRating: 4.8, acceptanceRate: 92 }, undefined, 186, 12000),
   createDefaultLevel('lvl-diamond', 'diamond', 'Diamond', 'Elite drivers with exceptional performance across all metrics.', 5, 5, { completedTrips: 5000, driverRating: 4.9, acceptanceRate: 95 }, undefined, 74, 25000),
@@ -778,7 +778,7 @@ export function computeDriverRewardsOverview(): DriverRewardsOverview {
 export const mockOverviewCharts: DriverRewardsOverviewCharts = {
   levelDistribution: [
     { label: 'Journey', value: 842 },
-    { label: 'Pro Go', value: 628 },
+    { label: 'Pro', value: 628 },
     { label: 'Elite', value: 412 },
     { label: 'Platinum', value: 186 },
     { label: 'Diamond', value: 74 },

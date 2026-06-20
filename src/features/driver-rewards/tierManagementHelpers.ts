@@ -2,6 +2,7 @@ import { Eye, Pencil, Trash2 } from 'lucide-react'
 import type { ActionMenuItem, DetailField } from '@/components/admin/types'
 import type { DriverLevel, LevelBenefit } from '@/types/driverRewards'
 import { LEVEL_LABELS } from '@/services/driverRewardsApi'
+import { countActiveBenefitRules, parseBenefitRules } from '@/features/driver-rewards/utils/tierConfigHelpers'
 
 export function getTierManagementActionItems(): ActionMenuItem[] {
   return [
@@ -19,14 +20,16 @@ export function getTierBenefitActionItems(): ActionMenuItem[] {
 }
 
 export function buildTierDetailFields(record: DriverLevel): DetailField[] {
+  const rules = parseBenefitRules(record.benefits)
   return [
     { label: 'Tier Name', value: record.label },
-    { label: 'Minimum Points', value: record.requiredPoints },
-    { label: 'Minimum Completed Trips', value: record.requiredTrips },
-    { label: 'Minimum Rating', value: record.requiredRating },
-    { label: 'Minimum Acceptance Rate', value: `${record.requiredAcceptanceRate}%` },
-    { label: 'Minimum Completion Rate', value: `${record.requiredCompletionRate}%` },
-    { label: 'Benefits Count', value: record.benefitsCount },
+    { label: 'Level', value: record.level },
+    { label: 'Trips Required', value: record.requiredTrips },
+    { label: 'Rating Required', value: record.requiredRating },
+    { label: 'Acceptance Rate', value: `${record.requiredAcceptanceRate}%` },
+    { label: 'Completion Rate', value: `${record.requiredCompletionRate}%` },
+    { label: 'Safety Score', value: record.requirements.safetyScore },
+    { label: 'Active Benefits', value: countActiveBenefitRules(rules) },
     { label: 'Driver Count', value: record.driverCount },
     { label: 'Status', value: record.status === 'active' ? 'Active' : 'Inactive' },
     { label: 'Notes', value: record.description || '—' },

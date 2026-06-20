@@ -2,6 +2,7 @@ import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
 import type {
   IncidentCategory,
   IncidentCategoryFormValues,
+  IncidentStatus,
   SafetyDashboardSummary,
   SafetyIncident,
   SafetyOverview,
@@ -16,6 +17,22 @@ import {
 } from '@/services/mock/safetyIncidentData'
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function appendStatusChange(
+  incident: SafetyIncident,
+  status: IncidentStatus,
+  note?: string,
+): SafetyIncident {
+  const timestamp = new Date().toISOString()
+  return {
+    ...incident,
+    status,
+    statusHistory: [
+      ...incident.statusHistory,
+      { status, timestamp, note: note ?? `Status changed to ${status}` },
+    ],
+  }
+}
 
 export const safetyIncidentApi = createApi({
   reducerPath: 'safetyIncidentApi',
@@ -47,29 +64,6 @@ export const safetyIncidentApi = createApi({
       },
       providesTags: ['Incidents'],
     }),
-    assignIncident: builder.mutation<SafetyIncident, { id: string; assignedTo: string }>({
-      queryFn: async ({ id, assignedTo }) => {
-        await delay()
-        const index = mockSafetyIncidents.findIndex((i) => i.id === id)
-        if (index === -1) return { error: { status: 404, data: 'Incident not found' } }
-        mockSafetyIncidents[index] = {
-          ...mockSafetyIncidents[index],
-          status: 'assigned',
-          assignedTo,
-          notes: [
-            ...mockSafetyIncidents[index].notes,
-            {
-              id: `n-${Date.now()}`,
-              author: 'Admin',
-              content: `Assigned to ${assignedTo}`,
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        }
-        return { data: mockSafetyIncidents[index] }
-      },
-      invalidatesTags: ['Incidents', 'SafetyOverview'],
-    }),
     addIncidentNote: builder.mutation<SafetyIncident, { id: string; content: string }>({
       queryFn: async ({ id, content }) => {
         await delay()
@@ -79,28 +73,38 @@ export const safetyIncidentApi = createApi({
           ...mockSafetyIncidents[index],
           notes: [
             ...mockSafetyIncidents[index].notes,
-            { id: `n-${Date.now()}`, author: 'Admin', content, timestamp: new Date().toISOString() },
+            { id: `n-${Date.now()}`, author: 'Super Admin', content, timestamp: new Date().toISOString() },
           ],
         }
         return { data: mockSafetyIncidents[index] }
       },
       invalidatesTags: ['Incidents'],
     }),
+    updateIncidentStatus: builder.mutation<SafetyIncident, { id: string; status: IncidentStatus; note?: string }>({
+      queryFn: async ({ id, status, note }) => {
+        await delay()
+        const index = mockSafetyIncidents.findIndex((i) => i.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Incident not found' } }
+        mockSafetyIncidents[index] = appendStatusChange(mockSafetyIncidents[index], status, note)
+        return { data: mockSafetyIncidents[index] }
+      },
+      invalidatesTags: ['Incidents', 'SafetyOverview'],
+    }),
     resolveIncident: builder.mutation<SafetyIncident, { id: string; note?: string }>({
       queryFn: async ({ id, note }) => {
         await delay()
         const index = mockSafetyIncidents.findIndex((i) => i.id === id)
         if (index === -1) return { error: { status: 404, data: 'Incident not found' } }
+        const resolutionNotes = note ?? 'Case resolved'
         mockSafetyIncidents[index] = {
-          ...mockSafetyIncidents[index],
-          status: 'resolved',
-          resolutionNotes: note ?? 'Case resolved',
+          ...appendStatusChange(mockSafetyIncidents[index], 'resolved', resolutionNotes),
+          resolutionNotes,
           notes: [
             ...mockSafetyIncidents[index].notes,
             {
               id: `n-${Date.now()}`,
-              author: 'Admin',
-              content: note ?? 'Case resolved',
+              author: 'Super Admin',
+              content: resolutionNotes,
               timestamp: new Date().toISOString(),
             },
           ],
@@ -114,15 +118,38 @@ export const safetyIncidentApi = createApi({
         await delay()
         const index = mockSafetyIncidents.findIndex((i) => i.id === id)
         if (index === -1) return { error: { status: 404, data: 'Incident not found' } }
+        const closingNote = note ?? 'Case closed'
         mockSafetyIncidents[index] = {
-          ...mockSafetyIncidents[index],
-          status: 'closed',
+          ...appendStatusChange(mockSafetyIncidents[index], 'closed', closingNote),
           notes: [
             ...mockSafetyIncidents[index].notes,
             {
               id: `n-${Date.now()}`,
-              author: 'Admin',
-              content: note ?? 'Case closed',
+              author: 'Super Admin',
+              content: closingNote,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        }
+        return { data: mockSafetyIncidents[index] }
+      },
+      invalidatesTags: ['Incidents', 'SafetyOverview'],
+    }),
+    reopenIncident: builder.mutation<SafetyIncident, { id: string; note?: string }>({
+      queryFn: async ({ id, note }) => {
+        await delay()
+        const index = mockSafetyIncidents.findIndex((i) => i.id === id)
+        if (index === -1) return { error: { status: 404, data: 'Incident not found' } }
+        const reopenNote = note ?? 'Case reopened'
+        mockSafetyIncidents[index] = {
+          ...appendStatusChange(mockSafetyIncidents[index], 'open', reopenNote),
+          resolutionNotes: undefined,
+          notes: [
+            ...mockSafetyIncidents[index].notes,
+            {
+              id: `n-${Date.now()}`,
+              author: 'Super Admin',
+              content: reopenNote,
               timestamp: new Date().toISOString(),
             },
           ],
@@ -184,10 +211,11 @@ export const {
   useGetSafetyDashboardSummaryQuery,
   useGetIncidentsQuery,
   useGetIncidentByIdQuery,
-  useAssignIncidentMutation,
   useAddIncidentNoteMutation,
+  useUpdateIncidentStatusMutation,
   useResolveIncidentMutation,
   useCloseIncidentMutation,
+  useReopenIncidentMutation,
   useGetIncidentCategoriesQuery,
   useCreateIncidentCategoryMutation,
   useUpdateIncidentCategoryMutation,
@@ -199,7 +227,7 @@ export const {
 export {
   TYPE_LABELS,
   STATUS_LABELS,
+  STATUS_OPTIONS,
   PRIORITY_LABELS,
   SEVERITY_LABELS,
-  ASSIGN_OPTIONS,
 } from '@/services/mock/safetyIncidentData'

@@ -11,6 +11,7 @@ import { useAdminActions } from '@/hooks/useAdminActions'
 import {
   CATEGORY_LABELS,
   useCreateOperationsPolicyMutation,
+  useDeleteOperationsPolicyMutation,
   useGetOperationsPoliciesQuery,
   useUpdateOperationsPolicyMutation,
 } from '@/services/operationsPolicyApi'
@@ -19,16 +20,46 @@ import { buildPolicyFields, getPolicyActionItems } from '@/features/operations-p
 
 interface PolicyRulesTableProps {
   category: OperationsPolicyCategory
-  readOnly?: boolean
 }
 
-export function PolicyRulesTable({ category, readOnly = false }: PolicyRulesTableProps) {
+export function PolicyRulesTable({ category }: PolicyRulesTableProps) {
   const adminActions = useAdminActions()
   const { data = [], isLoading } = useGetOperationsPoliciesQuery(category)
   const [editRecord, setEditRecord] = useState<OperationsPolicyRule | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [updatePolicy, { isLoading: updating }] = useUpdateOperationsPolicyMutation()
   const [createPolicy, { isLoading: creating }] = useCreateOperationsPolicyMutation()
+  const [deletePolicy] = useDeleteOperationsPolicyMutation()
+
+  const handleAction = (key: string, record: OperationsPolicyRule) => {
+    switch (key) {
+      case 'edit':
+        setEditRecord(record)
+        break
+      case 'enable':
+        updatePolicy({ id: record.id, status: 'active' })
+          .unwrap()
+          .then(() => adminActions.notify(`${record.name} enabled`))
+        break
+      case 'disable':
+        updatePolicy({ id: record.id, status: 'inactive' })
+          .unwrap()
+          .then(() => adminActions.notify(`${record.name} disabled`))
+        break
+      case 'delete':
+        adminActions.openConfirm({
+          title: 'Delete Rule',
+          description: `Delete "${record.name}"? This cannot be undone.`,
+          confirmLabel: 'Delete',
+          danger: true,
+          onConfirm: async () => {
+            await deletePolicy(record.id).unwrap()
+            adminActions.notify('Rule deleted')
+          },
+        })
+        break
+    }
+  }
 
   const PolicyForm = ({
     id,
@@ -46,20 +77,20 @@ export function PolicyRulesTable({ category, readOnly = false }: PolicyRulesTabl
       initialValues={{ status: 'active', category, ...initialValues }}
       onFinish={onFinish}
     >
-      <Form.Item name="name" label="Policy Name" rules={[{ required: true }]}>
+      <Form.Item name="name" label="Rule Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
       <Form.Item name="description" label="Description" rules={[{ required: true }]}>
         <Input.TextArea rows={2} />
       </Form.Item>
       <Form.Item name="value" label="Display Value" rules={[{ required: true }]}>
-        <Input placeholder="e.g. 12 hours" />
+        <Input placeholder="e.g. 50% or $25 max" />
       </Form.Item>
       <Form.Item name="numericValue" label="Numeric Value">
         <InputNumber className="w-full" />
       </Form.Item>
       <Form.Item name="unit" label="Unit">
-        <Input placeholder="hours, percent, USD, etc." />
+        <Input placeholder="percent, USD, hours, etc." />
       </Form.Item>
       <Form.Item name="status" label="Status" rules={[{ required: true }]}>
         <Select options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
@@ -70,13 +101,14 @@ export function PolicyRulesTable({ category, readOnly = false }: PolicyRulesTabl
 
   return (
     <>
-      {!readOnly && (
-        <div className="mb-4 flex justify-end">
-          <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>
-            Add Policy
-          </Button>
-        </div>
-      )}
+      <p className="mb-4 text-sm text-alygo-text-muted">
+        Manage {CATEGORY_LABELS[category].toLowerCase()} for platform-wide operational policy enforcement.
+      </p>
+      <div className="mb-4 flex justify-end">
+        <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>
+          Create Rule
+        </Button>
+      </div>
       <Table
         loading={isLoading}
         rowKey="id"
@@ -86,7 +118,7 @@ export function PolicyRulesTable({ category, readOnly = false }: PolicyRulesTabl
           adminActions.openDrawer(record.name, buildPolicyFields(record)),
         )}
         columns={[
-          { title: 'Policy Name', dataIndex: 'name' },
+          { title: 'Rule Name', dataIndex: 'name' },
           { title: 'Description', dataIndex: 'description', ellipsis: true },
           { title: 'Value', dataIndex: 'value' },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
@@ -95,52 +127,46 @@ export function PolicyRulesTable({ category, readOnly = false }: PolicyRulesTabl
             dataIndex: 'lastUpdated',
             render: (d: string) => new Date(d).toLocaleDateString(),
           },
-          ...(readOnly
-            ? []
-            : [
-                createActionsColumn<OperationsPolicyRule>(
-                  () => getPolicyActionItems(),
-                  (key, record) => { if (key === 'edit') setEditRecord(record) },
-                ),
-              ]),
+          createActionsColumn<OperationsPolicyRule>(
+            (record) => getPolicyActionItems(record),
+            (key, record) => handleAction(key, record),
+          ),
         ]}
       />
 
-      {!readOnly && (
-        <Modal
-          title={`Add ${CATEGORY_LABELS[category]}`}
-          open={createOpen}
-          confirmLoading={creating}
-          onCancel={() => setCreateOpen(false)}
-          onOk={() => {
-            document.getElementById(`policy-create-${category}`)?.dispatchEvent(
-              new Event('submit', { cancelable: true, bubbles: true }),
-            )
+      <Modal
+        title={`Create ${CATEGORY_LABELS[category]}`}
+        open={createOpen}
+        confirmLoading={creating}
+        onCancel={() => setCreateOpen(false)}
+        onOk={() => {
+          document.getElementById(`policy-create-${category}`)?.dispatchEvent(
+            new Event('submit', { cancelable: true, bubbles: true }),
+          )
+        }}
+        destroyOnClose
+      >
+        <PolicyForm
+          id={`policy-create-${category}`}
+          onFinish={async (values) => {
+            await createPolicy({
+              category,
+              name: values.name!,
+              description: values.description!,
+              value: values.value!,
+              numericValue: values.numericValue,
+              unit: values.unit,
+              status: values.status ?? 'active',
+            }).unwrap()
+            adminActions.notify('Rule created')
+            setCreateOpen(false)
           }}
-          destroyOnClose
-        >
-          <PolicyForm
-            id={`policy-create-${category}`}
-            onFinish={async (values) => {
-              await createPolicy({
-                category,
-                name: values.name!,
-                description: values.description!,
-                value: values.value!,
-                numericValue: values.numericValue,
-                unit: values.unit,
-                status: values.status ?? 'active',
-              }).unwrap()
-              adminActions.notify('Policy created')
-              setCreateOpen(false)
-            }}
-          />
-        </Modal>
-      )}
+        />
+      </Modal>
 
-      {!readOnly && editRecord && (
+      {editRecord && (
         <Modal
-          title={`Edit Policy — ${editRecord.name}`}
+          title={`Edit Rule — ${editRecord.name}`}
           open
           confirmLoading={updating}
           onCancel={() => setEditRecord(null)}
@@ -156,7 +182,7 @@ export function PolicyRulesTable({ category, readOnly = false }: PolicyRulesTabl
             initialValues={editRecord}
             onFinish={async (values) => {
               await updatePolicy({ id: editRecord.id, ...values }).unwrap()
-              adminActions.notify('Policy updated')
+              adminActions.notify('Rule updated')
               setEditRecord(null)
             }}
           />

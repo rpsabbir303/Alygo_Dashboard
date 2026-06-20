@@ -1,19 +1,24 @@
-import { CheckCircle, Eye, MessageSquare, UserPlus, XCircle } from 'lucide-react'
+import { CheckCircle, Eye, MessageSquare, RefreshCw, RotateCcw, XCircle } from 'lucide-react'
 import type { ActionMenuItem } from '@/components/admin/types'
 import type { SafetyIncident } from '@/types/safetyIncident'
 import { PRIORITY_LABELS, STATUS_LABELS, TYPE_LABELS } from '@/services/safetyIncidentApi'
 
 export function getIncidentActionItems(record: SafetyIncident): ActionMenuItem[] {
+  if (record.status === 'closed') {
+    return [
+      { key: 'view', label: 'View Case', icon: Eye },
+      { key: 'reopen', label: 'Reopen Case', icon: RotateCcw, group: 1 },
+    ]
+  }
+
   const items: ActionMenuItem[] = [
-    { key: 'view', label: 'View Details', icon: Eye },
+    { key: 'view', label: 'View Case', icon: Eye },
+    { key: 'note', label: 'Add Notes', icon: MessageSquare, group: 1 },
+    { key: 'status', label: 'Change Status', icon: RefreshCw, group: 1 },
   ]
 
-  if (record.status !== 'resolved' && record.status !== 'closed') {
-    items.push(
-      { key: 'assign', label: 'Assign Case', icon: UserPlus, group: 1 },
-      { key: 'note', label: 'Add Internal Notes', icon: MessageSquare, group: 1 },
-      { key: 'resolve', label: 'Resolve Case', icon: CheckCircle, group: 2 },
-    )
+  if (record.status !== 'resolved') {
+    items.push({ key: 'resolve', label: 'Resolve Case', icon: CheckCircle, group: 2 })
   }
 
   if (record.status === 'resolved') {
@@ -33,7 +38,6 @@ export function priorityColor(priority: string) {
 export function statusColor(status: string) {
   if (status === 'resolved' || status === 'closed') return 'success'
   if (status === 'in_review') return 'warning'
-  if (status === 'assigned') return 'processing'
   return 'default'
 }
 

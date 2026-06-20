@@ -125,9 +125,7 @@ function getNextLevel(current: DriverLevelName) {
 
 function syncLevelBenefitsCount() {
   mockDriverLevels.forEach((level) => {
-    level.benefitsCount = mockLevelBenefits.filter(
-      (b) => b.status === 'active' && b.assignedTiers.includes(level.name),
-    ).length
+    level.benefitsCount = deriveActiveBenefitLabels(level).length
   })
 }
 

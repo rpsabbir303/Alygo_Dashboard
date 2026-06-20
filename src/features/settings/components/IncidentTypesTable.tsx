@@ -31,20 +31,18 @@ const defaultFormValues: IncidentCategoryFormValues = {
   status: 'active',
 }
 
-function getCategoryActionItems(record: IncidentCategory): ActionMenuItem[] {
-  const items: ActionMenuItem[] = [
-    { key: 'edit', label: 'Edit Category', icon: Pencil },
-  ]
+function getIncidentTypeActionItems(record: IncidentCategory): ActionMenuItem[] {
+  const items: ActionMenuItem[] = [{ key: 'edit', label: 'Edit', icon: Pencil }]
   if (record.status === 'active') {
     items.push({ key: 'disable', label: 'Disable', icon: PowerOff, group: 1 })
   } else {
     items.push({ key: 'enable', label: 'Enable', icon: Power, group: 1 })
   }
-  items.push({ key: 'delete', label: 'Delete Category', icon: Trash2, danger: true, group: 2 })
+  items.push({ key: 'delete', label: 'Delete', icon: Trash2, danger: true, group: 2 })
   return items
 }
 
-export function IncidentCategoriesTable() {
+export function IncidentTypesTable() {
   const adminActions = useAdminActions()
   const { data = [], isLoading } = useGetIncidentCategoriesQuery()
   const [editRecord, setEditRecord] = useState<IncidentCategory | null>(null)
@@ -70,13 +68,13 @@ export function IncidentCategoriesTable() {
         break
       case 'delete':
         adminActions.openConfirm({
-          title: 'Delete Category',
+          title: 'Delete Incident Type',
           description: `Delete "${record.name}"? This cannot be undone.`,
           confirmLabel: 'Delete',
           danger: true,
           onConfirm: async () => {
             await deleteCategory(record.id).unwrap()
-            adminActions.notify('Category deleted')
+            adminActions.notify('Incident type deleted')
           },
         })
         break
@@ -87,10 +85,10 @@ export function IncidentCategoriesTable() {
     <>
       <div className="mb-4 flex items-center justify-between gap-4">
         <p className="text-sm text-alygo-text-muted">
-          Manage incident categories and severity levels for safety case classification.
+          Configure incident types used to classify safety cases across the platform.
         </p>
         <Button type="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>
-          Create Category
+          Add Incident Type
         </Button>
       </div>
 
@@ -98,42 +96,41 @@ export function IncidentCategoriesTable() {
         loading={isLoading}
         rowKey="id"
         dataSource={data}
-        scroll={{ x: 800 }}
+        scroll={{ x: 700 }}
         columns={[
           { title: 'Category Name', dataIndex: 'name' },
-          { title: 'Description', dataIndex: 'description', ellipsis: true },
           { title: 'Severity Level', dataIndex: 'severityLevel', render: (p: string) => severityLabel(p) },
           { title: 'Status', dataIndex: 'status', render: (s: string) => <StatusBadge status={s} /> },
           createActionsColumn<IncidentCategory>(
-            (record) => getCategoryActionItems(record),
+            (record) => getIncidentTypeActionItems(record),
             (key, record) => handleAction(key, record),
           ),
         ]}
       />
 
       {editRecord && (
-        <CategoryFormModal
-          title={`Edit Category — ${editRecord.name}`}
+        <IncidentTypeFormModal
+          title={`Edit Incident Type — ${editRecord.name}`}
           initialValues={editRecord}
           loading={updating}
           onCancel={() => setEditRecord(null)}
           onSubmit={async (values) => {
             await updateCategory({ id: editRecord.id, ...values }).unwrap()
-            adminActions.notify('Category updated')
+            adminActions.notify('Incident type updated')
             setEditRecord(null)
           }}
         />
       )}
 
       {createOpen && (
-        <CategoryFormModal
-          title="Create Category"
+        <IncidentTypeFormModal
+          title="Add Incident Type"
           initialValues={defaultFormValues}
           loading={creating}
           onCancel={() => setCreateOpen(false)}
           onSubmit={async (values) => {
             await createCategory(values).unwrap()
-            adminActions.notify('Category created')
+            adminActions.notify('Incident type created')
             setCreateOpen(false)
           }}
         />
@@ -144,7 +141,7 @@ export function IncidentCategoriesTable() {
   )
 }
 
-function CategoryFormModal({
+function IncidentTypeFormModal({
   title,
   initialValues,
   loading,
@@ -164,14 +161,14 @@ function CategoryFormModal({
       confirmLoading={loading}
       onCancel={onCancel}
       onOk={() => {
-        document.getElementById('category-form')?.dispatchEvent(
+        document.getElementById('incident-type-form')?.dispatchEvent(
           new Event('submit', { cancelable: true, bubbles: true }),
         )
       }}
       destroyOnClose
     >
       <Form
-        id="category-form"
+        id="incident-type-form"
         layout="vertical"
         className="mt-4"
         initialValues={initialValues}
